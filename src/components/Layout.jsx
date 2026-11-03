@@ -1,3 +1,4 @@
+import { canAccessModule } from '../utils/modulePermissions';
 import React, { useState, useEffect } from "react";
 import ErrorBoundary from './ErrorBoundary'
 import { Link, useLocation } from "react-router-dom";
@@ -350,6 +351,21 @@ export default function Layout({ children, onLogout }) {
     return false;
   };
 
+  // Sidebar groups → the module key the route guard checks (same check, UAT P1 #11).
+  const GROUP_MODULE = {
+    'Sales & Trade': 'sales',
+    'Purchasing': 'purchases',
+    'Inventory & Logistics': 'inventory',
+    'Financials': 'financials',
+    'HRMS': 'hr',
+  };
+  const profileLoaded = role === 'admin' || Boolean(profileData?.profile);
+  const groupHiddenByPermission = (groupTitle) => {
+    const moduleKey = GROUP_MODULE[groupTitle];
+    if (!moduleKey || !profileLoaded) return false;
+    return !canAccessModule(role, permissions, moduleKey);
+  };
+
   const getManagerModulePermission = (groupTitle) => {
     if (groupTitle === 'Sales & Trade') return permissions.sales;
     if (groupTitle === 'Purchasing') return permissions.purchases;
@@ -372,12 +388,14 @@ export default function Layout({ children, onLogout }) {
     };
   };
 
-  // Filter structural groups by roles only; manager module permissions are shown as locked items.
+  // Filter groups by role and by the same module permission the route guard uses.
   const filteredGroups = navigationGroups.map(group => {
     // Strict role-based isolation
     if (role === 'hr' && group.title !== 'HR & Payroll' && group.title !== 'System') return null;
     if (role === 'employee' && group.title !== 'Employee Portal' && group.title !== 'System') return null;
     if (role !== 'employee' && group.title === 'Employee Portal') return null;
+    // Hide modules the route guard would block for this role.
+    if (groupHiddenByPermission(group.title)) return null;
 
     const validItems = group.items.filter(item => {
       // 1. Role Check
