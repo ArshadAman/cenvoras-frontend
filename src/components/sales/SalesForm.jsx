@@ -1210,7 +1210,12 @@ export default function SalesForm({
 
   // UAT P1 item 4 (Rudra CA): round-off is a company setting (default on). New documents start
   // with it applied; the server recomputes the amount (half up to the rupee) on invoices.
-  const companyAutoRoundOff = userProfileData?.auto_round_off !== false;
+  // /users/profile/ returns { profile, billing_profile }; the company setting lives on billing_profile.
+  const companyAutoRoundOff = (
+    userProfileData?.billing_profile?.auto_round_off ??
+    userProfileData?.profile?.auto_round_off ??
+    userProfileData?.auto_round_off
+  ) !== false;
   useEffect(() => {
     if (!isOpen || editData?.id) return;
     setRoundOffApplied(companyAutoRoundOff);
