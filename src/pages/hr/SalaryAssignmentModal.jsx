@@ -55,13 +55,16 @@ export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, init
         monthly_ctc: parseFloat(form.monthly_ctc)
       };
 
+      let res;
       if (initialData?.id) {
-        await hrApi.updateSalaryAssignment(initialData.id, payload);
+        res = await hrApi.updateSalaryAssignment(initialData.id, payload);
         toast.success('Salary Assignment updated');
       } else {
-        await hrApi.createSalaryAssignment(payload);
+        res = await hrApi.createSalaryAssignment(payload);
         toast.success('Salary Assignment created');
       }
+      // Backend warns (does not block) when another assignment has the same effective date.
+      (res?.data?.warnings || []).forEach((w) => toast.warning(w, { autoClose: 10000 }));
       onSuccess();
       onClose();
     } catch (error) {
