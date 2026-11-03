@@ -16,7 +16,7 @@ import { formatErrorMessage } from "../../utils/toastUtils";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Added useQuery
 import { getCurrencySymbol } from '../../utils/currency';
-import { getAllUnits, saveCustomUnit } from '../../utils/units';
+import { getAllUnits, saveCustomUnit, unitOptionsWith } from '../../utils/units';
 import { DocumentTextIcon, ArrowPathIcon, PlusIcon, Bars3Icon, DocumentPlusIcon, TrashIcon, PencilSquareIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import DateInputField from "../common/DateInputField";
 import CustomerForm from "../customers/CustomerForm";
@@ -3123,7 +3123,7 @@ export default function SalesForm({
                                                <div key={col.key}>
                                                  <Field
                                                    name={`items.${index}.quantity`}
-                                                   type="number"
+                                                   type="number" step="any"
                                                    min={minQty}
                                                    className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                    onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
@@ -3175,7 +3175,7 @@ export default function SalesForm({
                                                   }}
                                                   className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-center text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                 >
-                                                  {availableUnits.map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
+                                                  {unitOptionsWith(availableUnits, item.unit).map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
                                                   <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
                                                 </select>
                                               </div>
@@ -3507,7 +3507,7 @@ export default function SalesForm({
                                               <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Qty</label>
                                               <Field
                                                 name={`items.${index}.quantity`}
-                                                type="number"
+                                                type="number" step="any"
                                                 min={isProtectedProductLine(item) ? getProtectedMinQty(item) : 0}
                                                 className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center font-bold focus:border-[var(--accent-primary)] outline-none"
                                                 onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
@@ -3532,7 +3532,7 @@ export default function SalesForm({
                                                 }}
                                                 className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-2 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none"
                                               >
-                                                {availableUnits.map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
+                                                {unitOptionsWith(availableUnits, item.unit).map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
                                                 <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
                                               </select>
                                           </div>
@@ -4096,7 +4096,7 @@ export default function SalesForm({
                     }}
                     className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
                   >
-                    {availableUnits.map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
+                    {unitOptionsWith(availableUnits, productCreationState.unit).map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
                     <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
                   </select>
                 </div>

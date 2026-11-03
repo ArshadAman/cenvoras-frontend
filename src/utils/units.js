@@ -39,3 +39,11 @@ export const getAllUnits = () => {
   const custom = getStoredCustomUnits();
   return Array.from(new Set([...DEFAULT_UNITS, ...custom]));
 };
+
+// UAT P1 item 5 retest: a line's unit (the product's unit, e.g. "KGS") must always be selectable,
+// otherwise the <select> silently shows the first option ("pcs").
+export const unitOptionsWith = (units, current) => {
+  const cur = String(current || "").trim();
+  if (!cur || units.includes(cur)) return units;
+  return [cur, ...units];
+};

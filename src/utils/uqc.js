@@ -1,6 +1,7 @@
 // UAT P1 item 5 (Rudra CA): quantity precision by UQC. Mirrors billing/uqc.py on the backend.
 // Count units (NOS/PCS/UNT/BOX/SET/PRS/DOZ) are whole numbers only; measured units
 // (KGS/GMS/LTR/MLT/MTR/CMS/SQM/CBM/TON/QTL) allow up to 3 decimals. Unknown units count as whole.
+// Stock is decimal(15,3), so fractional returns of measured units go back into stock.
 // Quantities are never rounded silently: the input keeps what was typed and shows an error.
 const ALIASES = {
   NOS: 'NOS', NO: 'NOS', NUMBER: 'NOS', NUMBERS: 'NOS',
@@ -31,7 +32,7 @@ const decimalsOf = (str) => {
 };
 
 // Returns an error string or '' for a typed quantity (string or number).
-export const quantityError = (value, unit, { stockReturn = false } = {}) => {
+export const quantityError = (value, unit) => {
   const s = String(value ?? '').trim();
   if (s === '' || Number(s) === 0) return '';
   if (!/^\d*\.?\d*$/.test(s) || Number.isNaN(Number(s))) return 'Enter a valid quantity.';
@@ -39,7 +40,6 @@ export const quantityError = (value, unit, { stockReturn = false } = {}) => {
   const d = decimalsOf(s);
   if (isMeasuredUnit(unit)) {
     if (d > 3) return `${label} quantities can have at most 3 decimals.`;
-    if (stockReturn && d > 0) return `Stock is kept in whole ${label}; return a whole quantity, or use a value-only reason.`;
     return '';
   }
   if (d > 0) return `${label} is counted in whole units, so the quantity must be a whole number.`;

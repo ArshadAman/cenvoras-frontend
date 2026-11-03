@@ -211,7 +211,7 @@ export default function StockJournalForm({ isOpen, onClose }) {
                                             <ErrorMessage name={`items.${index}.batch`} component="div" className="text-rose-500 text-xs" />
                                         </div>
                                         <div className="col-span-3 flex gap-2">
-                                            <Field name={`items.${index}.quantity`} type="number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/40 focus:border-[var(--accent-primary)] outline-none" />
+                                            <Field name={`items.${index}.quantity`} type="number" step="any" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/40 focus:border-[var(--accent-primary)] outline-none" />
                                             <span className="text-[var(--text-secondary)] self-center text-xs">{item.unit || 'pcs'}</span>
                                         </div>
                                         <div className="col-span-1 text-right">
