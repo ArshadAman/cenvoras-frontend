@@ -1,3 +1,4 @@
+import { table4Rows } from '../../utils/gstr3bTable4';
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -497,105 +498,20 @@ export default function GSTR3B() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border-subtle)]/50">
-                    {/* (A) ITC Available */}
-                    <tr className="bg-[var(--bg-primary)]/30">
-                      <td colSpan={5} className="py-2 px-4 font-bold text-[var(--text-primary)]">
-                        (A) ITC Available (whether in full or part)
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-[var(--bg-primary)]/50 transition-colors">
-                      <td className="py-2.5 px-4 pl-8 text-[var(--text-secondary)]">(5) All other ITC (Purchase Bills)</td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--status-success)] font-medium">
-                        {getCurrencySymbol()}{fmt(t4.itc_available?.all_other_itc?.iamt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--status-success)] font-medium">
-                        {getCurrencySymbol()}{fmt(t4.itc_available?.all_other_itc?.camt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--status-success)] font-medium">
-                        {getCurrencySymbol()}{fmt(t4.itc_available?.all_other_itc?.samt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--text-muted)]">
-                        {getCurrencySymbol()}{fmt(t4.itc_available?.all_other_itc?.csamt)}
-                      </td>
-                    </tr>
-
-                    {/* (B) ITC Reversed */}
-                    <tr className="bg-[var(--bg-primary)]/30">
-                      <td colSpan={5} className="py-2 px-4 font-bold text-[var(--text-primary)]">
-                        (B) ITC Reversed
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-[var(--bg-primary)]/50 transition-colors">
-                      <td className="py-2.5 px-4 pl-8 text-[var(--text-secondary)]">(2) Others (Debit Notes to Vendors)</td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--status-danger)] font-medium">
-                        {getCurrencySymbol()}{fmt(t4.itc_reversed?.others?.iamt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--status-danger)] font-medium">
-                        {getCurrencySymbol()}{fmt(t4.itc_reversed?.others?.camt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--status-danger)] font-medium">
-                        {getCurrencySymbol()}{fmt(t4.itc_reversed?.others?.samt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--text-muted)]">
-                        {getCurrencySymbol()}{fmt(t4.itc_reversed?.others?.csamt)}
-                      </td>
-                    </tr>
-
-                    {/* (C) Net ITC Available */}
-                    <tr className="bg-[var(--status-success)]/10 font-bold">
-                      <td className="py-3 px-4 text-[var(--status-success)]">
-                        (C) Net ITC Available (A) – (B)
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-[var(--status-success)] text-sm">
-                        {getCurrencySymbol()}{fmt(t4.net_itc_available?.iamt)}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-[var(--status-success)] text-sm">
-                        {getCurrencySymbol()}{fmt(t4.net_itc_available?.camt)}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-[var(--status-success)] text-sm">
-                        {getCurrencySymbol()}{fmt(t4.net_itc_available?.samt)}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-[var(--text-muted)]">
-                        {getCurrencySymbol()}{fmt(t4.net_itc_available?.csamt)}
-                      </td>
-                    </tr>
-
-                    {/* (D) Ineligible ITC */}
-                    <tr className="bg-[var(--bg-primary)]/30">
-                      <td colSpan={5} className="py-2 px-4 font-bold text-[var(--text-primary)]">
-                        (D) Ineligible ITC
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-[var(--bg-primary)]/50 transition-colors">
-                      <td className="py-2.5 px-4 pl-8 text-[var(--text-secondary)]">(1) As per section 17(5)</td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--text-secondary)]">
-                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.as_per_section_17_5?.iamt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--text-secondary)]">
-                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.as_per_section_17_5?.camt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--text-secondary)]">
-                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.as_per_section_17_5?.samt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--text-muted)]">
-                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.as_per_section_17_5?.csamt)}
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-[var(--bg-primary)]/50 transition-colors">
-                      <td className="py-2.5 px-4 pl-8 text-[var(--text-secondary)]">(2) Others</td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--text-secondary)]">
-                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.others?.iamt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--text-secondary)]">
-                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.others?.camt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--text-secondary)]">
-                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.others?.samt)}
-                      </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-[var(--text-muted)]">
-                        {getCurrencySymbol()}{fmt(t4.ineligible_itc?.others?.csamt)}
-                      </td>
-                    </tr>
+                    {table4Rows(t4).map((r) => r.header ? (
+                      <tr key={r.key} className="bg-[var(--bg-primary)]/30">
+                        <td colSpan={5} className="py-2 px-4 font-bold text-[var(--text-primary)]">{r.label}</td>
+                      </tr>
+                    ) : (
+                      <tr key={r.key} className={r.total ? 'bg-[var(--status-success)]/10 font-bold' : 'hover:bg-[var(--bg-primary)]/50 transition-colors'}>
+                        <td className={r.total ? 'py-3 px-4 text-[var(--status-success)]' : 'py-2.5 px-4 pl-8 text-[var(--text-secondary)]'}>{r.label}</td>
+                        {['iamt', 'camt', 'samt', 'csamt'].map((k) => (
+                          <td key={k} className={`py-2.5 px-4 text-right font-mono ${k === 'csamt' ? 'text-[var(--text-muted)]' : r.tone}`}>
+                            {getCurrencySymbol()}{fmt(r.v?.[k])}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
