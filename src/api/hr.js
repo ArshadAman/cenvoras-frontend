@@ -120,6 +120,8 @@ export const hrApi = {
 
   // Payroll Lifecycle & Exceptions
   calculatePayroll: (id) => api.post(`/hr/payroll-runs/${id}/calculate/`),
+  previewPayrollRecalculation: (id) => api.post(`/hr/payroll-runs/${id}/recalculate-preview/`),
+  confirmCtcScaling: (id, data) => api.post(`/hr/payroll-runs/${id}/confirm-ctc-scaling/`, data),
   getPayrollExceptions: (id) => api.get(`/hr/payroll-runs/${id}/exceptions/`),
   approvePayroll: (id) => api.post(`/hr/payroll-runs/${id}/approve/`),
   payPayroll: (id, data) => api.post(`/hr/payroll-runs/${id}/pay/`, data),
