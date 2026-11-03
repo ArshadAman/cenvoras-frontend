@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getWarehouses, getProducts, getStockPoints, createStockMovement } from "../../api/inventory";
+import { getWarehouses, getProducts, getStockPoints, createStockMovement, previewStockTransfer, printTransferChallan } from "../../api/inventory";
 import { toast } from "react-toastify";
 import { 
   XMarkIcon, 
@@ -32,6 +32,8 @@ const transferSchema = Yup.object().shape({
 export default function StockTransfer({ onClose }) {
   const queryClient = useQueryClient();
   const [sourceId, setSourceId] = useState(null);
+  // Pre-save warnings (e.g. e-way bill above ₹50k); the second click confirms.
+  const [preview, setPreview] = useState(null);
 
   // Queries
   const { data: warehousesData } = useQuery({ 
@@ -58,7 +60,7 @@ export default function StockTransfer({ onClose }) {
   const createMutation = useMutation({
     mutationFn: createStockMovement,
     onSuccess: (data) => {
-      (data?.warnings || []).forEach(w => toast.warning(w, { autoClose: 12000 }));
+      if (data?.id) printTransferChallan(data.id).catch(() => {});
       queryClient.invalidateQueries(["stockPoints"]);
       queryClient.invalidateQueries(["stockMovements"]);
       queryClient.invalidateQueries(["products"]);
@@ -86,6 +88,23 @@ export default function StockTransfer({ onClose }) {
         quantity: item.quantity
       }))
     };
+    const key = JSON.stringify(payload);
+    if (!preview || preview.key !== key) {
+      try {
+        const p = await previewStockTransfer(payload);
+        if (p?.warnings?.length) {
+          setPreview({ key, warnings: p.warnings, total: p.total_value });
+          if (setSubmitting) setSubmitting(false);
+          return; // show the warning first; clicking again confirms
+        }
+      } catch (error) {
+        const d = error?.response?.data;
+        const itemErr = Array.isArray(d?.items) ? d.items.filter(x => typeof x === 'string').join(' ') : '';
+        toast.error(itemErr || d?.error || "Couldn't check this transfer");
+        if (setSubmitting) setSubmitting(false);
+        return;
+      }
+    }
     try {
       await createMutation.mutateAsync(payload);
     } catch {
@@ -279,6 +298,13 @@ export default function StockTransfer({ onClose }) {
                   </FieldArray>
                 </div>
               </div>
+
+              {preview?.warnings?.length > 0 && (
+                <div className="mx-5 mb-2 p-3 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 text-sm">
+                  {preview.warnings.map((w, i) => <p key={i}>{w}</p>)}
+                  <p className="mt-1 text-xs">Value at weighted-average cost: ₹{Number(preview.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}. Click "Complete Transfer" again to save.</p>
+                </div>
+              )}
 
               {/* Footer */}
               <div className="p-5 border-t border-[var(--border-subtle)] flex justify-end gap-3 bg-[var(--bg-surface)]">
