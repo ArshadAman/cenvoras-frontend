@@ -1393,18 +1393,21 @@ export default function PayrollRuns() {
 
                         {/* Approve (Posts Accrual to Ledger) */}
                         {['calculated', 'review', 'completed'].includes(run.status) && (
-                          <span title={blockerTooltip(run.id) || undefined} className="inline-block">
+                          <span title={blockerTooltip(run.id) || undefined} className={blockerTooltip(run.id) ? "inline-block cursor-not-allowed" : "inline-block"}>
                           <button
                             disabled={!!blockerTooltip(run.id)}
-                            aria-disabled={!!blockerTooltip(run.id)}
+                            aria-describedby={blockerTooltip(run.id) ? `approve-block-${run.id}` : undefined}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleApprove(run.id);
                             }}
-                            className="disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1 rounded-xl bg-[var(--status-success)]/15 text-[var(--status-success)] hover:bg-[var(--status-success)]/25 border border-[var(--status-success)]/30 text-xs font-semibold inline-flex items-center gap-1 transition"
+                            className="disabled:opacity-50 disabled:pointer-events-none px-3 py-1 rounded-xl bg-[var(--status-success)]/15 text-[var(--status-success)] hover:bg-[var(--status-success)]/25 border border-[var(--status-success)]/30 text-xs font-semibold inline-flex items-center gap-1 transition"
                           >
                             <CheckBadgeIcon className="w-3.5 h-3.5" /> Approve
                           </button>
+                          {blockerTooltip(run.id) && (
+                            <span id={`approve-block-${run.id}`} className="sr-only">{blockerTooltip(run.id)}</span>
+                          )}
                           </span>
                         )}
 

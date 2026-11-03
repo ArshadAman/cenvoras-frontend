@@ -45,13 +45,19 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
     e.preventDefault();
     setSaving(true);
     try {
-      await hrApi.incrementSalary(employee.id, {
+      const res = await hrApi.incrementSalary(employee.id, {
         new_salary: form.new_salary,
         reason: form.reason,
         effective_from: form.effective_date,
         effective_date: form.effective_date,
       });
-      toast.success(`Salary revision logged for ${employee.full_name}`);
+      const warnings = res?.data?.warnings || [];
+      if (warnings.length) {
+        // Same-date revision: still saved, but say which assignment it replaces.
+        toast.success(`Salary revision logged for ${employee.full_name}. ${warnings.join(' ')}`, { autoClose: 10000 });
+      } else {
+        toast.success(`Salary revision logged for ${employee.full_name}`);
+      }
       onSuccess();
       onClose();
     } catch (err) {
