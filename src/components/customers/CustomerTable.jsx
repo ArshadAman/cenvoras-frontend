@@ -366,7 +366,7 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-[var(--text-secondary)] font-mono">
-                      {customer.gstin || 'N/A'}
+                      {customer.gstin || 'N/A'}{customer.gstin_warning && (<span title={customer.gstin_warning} className="ml-1 inline-block rounded px-1 text-[10px] font-semibold bg-amber-100 text-amber-800">{customer.gstin_warning}</span>)}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -475,7 +475,7 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
 
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">GSTIN:</span>
-                  <span className="text-sm text-[var(--text-primary)] font-mono">{customer.gstin || 'N/A'}</span>
+                  <span className="text-sm text-[var(--text-primary)] font-mono">{customer.gstin || 'N/A'}{customer.gstin_warning && (<span title={customer.gstin_warning} className="ml-1 inline-block rounded px-1 text-[10px] font-semibold bg-amber-100 text-amber-800">{customer.gstin_warning}</span>)}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
