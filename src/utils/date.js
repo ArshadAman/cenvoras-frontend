@@ -1,0 +1,93 @@
+/**
+ * Date utilities with strict Asia/Kolkata timezone support (IST, UTC+05:30).
+ * Prevents UTC day rollover bugs where 13/10 displays as 12/10.
+ */
+
+// R22: DD/MM/YYYY for user-facing messages (input: 'YYYY-MM-DD' or a Date-parsable string).
+export function formatDMY(value) {
+  if (!value) return '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value));
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+}
+
+export function getTodayKolkata(date = new Date()) {
+  const d = date instanceof Date ? date : new Date(date);
+  // Uses en-CA which outputs YYYY-MM-DD
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(d);
+}
+
+export function getKolkataMonthBounds(date = new Date()) {
+  const todayStr = getTodayKolkata(date);
+  const [yearStr, monthStr] = todayStr.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  
+  const from = `${yearStr}-${monthStr}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const to = `${yearStr}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
+  return { from, to };
+}
+
+/** Calendar year start (Jan 1) in Asia/Kolkata. */
+export function getKolkataYearStart(date = new Date()) {
+  const todayStr = getTodayKolkata(date);
+  const year = todayStr.split('-')[0];
+  return `${year}-01-01`;
+}
+
+/** Indian FY start (Apr 1) in Asia/Kolkata. */
+export function getKolkataFYStart(date = new Date()) {
+  const todayStr = getTodayKolkata(date);
+  const [yearStr, monthStr] = todayStr.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const fyYear = month >= 4 ? year : year - 1;
+  return `${fyYear}-04-01`;
+}
+
+export function formatDateKolkata(date, format = 'DD-MM-YYYY') {
+  if (!date) return '';
+  const d = date instanceof Date ? date : new Date(date);
+  const parts = new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).formatToParts(d);
+
+  const day = parts.find(p => p.type === 'day')?.value || '01';
+  const month = parts.find(p => p.type === 'month')?.value || '01';
+  const year = parts.find(p => p.type === 'year')?.value || '1970';
+
+  if (format === 'DD-MM-YYYY') return `${day}-${month}-${year}`;
+  if (format === 'YYYY-MM-DD') return `${year}-${month}-${day}`;
+  if (format === 'DD-MMM-YYYY') {
+    const monthShort = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      month: 'short',
+    }).format(d);
+    return `${day}-${monthShort}-${year}`;
+  }
+  return `${day}/${month}/${year}`;
+}
+
+/**
+ * Parse a date-only API value ("YYYY-MM-DD") as a LOCAL calendar date.
+ * `new Date("2026-10-22")` is UTC midnight, which renders as 21/10 in any browser
+ * west of UTC (QA: R13-P0-IGST / DN-0003). Datetimes and Date objects pass through.
+ */
+export function parseDateOnly(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value).trim());
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return new Date(value);
+}

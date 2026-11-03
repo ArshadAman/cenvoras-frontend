@@ -4,10 +4,24 @@ import { getPurchaseBills } from "../../api/purchase";
 import { format } from "date-fns";
 import AdvancedPurchaseFilters from "./AdvancedPurchaseFilters";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { EyeIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { parseDateOnly } from '../../utils/date';
+import useResizableColumns from "../../hooks/useResizableColumns";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from "../common/tableHeaderClasses";
+
+const DEFAULT_COLUMN_WIDTHS = {
+  checkbox: 44,
+  bill_number: 140,
+  bill_date: 110,
+  vendor_name: 190,
+  items: 80,
+  total_amount: 140,
+  actions: 145,
+};
 
 export default function PurchaseTable({ onEdit, onView, onDelete }) {
   const [search, setSearch] = useState("");
-  const [ordering, setOrdering] = useState("-bill_date"); // default: newest first
+  const [ordering, setOrdering] = useState("-bill_number"); // default: document number desc
   const [page, setPage] = useState(1);
   const [limit] = useState(10); // Items per page
   const [selectedBills, setSelectedBills] = useState(new Set());
@@ -28,6 +42,20 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
     status: "all",
     hasOverdue: false,
   });
+  const [sortConfig, setSortConfig] = useState({ key: "bill_number", direction: "desc" });
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    "cenvoras_purchase_table_col_widths",
+    DEFAULT_COLUMN_WIDTHS
+  );
+
+  const handleSort = (key) => {
+    setSortConfig(prev => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["purchaseBills", page, limit],
@@ -37,14 +65,14 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
 
   if (error) {
     return (
-      <div className="p-4 text-red-600">
+      <div className="p-4 text-[var(--status-danger)]">
         Error loading purchase bills: {error.message}
         <button
           onClick={() => {
             localStorage.clear();
             window.location.href = "/login";
           }}
-          className="ml-4 px-2 py-1 bg-red-500 text-white rounded text-xs"
+          className="btn-destructive ml-4 !text-xs !py-1 !px-2 !normal-case !tracking-normal !font-semibold"
         >
           Clear Auth & Re-login
         </button>
@@ -123,11 +151,20 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
       return matchesSearch && matchesDate && matchesAmount && matchesVendor && matchesJournal && matchesGST && matchesOverdue;
     })
     .sort((a, b) => {
-      // Frontend ordering
-      if (ordering === "-bill_date") return new Date(b.bill_date) - new Date(a.bill_date);
-      if (ordering === "bill_date") return new Date(a.bill_date) - new Date(b.bill_date);
-      if (ordering === "-total_amount") return Number(b.total_amount) - Number(a.total_amount);
-      if (ordering === "total_amount") return Number(a.total_amount) - Number(b.total_amount);
+      const { key, direction } = sortConfig;
+      const factor = direction === "asc" ? 1 : -1;
+      if (key === "bill_date") {
+        return factor * (new Date(a.bill_date || 0) - new Date(b.bill_date || 0));
+      }
+      if (key === "bill_number") {
+        return factor * String(a.bill_number || "").localeCompare(String(b.bill_number || ""), undefined, { numeric: true });
+      }
+      if (key === "vendor_name") {
+        return factor * String(a.vendor_name || "").localeCompare(String(b.vendor_name || ""));
+      }
+      if (key === "total_amount") {
+        return factor * (Number(a.total_amount || 0) - Number(b.total_amount || 0));
+      }
       return 0;
     });
 
@@ -245,12 +282,12 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
   };
 
   return (
-    <div className="bg-white/5 backdrop-filter backdrop-blur-20 p-4 rounded shadow border border-white/10">
+    <div className="bg-[var(--bg-surface)] p-4 rounded-xl shadow border border-[var(--border-default)] text-[var(--text-primary)]">
       {/* Enhanced Filters */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           <input
-            className="w-full sm:w-64 px-4 py-2.5 border border-white/10 rounded-xl bg-white/5 text-white placeholder-white/30 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+            className="w-full sm:w-64 px-4 py-2.5 border border-[var(--border-default)] rounded-xl bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-1 focus:ring-[var(--border-focus)] focus:border-[var(--border-focus)] outline-none transition-all"
             placeholder="Search Bill or Vendor..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -258,7 +295,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
           <select
             value={ordering}
             onChange={(e) => setOrdering(e.target.value)}
-            className="w-full sm:w-48 px-4 py-2.5 border border-white/10 rounded-xl bg-[#0a0a0a] text-white focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all cursor-pointer"
+            className="w-full sm:w-48 px-4 py-2.5 border border-[var(--border-default)] rounded-xl bg-[var(--bg-primary)] text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--border-focus)] focus:border-[var(--border-focus)] outline-none transition-all cursor-pointer"
           >
             <option value="-bill_date">Newest First</option>
             <option value="bill_date">Oldest First</option>
@@ -272,23 +309,23 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
             type="date"
             value={dateFilter.start}
             onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
-            className="w-full sm:w-auto px-4 py-2.5 border border-white/10 rounded-xl bg-white/5 text-white focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+            className="w-full sm:w-auto px-4 py-2.5 border border-[var(--border-default)] rounded-xl bg-[var(--bg-primary)] text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--border-focus)] focus:border-[var(--border-focus)] outline-none transition-all"
           />
           <input
             type="date"
             value={dateFilter.end}
             onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
-            className="w-full sm:w-auto px-4 py-2.5 border border-white/10 rounded-xl bg-white/5 text-white focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+            className="w-full sm:w-auto px-4 py-2.5 border border-[var(--border-default)] rounded-xl bg-[var(--bg-primary)] text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--border-focus)] focus:border-[var(--border-focus)] outline-none transition-all"
           />
           <button
             onClick={() => setDateFilter({ start: "", end: "" })}
-            className="col-span-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white text-xs font-black uppercase tracking-widest transition-all"
+            className="btn-secondary col-span-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider"
           >
             Clear
           </button>
           <button
             onClick={() => setShowAdvancedFilters(true)}
-            className="col-span-1 px-4 py-2.5 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400 hover:bg-purple-500/20 text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+            className="btn-secondary col-span-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
@@ -302,13 +339,13 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
           {selectedBills.size > 0 && (
-            <div className="flex items-center gap-3 p-2 px-4 bg-purple-500/10 border border-purple-500/20 rounded-xl w-full sm:w-auto justify-between sm:justify-start">
-              <span className="text-[10px] font-black uppercase tracking-widest text-purple-400">
+            <div className="flex items-center gap-3 p-2 px-4 bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 rounded-xl w-full sm:w-auto justify-between sm:justify-start">
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)]">
                 {selectedBills.size} Selected
               </span>
               <button
                 onClick={handleBulkDelete}
-                className="px-4 py-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-red-500/30 transition-all"
+                className="btn-destructive !text-xs !py-1 !px-3 !normal-case !tracking-normal !font-semibold"
               >
                 Delete
               </button>
@@ -319,7 +356,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
         <div className="flex gap-2 w-full sm:w-auto">
           <button
             onClick={exportToCSV}
-            className="flex-1 sm:flex-none px-4 py-2.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
+            className="btn-secondary flex-1 sm:flex-none text-xs py-2 px-3 flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -328,7 +365,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
           </button>
           <button
             onClick={exportDetailedCSV}
-            className="flex-1 sm:flex-none px-4 py-2.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
+            className="btn-secondary flex-1 sm:flex-none text-xs py-2 px-3 flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -340,56 +377,118 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
       {/* Table for desktop, Cards for mobile */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm border-separate border-spacing-y-2">
-          <thead>
-            <tr className="bg-gradient-to-r from-[#7fd3f7]/10 to-[#b6e0f7]/10 backdrop-blur-10">
-              <th className="text-left py-3 px-4 rounded-l-lg">
+          <table className="w-full table-fixed text-sm divide-y divide-[var(--border-subtle)]">
+            <colgroup>
+              <col style={{ width: `${colWidths.checkbox}px` }} />
+              <col style={{ width: `${colWidths.bill_number}px` }} />
+              <col style={{ width: `${colWidths.bill_date}px` }} />
+              <col style={{ width: `${colWidths.vendor_name}px` }} />
+              <col style={{ width: `${colWidths.items}px` }} />
+              <col style={{ width: `${colWidths.total_amount}px` }} />
+              <col style={{ width: `${colWidths.actions}px` }} />
+            </colgroup>
+          <thead className={LIST_THEAD}>
+            <tr className="border-b border-[var(--border-subtle)]">
+              <th className={`${LIST_TH} rounded-l-lg`}>
                 <input
                   type="checkbox"
                   checked={filteredBills.length > 0 && selectedBills.size === filteredBills.length}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                  className="rounded border-[var(--border-default)] accent-[var(--accent-primary)]"
                 />
+                {renderResizeHandle("checkbox")}
               </th>
-              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Bill Number</th>
-              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Bill Date</th>
-              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Vendor</th>
-              <th className="text-left py-3 px-4 font-black text-white drop-shadow-lg">Items</th>
-              <th className="text-right py-3 px-4 font-black text-white drop-shadow-lg">Total Amount</th>
-              <th className="text-center py-3 px-4 rounded-r-lg font-black text-white drop-shadow-lg">Actions</th>
+              <th
+                onClick={() => handleSort("bill_number")}
+                className={LIST_TH_SORTABLE}
+              >
+                <div className={LIST_TH_LABEL}>
+                  <span>Bill Number</span>
+                  {sortConfig.key === "bill_number" && (
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+                {renderResizeHandle("bill_number")}
+              </th>
+              <th
+                onClick={() => handleSort("bill_date")}
+                className={LIST_TH_SORTABLE}
+              >
+                <div className={LIST_TH_LABEL}>
+                  <span>Bill Date</span>
+                  {sortConfig.key === "bill_date" && (
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+                {renderResizeHandle("bill_date")}
+              </th>
+              <th
+                onClick={() => handleSort("vendor_name")}
+                className={LIST_TH_SORTABLE}
+              >
+                <div className={LIST_TH_LABEL}>
+                  <span>Vendor</span>
+                  {sortConfig.key === "vendor_name" && (
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+                {renderResizeHandle("vendor_name")}
+              </th>
+              <th className={LIST_TH}>
+                Items
+                {renderResizeHandle("items")}
+              </th>
+              <th
+                onClick={() => handleSort("total_amount")}
+                className={LIST_TH_SORTABLE}
+              >
+                <div className={LIST_TH_LABEL}>
+                  <span>Total Amount</span>
+                  {sortConfig.key === "total_amount" && (
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+                {renderResizeHandle("total_amount")}
+              </th>
+              <th className={`${LIST_TH} rounded-r-lg`}>
+                Actions
+                {renderResizeHandle("actions")}
+              </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {isLoading
               ? Array(5)
                   .fill(0)
                   .map((_, i) => (
-                    <tr key={i}>
+                    <tr key={i} className="no-hover">
                       <td
                         colSpan={7}
-                        className="py-6 animate-pulse bg-white/10 backdrop-filter backdrop-blur-10 rounded"
+                        className="py-6 animate-pulse bg-[var(--bg-surface)] rounded-lg"
                       />
                     </tr>
                   ))
               : filteredBills.map((bill) => (
                   <tr
                     key={bill.id}
-                    className="bg-white/5 backdrop-filter backdrop-blur-10 shadow rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300"
+                    className="hover:bg-[var(--bg-primary)] transition-colors"
                   >
-                    <td className="py-3 px-4">
+                    <td className={LIST_TD}>
                       <input
                         type="checkbox"
                         checked={selectedBills.has(bill.id)}
                         onChange={(e) => handleSelectBill(bill.id, e.target.checked)}
-                        className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10"
+                        className="rounded border-[var(--border-default)] accent-[var(--accent-primary)]"
                       />
                     </td>
-                    <td className="py-3 px-4 font-semibold text-white drop-shadow-lg">
+                    <td className={`${LIST_TD} font-semibold text-[var(--text-primary)]`}>
                       {bill.bill_number}
                     </td>
-                    <td className="py-3 px-4 text-white drop-shadow-lg">{bill.bill_date}</td>
-                    <td className="py-3 px-4 text-white drop-shadow-lg">{bill.vendor_name}</td>
-                    <td className="py-3 px-4">
+                    <td className={`${LIST_TD} text-[var(--text-secondary)]`}>
+                      {bill.bill_date ? format(parseDateOnly(bill.bill_date), 'dd/MM/yyyy') : '-'}
+                    </td>
+                    <td className={`${LIST_TD} text-[var(--text-primary)] font-medium`}>{bill.vendor_name}</td>
+                    <td className={LIST_TD}>
                       {bill.items && bill.items.length > 0 ? (
                         <div className="flex items-center gap-2">
                           {/* Show first 2 items as compact pills */}
@@ -397,7 +496,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                             {bill.items.slice(0, 2).map((item, idx) => (
                               <span
                                 key={item.id || idx}
-                                className="inline-flex items-center px-2 py-1 bg-white/10 text-white/90 text-xs rounded-md border border-white/10 truncate max-w-[90px]"
+                                className="inline-flex items-center px-2 py-1 bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs rounded-md border border-[var(--border-default)] truncate max-w-[90px]"
                                 title={`${item.product_detail?.name || item.product || 'Product'} - Qty: ${item.quantity} × ${getCurrencySymbol()}${Number(item.price).toFixed(0)}`}
                               >
                                 {(item.product_detail?.name || item.product || 'Product').length > 12 
@@ -408,55 +507,64 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                           </div>
                           {/* Show count badge if more items */}
                           {bill.items.length > 2 && (
-                            <span className="inline-flex items-center justify-center w-6 h-6 bg-purple-500/30 text-purple-300 text-xs font-semibold rounded-full border border-purple-400/30">
+                            <span className="inline-flex items-center justify-center w-6 h-6 bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] text-xs font-bold rounded-full border border-[var(--border-default)]">
                               +{bill.items.length - 2}
                             </span>
                           )}
                           {/* Total items indicator */}
-                          <span className="text-[10px] text-gray-500 ml-1">
+                          <span className="text-xs text-[var(--text-muted)] font-medium ml-1">
                             ({bill.items.length} items)
                           </span>
                         </div>
                       ) : (
-                        <span className="text-gray-500 text-xs italic">No items</span>
+                        <span className="text-[var(--text-muted)] text-xs italic">No items</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right font-bold text-white drop-shadow-lg">
+                    <td className={`${LIST_TD_AMOUNT} font-bold text-[var(--text-primary)] tabular-nums`}>
                       {getCurrencySymbol()}{Number(bill.total_amount).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
                     </td>
-                    <td className="py-3 px-4 text-center space-x-2">
-                      <button
-                        className="px-3 py-1 bg-blue-500/30 text-white border border-blue-300/50 rounded hover:bg-blue-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                        onClick={() => onView(bill.id)}
-                      >
-                        View
-                      </button>
-                      <button
-                        type="button"
-                        className={`px-3 py-1 rounded transition backdrop-filter backdrop-blur-10 drop-shadow-lg border ${
-                          canEditBill(bill)
-                            ? 'bg-green-500/30 text-white border-green-300/50 hover:bg-green-500/50'
-                            : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
-                        }`}
-                        onClick={() => {
-                          if (canEditBill(bill)) {
-                            onEdit(bill);
-                          }
-                        }}
-                        disabled={!canEditBill(bill)}
-                        title={editBillTitle(bill)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="px-3 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 drop-shadow-lg"
-                        onClick={() => onDelete(bill.id)}
-                      >
-                        Delete
-                      </button>
+                    <td className={LIST_TD}>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--accent-primary)] transition-all"
+                          onClick={() => onView(bill.id)}
+                          title="View Purchase Bill"
+                          aria-label="View Purchase Bill"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className={`p-1.5 rounded-lg transition-all border ${
+                            canEditBill(bill)
+                              ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--accent-primary)]'
+                              : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)] cursor-not-allowed opacity-40'
+                          }`}
+                          onClick={() => {
+                            if (canEditBill(bill)) {
+                              onEdit(bill);
+                            }
+                          }}
+                          disabled={!canEditBill(bill)}
+                          title={editBillTitle(bill)}
+                          aria-label={editBillTitle(bill)}
+                        >
+                          <PencilSquareIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--status-danger)] border border-[var(--border-subtle)] hover:bg-[var(--status-danger)]/10 transition-all"
+                          onClick={() => onDelete(bill.id)}
+                          title="Delete Purchase Bill"
+                          aria-label="Delete Purchase Bill"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -471,7 +579,7 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
               ? data.length === 0
               : ((!data.data || data.data.length === 0) &&
                   (!data.results || data.results.length === 0)))) && (
-          <div className="p-8 text-center text-white/80 drop-shadow-lg">
+          <div className="p-8 text-center text-[var(--text-muted)] font-medium">
             <p>No purchase bills found.</p>
             <p className="text-sm mt-2">
               Click "New Purchase" to create your first purchase bill.
@@ -484,17 +592,17 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
       <div className="lg:hidden space-y-4 p-2">
         {isLoading ? (
           Array(3).fill(0).map((_, i) => (
-            <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-2xl border border-white/10 p-5 animate-pulse">
-              <div className="h-5 bg-white/20 rounded-lg mb-4 w-1/2"></div>
+            <div key={i} className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-default)] p-5 animate-pulse">
+              <div className="h-5 bg-[var(--bg-primary)] rounded-lg mb-4 w-1/2"></div>
               <div className="space-y-3">
-                <div className="h-3 bg-white/10 rounded w-full"></div>
-                <div className="h-3 bg-white/10 rounded w-3/4"></div>
+                <div className="h-3 bg-[var(--bg-primary)] rounded w-full"></div>
+                <div className="h-3 bg-[var(--bg-primary)] rounded w-3/4"></div>
               </div>
             </div>
           ))
         ) : (
           filteredBills.map((bill) => (
-            <div key={bill.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-2xl border border-white/10 p-5 hover:bg-white/10 transition-all duration-300">
+            <div key={bill.id} className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-default)] p-5 transition-all duration-150">
               {/* Card Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -502,14 +610,14 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                     type="checkbox"
                     checked={selectedBills.has(bill.id)}
                     onChange={(e) => handleSelectBill(bill.id, e.target.checked)}
-                    className="rounded border-white/10 text-purple-500 focus:ring-purple-500 bg-white/5 w-5 h-5"
+                    className="rounded border-[var(--border-default)] accent-[var(--accent-primary)] w-5 h-5"
                   />
                   <div>
-                    <div className="text-base font-black text-white tracking-tight">
+                    <div className="text-base font-bold text-[var(--text-primary)] tracking-tight">
                       {bill.bill_number}
                     </div>
-                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                      {format(new Date(bill.bill_date), 'MMM dd, yyyy')}
+                    <div className="text-xs text-[var(--text-muted)]">
+                      {bill.bill_date ? format(parseDateOnly(bill.bill_date), 'dd/MM/yyyy') : '-'}
                     </div>
                   </div>
                 </div>
@@ -518,32 +626,35 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
               {/* Card Content */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Vendor:</span>
-                  <span className="text-sm font-bold text-white text-right truncate max-w-[150px]">{bill.vendor_name}</span>
+                  <span className="text-xs text-[var(--text-muted)]">Vendor:</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)] text-right truncate max-w-[150px]">{bill.vendor_name}</span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Items:</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded border border-purple-400/20">
+                  <span className="text-xs text-[var(--text-muted)]">Items:</span>
+                  <span className="text-xs font-bold text-[var(--accent-primary)] bg-[var(--accent-primary)]/15 px-2 py-0.5 rounded border border-[var(--accent-primary)]/30">
                     {bill.items?.length || 0} items
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center pt-2 border-t border-white/5">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Amount:</span>
-                  <span className="text-lg font-black text-white font-mono tracking-tighter">
+                <div className="flex justify-between items-center pt-2 border-t border-[var(--border-default)]">
+                  <span className="text-xs text-[var(--text-muted)]">Amount:</span>
+                  <span className="text-lg font-bold text-[var(--text-primary)] font-mono">
                     {getCurrencySymbol()}{Number(bill.total_amount || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
 
               {/* Card Actions */}
-              <div className="flex gap-2 mt-5 pt-4 border-t border-white/5">
+              <div className="flex items-center justify-end gap-2 mt-5 pt-4 border-t border-[var(--border-default)]">
                 <button
+                  type="button"
                   onClick={() => onView(bill.id)}
-                  className="flex-1 px-4 py-2.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl hover:bg-blue-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center"
+                  title="View Purchase Bill"
+                  aria-label="View Purchase Bill"
+                  className="p-2 rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--accent-primary)] transition-all"
                 >
-                  View
+                  <EyeIcon className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
@@ -553,19 +664,24 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                     }
                   }}
                   disabled={!canEditBill(bill)}
-                  className={`flex-1 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center border ${
+                  title={editBillTitle(bill)}
+                  aria-label={editBillTitle(bill)}
+                  className={`p-2 rounded-lg transition-all border ${
                     canEditBill(bill)
-                      ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20'
-                      : 'bg-white/5 text-gray-600 border-white/5 cursor-not-allowed opacity-50'
+                      ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--accent-primary)]'
+                      : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)] cursor-not-allowed opacity-40'
                   }`}
                 >
-                  Edit
+                  <PencilSquareIcon className="w-4 h-4" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => onDelete(bill.id)}
-                  className="flex-1 px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center"
+                  title="Delete Purchase Bill"
+                  aria-label="Delete Purchase Bill"
+                  className="p-2 rounded-lg bg-[var(--bg-primary)] text-[var(--status-danger)] border border-[var(--border-subtle)] hover:bg-[var(--status-danger)]/10 transition-all"
                 >
-                  Delete
+                  <TrashIcon className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -575,28 +691,28 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
         {/* No data message for mobile */}
         {!isLoading && filteredBills.length === 0 && (
           <div className="p-12 text-center">
-            <p className="text-sm font-black uppercase tracking-widest text-gray-500">No purchase bills found.</p>
+            <p className="text-sm font-bold text-[var(--text-muted)]">No purchase bills found.</p>
           </div>
         )}
       </div>
       {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
-        <span className="text-sm text-gray-400">
+        <span className="text-sm text-[var(--text-muted)]">
           {data?.pagination ? `Showing ${((data.pagination.page - 1) * data.pagination.limit) + 1}-${Math.min(data.pagination.page * data.pagination.limit, data.pagination.total_count)} of ${data.pagination.total_count}` : ''}
         </span>
         <div className="flex gap-2 items-center">
           <button
-            className="px-3 py-1.5 border border-white/20 rounded-md bg-white/5 text-white hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+            className="btn-secondary text-xs py-1.5 px-3"
             disabled={!data?.pagination?.has_prev}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
             ← Prev
           </button>
-          <span className="px-3 py-1 text-white text-sm">
+          <span className="px-3 py-1 text-[var(--text-primary)] text-sm font-semibold">
             Page {data?.pagination?.page || page} of {data?.pagination?.total_pages || 1}
           </span>
           <button
-            className="px-3 py-1.5 border border-white/20 rounded-md bg-white/5 text-white hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+            className="btn-secondary text-xs py-1.5 px-3"
             disabled={!data?.pagination?.has_next}
             onClick={() => setPage((p) => p + 1)}
           >

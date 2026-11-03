@@ -1,3 +1,3 @@
-/hsn/*  https://api.cenvora.app/hsn/:splat  200
-/gst-rate/*  https://api.cenvora.app/gst-rate/:splat  200
+/hsn/*  https://api.cenvora.co.in/hsn/:splat  200
+/gst-rate/*  https://api.cenvora.co.in/gst-rate/:splat  200
 /* /index.html 200

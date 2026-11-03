@@ -1,7 +1,10 @@
+import { documentTitle, documentDeclaration } from '../../../utils/gstStatus';
 import React, { forwardRef } from 'react';
-import { amountInWords } from '../../../utils/invoiceSettings';
+import PlaceOfSupplyLine from './PlaceOfSupplyLine';
+import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType, splitTax } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
+import InvoicePrintShell from '../InvoicePrintShell';
 
 // Beautiful Invoice Preview Component
 // Renders invoice based on template settings with dynamic styling
@@ -33,8 +36,17 @@ const InvoicePreview = forwardRef(({
   const companyPhone = businessInfo.phone || '';
   const companyEmail = businessInfo.email || '';
   const companyGST = businessInfo.gstin || businessInfo.gst || '';
+  const companyPAN = businessInfo.pan_number || businessInfo.pan || '';
   const companyGEM = businessInfo.gem_id || '';
   const companyDL = businessInfo.dl_number || '';
+
+  const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
+  const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
+  const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.branch || '';
+  const bankUpi = businessInfo.bank_upi_id || '';
+  const bankQr = businessInfo.bank_qr_code || '';
+  const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
   // Invoice data
   const items = invoice.items || [];
@@ -47,53 +59,80 @@ const InvoicePreview = forwardRef(({
   const dueDate = invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('en-IN') : '';
   const poNumber = invoice.po_number || '';
   const poDate = invoice.po_date ? new Date(invoice.po_date).toLocaleDateString('en-IN') : '';
-  const challanNumber = invoice.challan_number || '';
+  const challanNumber = invoice.challan_number || invoice.delivery_challan_number || '';
   const challanDate = invoice.challan_date ? new Date(invoice.challan_date).toLocaleDateString('en-IN') : '';
+  const challanListText = formatLinkedChallanList(invoice);
   const roundOff = parseFloat(invoice.round_off || 0) || 0;
   const customerAddress = billingAddress;
   const hasSeparateShipping = Boolean(
     shippingAddress && shippingAddress.trim() !== billingAddress.trim()
   );
+  const shippingLines = hasSeparateShipping
+    ? shippingAddress.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
+    : [];
+  const type = resolveTypography(typography);
+  const sectionHeadingSize = type.sectionTitleSize;
+  const addressBodySize = type.addressSize;
+  const customerNameSize = type.customerNameSize;
+  const docTitleSize = type.invoiceTitleSize;
   
   // Tax type determination
   const taxType = getTaxType(invoice, businessInfo);
   const isIGST = taxType === 'igst';
   
-  // Calculate totals
+  // Calculate totals factoring in discounts
   const subtotal = items.reduce((sum, item) => {
     const qty = parseFloat(item.quantity || 0);
     const price = parseFloat(item.price || 0);
-    return sum + (qty * price);
+    const discount = parseFloat(item.discount || 0);
+    const lineBase = qty * price;
+    return sum + (lineBase - (lineBase * discount) / 100);
   }, 0);
   
   const taxTotal = items.reduce((sum, item) => {
     const qty = parseFloat(item.quantity || 0);
     const price = parseFloat(item.price || 0);
+    const discount = parseFloat(item.discount || 0);
     const tax = parseFloat(item.tax || 0);
-    return sum + ((qty * price * tax) / 100);
+    const lineBase = qty * price;
+    const taxable = lineBase - (lineBase * discount) / 100;
+    return sum + ((taxable * tax) / 100);
   }, 0);
   
   const grandTotal = subtotal + taxTotal;
-  const finalTotal = grandTotal + roundOff;
+  const finalTotal = invoice.total_amount != null
+    ? parseFloat(invoice.total_amount)
+    : Number((grandTotal + roundOff).toFixed(2));
   
-  const planCode = businessInfo.plan_code || 'free';
-  const showWatermarkFooter = planCode !== 'business';
+  // Forced footer chrome — always shown regardless of template/settings/plan
+  const showWatermarkFooter = true;
   
+  const isDeliveryChallan = 
+    invoice.document_type === 'delivery_challan' || 
+    invoice.is_delivery_challan || 
+    content.invoiceTitle === 'DELIVERY CHALLAN' || 
+    Boolean(invoice.challan_number && !invoice.invoice_number);
+
   // Dynamic styles
   const paperStyle = {
-    fontFamily: typography.fontFamily || 'Inter, system-ui, sans-serif',
-    fontSize: `${typography.bodySize || 11}px`,
-    lineHeight: typography.lineHeight || 1.5,
+    fontFamily: type.fontFamily,
+    fontSize: `${type.bodySize}px`,
+    lineHeight: type.lineHeight,
     backgroundColor: colors.background || '#ffffff',
     color: colors.text || '#333333',
-    transform: `scale(${scale})`,
-    transformOrigin: 'top left',
+    ...(scale && scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : {}),
+    display: 'flex',
+    flexDirection: 'column',
+    width: '210mm',
+    minHeight: '297mm',
+    boxSizing: 'border-box',
+    margin: '0 auto',
   };
   
   const headerStyle = {
     color: colors.primary || '#1a1a2e',
-    fontSize: `${typography.companyNameSize || 24}px`,
-    fontFamily: typography.headerFont || typography.fontFamily,
+    fontSize: `${type.companyNameSize}px`,
+    fontFamily: type.headerFont,
   };
   
   const tableHeaderStyle = {
@@ -106,27 +145,31 @@ const InvoicePreview = forwardRef(({
     color: '#111827',
   };
   
+  const hasAnyDiscount = (items || []).some(item => Number(item?.discount || 0) > 0);
+
   // Get visible columns
   const visibleColumns = columns
     .filter(col => col.show !== false)
     .filter(col => invoiceSettings.show_item_batch !== false || col.id !== 'batch')
     .filter(col => invoiceSettings.show_item_hsn !== false || col.id !== 'hsn')
     .filter(col => invoiceSettings.show_item_free_quantity !== false || col.id !== 'free_qty')
-    .filter(col => invoiceSettings.show_item_discount !== false || col.id !== 'discount')
+    .filter(col => (invoiceSettings.show_item_discount !== false && hasAnyDiscount) || col.id !== 'discount')
     .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
   const preferredWidths = {
-    serial: 6,
+    serial: 4,
     description: 0,
     batch: 10,
-    hsn: 12,
-    quantity: 7,
-    free_qty: 7,
-    unit: 8,
-    price: 14,
-    discount: 9,
-    tax: 9,
-    amount: 18,
+    hsn: 10,
+    quantity: 5,
+    free_qty: 5,
+    unit: 6,
+    make: 12,
+    pack_size: 12,
+    price: 10,
+    discount: 6,
+    tax: 6,
+    amount: 10,
   };
 
   const nonDescriptionWidth = visibleColumns
@@ -140,21 +183,26 @@ const InvoicePreview = forwardRef(({
   };
 
   const getColumnLabel = (col) => {
-    if (col.id === 'serial') return 'S. No';
+    if (col.id === 'serial') return 'Sl.';
+    if (col.id === 'price') return 'Price';
     return col.label;
   };
   
   return (
     <div 
       ref={ref}
-      className="bg-white"
+      data-bill-template="true"
+      className="bg-white invoice-sheet"
       style={{
         ...paperStyle,
         width: '210mm',
         minHeight: '297mm',
-        padding: '10mm',
+        /* Full-bleed letterhead in thead; 7mm body inset is on the print-shell cell. */
+        padding: '0 0 10mm 0',
         boxSizing: 'border-box',
+        margin: '0 auto',
         position: 'relative',
+        overflow: 'visible',
       }}
     >
       {/* Watermark */}
@@ -163,60 +211,64 @@ const InvoicePreview = forwardRef(({
           <span className="text-8xl font-bold text-gray-500 rotate-[-30deg]">PREVIEW</span>
         </div>
       )}
-      
-      {/* Header Section */}
-      <div
-        className="mb-4"
-        style={{
-          backgroundColor: '#ececec',
-          margin: '-10mm -10mm 0 -10mm',
-          padding: '8mm 10mm 5mm 10mm',
-          borderBottomLeftRadius: '120% 28px',
-          borderBottomRightRadius: '120% 28px',
+
+      <InvoicePrintShell
+        theme="classic"
+        headerProps={{
+          companyName,
+          companyAddress,
+          companyPhone,
+          companyEmail,
+          companyGST,
+          companyPAN,
+          companyGEM,
+          companyDL,
+          companyNameColor: '#d11f1f',
+          companyNameSize: type.companyNameSize,
+          fontFamily: type.headerFont,
+          companyAddressSize: type.companyAddressSize,
+          smallSize: type.smallSize,
+          showGST: sections.showGST !== false,
+          showGEMID: Boolean(sections.showGEMID),
         }}
       >
-        <div className="flex justify-end">
-          <div className="text-right" style={{ maxWidth: '58%' }}>
-            <h1 className="font-semibold mb-1" style={{ ...headerStyle, color: '#d11f1f', fontSize: `${typography.companyNameSize || 22}px` }}>
-              {companyName}
-            </h1>
-            <div className="space-y-0.5" style={{ color: '#1f2937', fontSize: `${typography.smallSize || 9}px` }}>
-              {companyAddress && <p className="whitespace-pre-line">{companyAddress}</p>}
-              {(companyPhone || companyEmail) && (
-                <p>
-                  {companyPhone ? `Ph- ${companyPhone}` : ''}
-                  {companyPhone && companyEmail ? ', ' : ''}
-                  {companyEmail ? `email-${companyEmail}` : ''}
-                </p>
-              )}
-              {sections.showGST && companyGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN: ' : 'TRN: '}{companyGST}</p>}
-              {sections.showGEMID && companyGEM && <p className="font-medium">GEM ID- {companyGEM}</p>}
-              {companyDL && <p className="font-medium">DL No- {companyDL}</p>}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Address Section */}
-      <div className="flex justify-between items-start mb-5 gap-8">
-        <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-3">
-          <div className="font-semibold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${typography.sectionTitleSize || 12}px` }}>
-            Billing Address
+      <div className="flex justify-between items-start mb-1 gap-8">
+        <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-2">
+          <div className="font-bold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${sectionHeadingSize}px` }}>
+            {isDeliveryChallan ? 'Customer Address' : 'Billing Address'}
           </div>
-          <div className="space-y-0.5" style={{ color: colors.text, fontSize: `${typography.bodySize || 11}px` }}>
-            <div className="font-medium">{customerName}</div>
-            {billingAddress && <p className="whitespace-pre-line">{billingAddress}</p>}
-            {customerGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {customerGST}</p>}
+          <div className="space-y-0.5" style={{ color: colors.text }}>
+            <div className="font-bold" style={{ fontSize: `${customerNameSize}px` }}>{customerName}</div>
+            {billingAddress && (
+              <p className="whitespace-pre-line font-normal" style={{ fontSize: `${addressBodySize}px` }}>{billingAddress}</p>
+            )}
+            {customerGST && (
+              <p className="font-normal" style={{ fontSize: `${addressBodySize}px` }}>
+                {getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {customerGST}
+              </p>
+            )}
+            <PlaceOfSupplyLine invoice={invoice} />
           </div>
         </div>
 
         {hasSeparateShipping ? (
-          <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-3">
-            <div className="font-semibold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${typography.sectionTitleSize || 12}px` }}>
+          <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-2">
+            <div className="font-bold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${sectionHeadingSize}px` }}>
               Shipping Address
             </div>
-            <div className="space-y-0.5" style={{ color: colors.text, fontSize: `${typography.bodySize || 11}px` }}>
-              <div className="whitespace-pre-line">{shippingAddress}</div>
+            <div className="space-y-0.5" style={{ color: colors.text }}>
+              {shippingLines.length > 0 ? (
+                <>
+                  <div className="font-bold" style={{ fontSize: `${customerNameSize}px` }}>{shippingLines[0]}</div>
+                  {shippingLines.slice(1).map((line, i) => (
+                    <p key={i} className="font-normal" style={{ fontSize: `${addressBodySize}px` }}>{line}</p>
+                  ))}
+                </>
+              ) : (
+                <div className="whitespace-pre-line font-normal" style={{ fontSize: `${addressBodySize}px` }}>{shippingAddress}</div>
+              )}
             </div>
           </div>
         ) : null}
@@ -252,7 +304,7 @@ const InvoicePreview = forwardRef(({
           )}
           
           {/* Company Details */}
-          <div className="space-y-0.5" style={{ color: colors.lightText, fontSize: `${typography.smallSize || 9}px` }}>
+          <div className="space-y-0.5" style={{ color: colors.lightText, fontSize: `${type.companyAddressSize}px` }}>
             {companyAddress && <p className="whitespace-pre-line">{companyAddress}</p>}
             {companyPhone && <p>Ph: {companyPhone}</p>}
             {companyEmail && <p>Email: {companyEmail}</p>}
@@ -262,325 +314,458 @@ const InvoicePreview = forwardRef(({
           </div>
           </div>
           <div className="text-right flex-1">
-          <div className="mb-2" style={{ color: colors.secondary, fontSize: `${typography.sectionTitleSize || 12}px` }}>
+          <div className="mb-2" style={{ color: colors.secondary, fontSize: `${type.sectionTitleSize}px` }}>
             <span className="font-semibold">BILL TO</span>
           </div>
           <div className="font-bold text-base mb-1" style={{ color: colors.primary }}>
             {customerName}
           </div>
-          <div className="space-y-0.5" style={{ color: colors.lightText, fontSize: `${typography.smallSize || 9}px` }}>
+          <div className="space-y-0.5" style={{ color: colors.lightText, fontSize: `${type.addressSize}px` }}>
             {customerAddress && <p className="whitespace-pre-line">{customerAddress}</p>}
             {customerGST && <p className="font-medium">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {customerGST}</p>}
+            <PlaceOfSupplyLine invoice={invoice} showDelivery />
           </div>
           </div>
         </div>
       </div>
       
       {/* Invoice Title */}
-      <div className="text-center mb-4">
+      <div className="text-center mb-2">
         <h2 
           className="font-bold tracking-wide"
           style={{ 
-            fontSize: `${typography.invoiceTitleSize || 20}px`,
+            fontSize: `${docTitleSize}px`,
             color: '#111827',
             letterSpacing: '1px',
           }}
         >
-          {content.invoiceTitle || 'TAX INVOICE'}
+          {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : documentTitle(content.invoiceTitle, businessInfo)}
         </h2>
+{!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
         {content.invoiceSubtitle && (
-          <p className="text-sm mt-1" style={{ color: colors.lightText }}>
+          <p className="mt-1" style={{ color: colors.lightText, fontSize: `${type.bodySize}px` }}>
             {content.invoiceSubtitle}
           </p>
         )}
       </div>
       
-      {/* Invoice Details Row */}
-      <div className="flex justify-between mb-4 text-sm">
-        <div className="space-y-1">
-          <div><span className="font-medium">Invoice #:</span> <span className="font-bold" style={{ color: colors.primary }}>{invoiceNumber}</span></div>
-          <div><span className="font-medium">Date:</span> {invoiceDate}</div>
-          {poNumber && <div><span className="font-medium">PO:</span> {poNumber}{poDate ? ` | ${poDate}` : ''}</div>}
-          {challanNumber && <div><span className="font-medium">Challan:</span> {challanNumber}{challanDate ? ` | ${challanDate}` : ''}</div>}
+      {/* Invoice / Challan Details Row */}
+      {isDeliveryChallan ? (
+        <div className="flex justify-between mb-2" style={{ fontSize: `${type.bodySize}px` }}>
+          <div className="space-y-1">
+            <div>
+              <span className="font-medium">Challan #:</span>{' '}
+              <span className="font-bold" style={{ color: colors.primary }}>
+                {challanNumber || invoiceNumber}
+              </span>
+            </div>
+            <div>
+              <span className="font-medium">Challan Date:</span>{' '}
+              {challanDate || invoiceDate}
+            </div>
+            {(invoice.sales_order_number || poNumber) && (
+              <div>
+                <span className="font-medium">Ref Order:</span>{' '}
+                {invoice.sales_order_number || poNumber}
+              </div>
+            )}
+          </div>
+          <div className="text-right space-y-1">
+            {invoice.vehicle_number && (
+              <div>
+                <span className="font-medium">Vehicle No:</span>{' '}
+                <span className="font-mono font-bold text-gray-800">{invoice.vehicle_number}</span>
+              </div>
+            )}
+            {invoice.transport_mode && (
+              <div>
+                <span className="font-medium">Transport Mode:</span> {invoice.transport_mode}
+              </div>
+            )}
+            {invoice.transporter_name && (
+              <div>
+                <span className="font-medium">Transporter:</span> {invoice.transporter_name}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="text-right space-y-1">
-          {sections.showDueDate && dueDate && (
-            <div><span className="font-medium">Due Date:</span> {dueDate}</div>
-          )}
+      ) : (
+        <div className="mb-2 space-y-1" style={{ fontSize: `${type.bodySize}px` }}>
+          <div className="flex justify-between gap-4 items-baseline">
+            <div>
+              <span className="font-medium">Invoice No. :</span>{' '}
+              <span className="font-bold" style={{ color: colors.primary }}>{invoiceNumber}</span>
+            </div>
+            <div className="text-right whitespace-nowrap">
+              <span className="font-medium">Date:</span> {invoiceDate}
+            </div>
+          </div>
+          {poNumber ? (
+            <div className="flex justify-between gap-4 items-baseline">
+              <div>
+                <span className="font-medium">PO No. :</span>{' '}
+                <span className="font-bold" style={{ color: colors.primary }}>{poNumber}</span>
+              </div>
+              <div className="text-right whitespace-nowrap">
+                <span className="font-medium">Date:</span> {poDate || '—'}
+              </div>
+            </div>
+          ) : null}
+          {challanListText ? (
+            <div className="flex justify-between gap-4 items-baseline">
+              <div className="min-w-0 flex-1">
+                <span className="font-medium">Challan No. :</span>{' '}
+                <span>{challanListText}</span>
+              </div>
+            </div>
+          ) : null}
+          {sections.showDueDate && dueDate ? (
+            <div className="flex justify-end">
+              <div className="text-right whitespace-nowrap">
+                <span className="font-medium">Due Date:</span> {dueDate}
+              </div>
+            </div>
+          ) : null}
         </div>
-      </div>
+      )}
 
       <div className="mb-4" style={{ height: '7px', backgroundColor: '#ece8e8', borderRadius: '999px' }} />
       
       {/* Items Table */}
       <div className="mb-5">
         <table 
-          className="w-full border-collapse"
-          style={{ 
-            borderRadius: styles.borderRadius || 0,
-            overflow: 'hidden',
-            tableLayout: 'fixed',
-          }}
-        >
-          <colgroup>
-            {visibleColumns.map((col) => (
-              <col key={col.id} style={{ width: getColumnWidth(col.id) }} />
-            ))}
-          </colgroup>
-          <thead style={{ display: 'table-header-group' }}>
-            <tr style={tableHeaderStyle}>
-              {visibleColumns.map(col => (
-                <th 
-                  key={col.id}
-                  className="px-3 py-2 font-bold border"
-                  style={{ 
-                    width: getColumnWidth(col.id),
-                    textAlign: col.align || 'left',
-                    borderColor: colors.tableBorder,
-                    fontSize: `${typography.smallSize || 10}px`,
-                  }}
-                >
-                  {getColumnLabel(col)}
-                </th>
+            className="w-full border-collapse"
+            style={{ 
+              borderRadius: styles.borderRadius || 0,
+              overflow: 'hidden',
+              tableLayout: 'fixed',
+            }}
+          >
+            <colgroup>
+              {visibleColumns.map((col) => (
+                <col key={col.id} style={{ width: getColumnWidth(col.id) }} />
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {items.length > 0 ? items.map((item, index) => {
-              const qty = parseFloat(item.quantity || 0);
-              const price = parseFloat(item.price || 0);
-              const tax = parseFloat(item.tax || 0);
-              const discount = parseFloat(item.discount || 0);
-              const amount = qty * price;
-              
-              return (
-                <tr 
-                  key={index}
-                  style={{
-                    backgroundColor: styles.tableStyle === 'striped' && index % 2 === 1 
-                      ? colors.tableStripe 
-                      : 'transparent',
-                  }}
-                >
-                  {visibleColumns.map(col => {
-                    let value = '';
-                    switch(col.id) {
-                      case 'serial': value = index + 1; break;
-                      case 'description': value = item.product_detail?.name || item.product_name || item.product || ''; break;
-                      case 'batch': value = item.batch_number || item.batch?.batch_number || item.batch || '-'; break;
-                      case 'hsn': value = item.hsn_sac_code || item.hsn_code || ''; break;
-                      case 'quantity': value = qty; break;
-                      case 'free_qty': value = item.free_quantity || 0; break;
-                      case 'unit': value = item.unit || 'pcs'; break;
-                      case 'price': value = `${getCurrencySymbol()}${price.toFixed(2)}`; break;
-                      case 'discount': value = discount > 0 ? `${discount}%` : '-'; break;
-                      case 'tax': value = `${tax}%`; break;
-                      case 'amount': value = `${getCurrencySymbol()}${amount.toFixed(2)}`; break;
-                      default: value = '';
-                    }
-                    
-                    return (
-                      <td 
-                        key={col.id}
-                        className="px-2 py-1 border"
-                        style={{ 
-                          textAlign: col.align || 'left',
-                          borderColor: colors.tableBorder,
-                          fontSize: `${typography.bodySize || 11}px`,
-                          wordBreak: col.id === 'description' ? 'break-word' : 'normal',
-                          whiteSpace: col.id === 'description' ? 'normal' : 'nowrap',
-                        }}
-                      >
-                        {col.id === 'description' ? (
-                          <div>
-                            <div>{item.product_detail?.name || item.product_name || item.product || ''}</div>
-                            {invoiceSettings.show_item_description !== false && (item.product_detail?.description || item.product_description) ? (
-                              <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666' }}>
-                                {item.product_detail?.description || item.product_description}
-                              </div>
-                            ) : null}
-                            {invoiceSettings.show_item_storage_condition && (item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                              <div style={{ fontSize: `${typography.smallSize || 9}px`, color: colors.lightText || '#666', marginTop: '2px', fontWeight: 500 }}>
-                                {item.product_detail?.storage_condition ? `Storage: ${item.product_detail.storage_condition}` : ''}
-                                {item.product_detail?.storage_condition && item.product_detail?.temperature ? ' | ' : ''}
-                                {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
-                              </div>
-                            ) : null}
-                          </div>
-                        ) : value}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            }) : (
-              <tr>
-                <td 
-                  colSpan={visibleColumns.length}
-                  className="text-center py-8 text-gray-400"
-                >
-                  No items added yet
-                </td>
+            </colgroup>
+            <thead style={{ display: 'table-header-group' }}>
+              <tr style={tableHeaderStyle}>
+                {visibleColumns.map(col => {
+                  const isDesc = col.id === 'description';
+                  return (
+                  <th 
+                    key={col.id}
+                    className="py-2 font-bold border"
+                    style={{ 
+                      width: getColumnWidth(col.id),
+                      textAlign: 'center',
+                      borderColor: colors.tableBorder,
+                      fontSize: `${type.tableHeaderSize}px`,
+                      paddingLeft: '8px',
+                      paddingRight: '8px',
+                      whiteSpace: isDesc ? 'normal' : 'nowrap',
+                      overflow: 'visible',
+                    }}
+                  >
+                    {getColumnLabel(col)}
+                  </th>
+                  );
+                })}
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      
-      {/* Bottom Section - Bank Details & Totals */}
-      <div className="flex justify-between gap-6 mb-2">
-        {/* Bank Details - Left */}
-        {sections.showBankDetails && (
-          <div className="flex-1">
-            <h4 
-              className="font-bold mb-2 pb-1"
-              style={{ 
-                color: colors.secondary,
-                fontSize: `${typography.sectionTitleSize || 12}px`,
-                borderBottom: `1px solid ${colors.tableBorder}`,
-              }}
-            >
-              Our Bank Details:
-            </h4>
-            <div className="space-y-1 text-sm" style={{ color: colors.lightText }}>
-              {content.bankDetails?.bankName && (
-                <p><span className="font-medium">Bank Name:</span> {content.bankDetails.bankName}</p>
-              )}
-              {content.bankDetails?.accountNumber && (
-                <p><span className="font-medium">Account Number:</span> {content.bankDetails.accountNumber}</p>
-              )}
-              {content.bankDetails?.ifscCode && (
-                <p><span className="font-medium">NEFT/IFSC Code:</span> {content.bankDetails.ifscCode}</p>
-              )}
-              {content.bankDetails?.accountHolder && (
-                <p><span className="font-medium">Name:</span> {content.bankDetails.accountHolder}</p>
-              )}
-            </div>
-          </div>
-        )}
-        
-        {/* Totals - Right */}
-        <div className="w-80">
-          <table className="w-full border-collapse text-sm">
+            </thead>
             <tbody>
-              <tr>
-                <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
-                  Untaxed Amount
-                </td>
-                <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
-                  {getCurrencySymbol()}{subtotal.toFixed(2)}
-                </td>
-              </tr>
-              {isIGST ? (
-                <tr>
-                  <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>IGST</td>
-                  <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{taxTotal.toFixed(2)}</td>
-                </tr>
-              ) : (
-                <>
-                  <tr>
-                    <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>CGST</td>
-                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+              {items.length > 0 ? items.map((item, index) => {
+                if (item.row_type === 'note') {
+                  return (
+                    <tr key={index} style={{ backgroundColor: '#fbfbfb' }}>
+                      <td
+                        colSpan={visibleColumns.length}
+                        className="border px-2 py-1.5 text-slate-700 italic text-left font-medium"
+                        style={{ borderColor: colors.tableBorder, fontSize: `${type.smallSize}px` }}
+                      >
+                        Note: {item.description || item.product_description || item.product || ''}
+                      </td>
+                    </tr>
+                  );
+                }
+                const qty = parseFloat(item.quantity || 0);
+                const price = parseFloat(item.price || 0);
+                const tax = parseFloat(item.tax || 0);
+                const discount = parseFloat(item.discount || 0);
+                const lineBase = qty * price;
+                const amount = lineBase - (lineBase * discount) / 100;
+                
+                return (
+                  <tr 
+                    key={index}
+                    style={{
+                      backgroundColor: styles.tableStyle === 'striped' && index % 2 === 1 
+                        ? colors.tableStripe 
+                        : 'transparent',
+                      paddingTop: '0.6px',
+                      paddingBottom: '0.6px',
+                      margin: 0,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {visibleColumns.map(col => {
+                      let value = '';
+                      switch(col.id) {
+                        case 'serial': value = items.slice(0, index).filter((row) => row.row_type !== 'note').length + 1; break;
+                        case 'description': value = item.product_detail?.name || item.product_name || item.product || ''; break;
+                        case 'batch': value = item.batch_number || item.batch?.batch_number || item.batch || '-'; break;
+                        case 'hsn': value = item.hsn_sac_code || item.hsn_code || ''; break;
+                        case 'quantity': value = qty; break;
+                        case 'free_qty': value = item.free_quantity || 0; break;
+                        case 'unit': value = item.unit || 'pcs'; break;
+                        case 'make': value = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-'; break;
+                        case 'pack_size': value = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-'; break;
+                        case 'price': {
+                          const pStr = price.toString();
+                          const decCount = (pStr.split('.')[1] || '').length;
+                          const decimals = Math.min(Math.max(2, decCount), 4);
+                          value = `${getCurrencySymbol()}${price.toFixed(decimals)}`;
+                          break;
+                        }
+                        case 'discount': value = discount > 0 ? `${discount}%` : '-'; break;
+                        case 'tax': value = `${Math.round(tax)}%`; break;
+                        case 'amount': value = `${getCurrencySymbol()}${amount.toFixed(2)}`; break;
+                        default: value = '';
+                      }
+                      
+                      const isDesc = col.id === 'description';
+                      const isNum = col.id === 'price' || col.id === 'amount';
+                      return (
+                        <td 
+                          key={col.id}
+                          className="border align-middle"
+                          style={{ 
+                            paddingTop: '0.6px',
+                            paddingBottom: '0.6px',
+                            paddingLeft: '8px',
+                            paddingRight: '8px',
+                            margin: 0,
+                            lineHeight: 1.2,
+                            fontSize: `${type.tableBodySize}px`,
+                            textAlign: isDesc ? 'left' : isNum ? 'right' : 'center',
+                            borderColor: colors.tableBorder,
+                            wordBreak: isDesc ? 'break-word' : 'normal',
+                            whiteSpace: isDesc ? 'normal' : 'nowrap',
+                            overflow: 'visible',
+                            verticalAlign: 'middle',
+                          }}
+                        >
+                          {col.id === 'description' ? (
+                            <div>
+                              <div className="font-normal text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
+                              {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                                <div className="text-xs text-gray-500 font-medium italic mt-0.5">
+                                  Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                                </div>
+                              )}
+                              {invoiceSettings.show_item_description !== false && (item.description || item.product_description || item.product_detail?.description) ? (
+                                <div className="whitespace-pre-line" style={{ fontSize: `${type.smallSize}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, wordBreak: 'break-word' }}>
+                                  {item.description || item.product_description || item.product_detail?.description}
+                                </div>
+                              ) : null}
+                              {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                                <div style={{ fontSize: `${type.smallSize}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, fontWeight: 500 }}>
+                                  {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
+                                  {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
+                                  {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : value}
+                        </td>
+                      );
+                    })}
                   </tr>
-                  <tr>
-                    <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>SGST</td>
-                    <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
-                  </tr>
-                </>
-              )}
-              {roundOff !== 0 && (
+                );
+              }) : (
                 <tr>
-                  <td className="px-3 py-2 border font-medium" style={{ borderColor: colors.tableBorder }}>
-                    Round Off
-                  </td>
-                  <td className="px-3 py-2 border text-right" style={{ borderColor: colors.tableBorder }}>
-                    {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                  <td 
+                    colSpan={visibleColumns.length}
+                    className="text-center py-8 text-gray-400"
+                  >
+                    No items added yet
                   </td>
                 </tr>
               )}
-              <tr style={totalRowStyle}>
-                <td className="px-3 py-3 border font-bold">
-                  Grand Total
-                </td>
-                <td className="px-3 py-3 border text-right font-bold text-lg">
-                  {getCurrencySymbol()}{finalTotal.toFixed(2)}
-                </td>
-              </tr>
             </tbody>
           </table>
-          
-          {/* Amount in Words */}
-          {sections.showAmountInWords && (
-            <div className="mt-3 text-xs text-right" style={{ color: colors.lightText }}>
-              <span className="font-medium">Total amount in words:</span>
-              <br />
-              <span className="font-semibold" style={{ color: colors.text }}>
-                {amountInWords(finalTotal)}
-              </span>
+      </div>
+      
+      {/* Bottom Section - Bank Details & Totals (Hidden for Delivery Challans). Keep-together: never split across pages. */}
+      {!isDeliveryChallan && (
+        <div className="invoice-totals-block flex justify-between gap-6 mb-2">
+          {/* Bank Details - Left */}
+          {sections.showBankDetails && hasBankDetails && (
+            <div className="flex-1 mr-8">
+              <h4 
+                className="font-bold mb-1 pb-0.5"
+                style={{ 
+                  color: colors.secondary,
+                  fontSize: `${type.sectionTitleSize}px`,
+                  borderBottom: `1px solid ${colors.tableBorder}`,
+                }}
+              >
+                Our Bank Details:
+              </h4>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1" style={{ color: colors.lightText, fontSize: `${type.bankDetailsSize}px` }}>
+                  {bankName && (
+                    <p><span className="font-medium">Bank Name:</span> {bankName}</p>
+                  )}
+                  {bankAccount && (
+                    <p><span className="font-medium">Account Number:</span> <span className="font-mono">{bankAccount}</span></p>
+                  )}
+                  {bankIfsc && (
+                    <p><span className="font-medium">NEFT/IFSC Code:</span> <span className="font-mono">{bankIfsc}</span></p>
+                  )}
+                  {bankBranch && (
+                    <p><span className="font-medium">Branch:</span> {bankBranch}</p>
+                  )}
+                  {bankUpi && (
+                    <p><span className="font-medium">UPI / VPA:</span> <span className="font-mono">{bankUpi}</span></p>
+                  )}
+                </div>
+                {sections.showQRCode !== false && bankQr && (
+                  <div className="text-center flex-shrink-0">
+                    <img 
+                      src={bankQr} 
+                      alt="Scan to Pay" 
+                      className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5 bg-white shadow-sm"
+                    />
+                    <span className="text-xs text-gray-500 block mt-0.5">Scan to Pay</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
-        </div>
-      </div>
-      
-      {/* Terms & Signature Row */}
-      <div className="flex justify-between gap-6 mt-3 pt-3" style={{ borderTop: `1px solid ${colors.tableBorder}` }}>
-        {/* Terms */}
-        {sections.showTerms && content.termsAndConditions?.length > 0 && (
-          <div className="flex-1">
-            <h4 
-              className="font-bold mb-2"
-              style={{ 
-                color: colors.secondary,
-                fontSize: `${typography.sectionTitleSize || 12}px`,
-              }}
-            >
-              Terms & Conditions
-            </h4>
-            <ul className="space-y-1 text-xs" style={{ color: colors.lightText }}>
-              {content.termsAndConditions.map((term, i) => (
-                <li key={i}>• {term}</li>
-              ))}
-            </ul>
+          
+          {/* Totals - Right */}
+          <div className="w-80">
+            <table className="w-full border-collapse" style={{ fontSize: `${type.totalsSize}px` }}>
+              <tbody>
+                <tr>
+                  <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>
+                    Untaxed Amount
+                  </td>
+                  <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>
+                    {getCurrencySymbol()}{subtotal.toFixed(2)}
+                  </td>
+                </tr>
+                {isIGST ? (
+                  <tr>
+                    <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>IGST</td>
+                    <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{taxTotal.toFixed(2)}</td>
+                  </tr>
+                ) : (
+                  <>
+                    <tr>
+                      <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>CGST</td>
+                      <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>SGST</td>
+                      <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+                    </tr>
+                  </>
+                )}
+                {roundOff !== 0 && (
+                  <tr>
+                    <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>
+                      Round Off
+                    </td>
+                    <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>
+                      {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                    </td>
+                  </tr>
+                )}
+                <tr style={totalRowStyle}>
+                  <td className="px-3 py-1.5 border font-bold">
+                    Grand Total
+                  </td>
+                  <td className="px-3 py-1.5 border text-right font-bold">
+                    {getCurrencySymbol()}{finalTotal.toFixed(2)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            
+            {/* Amount in Words */}
+            {sections.showAmountInWords && (
+              <div className="mt-1 text-right" style={{ color: colors.lightText, fontSize: `${type.totalsSize}px` }}>
+                <span className="font-medium">Total amount in words:</span>
+                <br />
+                <span className="font-medium italic" style={{ color: colors.text }}>
+                  {amountInWords(finalTotal)}
+                </span>
+              </div>
+            )}
           </div>
-        )}
-        
-        {/* Signature */}
-        {sections.showSignature && (
-          <div className="w-48 text-center">
-            <div 
-              className="border-b-2 mb-2 h-16"
+        </div>
+      )}
+      
+      {/* Footer sits under totals (not pinned to page bottom) */}
+      <div className="mt-2 invoice-page-footer">
+        <div className="flex justify-between gap-4 pt-2" style={{ borderTop: `1px solid ${colors.tableBorder}` }}>
+          {sections.showTerms && content.termsAndConditions?.length > 0 && (
+            <div className="flex-1">
+              <h4
+                className="font-bold mb-1"
+                style={{
+                  color: colors.secondary,
+                  fontSize: `${type.sectionTitleSize}px`,
+                }}
+              >
+                Terms & Conditions
+              </h4>
+              <ul className="space-y-1" style={{ color: colors.lightText, fontSize: `${type.footerSize}px` }}>
+                {content.termsAndConditions.map((term, i) => (
+                  <li key={i}>• {term}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="w-48 text-center ml-auto">
+            <div
+              className="border-b-2 mb-1 h-10"
               style={{ borderColor: colors.text }}
             />
-            <p className="text-xs font-medium" style={{ color: colors.secondary }}>
-              {content.signatureLabel || 'Authorized Signatory'}
+            <p className="font-medium" style={{ color: colors.secondary, fontSize: `${type.footerSize}px` }}>
+              {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
             </p>
+          </div>
+        </div>
+
+        {content.footerNote && (
+          <div
+            className="text-center mt-3 pt-2"
+            style={{
+              color: colors.lightText,
+              borderTop: `1px dashed ${colors.tableBorder}`,
+              fontSize: `${type.footerSize}px`,
+            }}
+          >
+            {content.footerNote}
+          </div>
+        )}
+
+        <div className="mt-3 pt-2 text-center text-gray-500 font-medium" style={{ fontSize: `${type.footerSize}px` }}>
+          {isDeliveryChallan
+            ? 'This is a computer generated delivery challan and does not require a signature.'
+            : 'This is a computer generated digital invoice and does not require a signature.'}
+        </div>
+
+        {showWatermarkFooter && (
+          <div className="mt-1 text-center text-xs text-gray-400 print-watermark">
+            Made with Cenvora: Built for Modern Businesses<br />
+            <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
           </div>
         )}
       </div>
-      
-      {/* Footer */}
-      {content.footerNote && (
-        <div 
-          className="text-center mt-8 pt-4 text-xs"
-          style={{ 
-            color: colors.lightText,
-            borderTop: `1px dashed ${colors.tableBorder}`,
-          }}
-        >
-          {content.footerNote}
-        </div>
-      )}
-      
-      <div className="mt-4 pt-2 text-center text-[10px] text-gray-500 font-medium">
-        This is a computer generated digital invoice and does not require a signature.
-      </div>
-      
-      {showWatermarkFooter && (
-        <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark">
-          Made with Cenvora: Built for Modern Businesses<br />
-          <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
-        </div>
-      )}
+      </InvoicePrintShell>
     </div>
   );
 });

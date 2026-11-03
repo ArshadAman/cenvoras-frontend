@@ -45,6 +45,18 @@ export const getProducts = () =>
 export const getVendorProducts = (vendorName) =>
   api.get("/billing/vendor-products/", { params: { vendor_name: vendorName } }).then(res => res.data);
 
+export const getUnpaidPurchaseBills = (params) =>
+  api.get("/billing/vendor-payments/unpaid-bills/", { params }).then(res => res.data);
+
+export const createVendorPayment = (data) =>
+  api.post("/billing/vendor-payments/", data).then(res => res.data);
+
+export const getRule37Itc = (params) =>
+  api.get("/billing/rule37-itc/", { params }).then(res => res.data);
+
+export const applyRule37Itc = (data) =>
+  api.post("/billing/rule37-itc/", data).then(res => res.data);
+
 export const createProduct = (data) =>
   api.post("/inventory/add-product/", data).then(res => res.data);
 

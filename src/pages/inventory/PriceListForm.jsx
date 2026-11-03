@@ -61,17 +61,17 @@ export default function PriceListForm() {
     })) || [{ product: "", price: "", min_qty: 1 }],
   };
 
-  const inputClass = "bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white text-sm w-full focus:ring-1 focus:ring-green-500 outline-none";
+  const inputClass = "bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm w-full focus:border-[var(--accent-primary)] outline-none";
 
   return (
     <>
       <div className="p-6 md:p-10 animate-fade-up max-w-5xl mx-auto">
-        <button onClick={() => navigate(-1)} className="flex items-center text-gray-400 hover:text-white mb-6 transition-colors">
+        <button onClick={() => navigate(-1)} className="flex items-center text-[var(--text-muted)] hover:text-[var(--text-primary)] mb-6 transition-colors">
             <ArrowLeftIcon className="w-4 h-4 mr-2" /> Back to List
         </button>
 
         <div className="bento-card relative overflow-hidden">
-            <h1 className="text-2xl font-bold text-white mb-6 border-b border-white/10 pb-4">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-6 border-b border-[var(--border-subtle)] pb-4">
                 {isEdit ? "Edit Price List" : "New Price List"}
             </h1>
 
@@ -85,12 +85,12 @@ export default function PriceListForm() {
                     <Form className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Name</label>
+                                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1">Name</label>
                                 <Field name="name" className={inputClass} placeholder="e.g. Wholesale 2024" />
-                                <ErrorMessage name="name" component="div" className="text-red-400 text-xs mt-1" />
+                                <ErrorMessage name="name" component="div" className="text-red-500 text-xs mt-1" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Party Category</label>
+                                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1">Party Category</label>
                                 <Field as="select" name="party_category" className={inputClass}>
                                     <option value="">Select Category</option>
                                     <option value="retailer">Retailer</option>
@@ -98,23 +98,23 @@ export default function PriceListForm() {
                                     <option value="distributor">Distributor</option>
                                     <option value="consumer">End Consumer</option>
                                 </Field>
-                                <ErrorMessage name="party_category" component="div" className="text-red-400 text-xs mt-1" />
+                                <ErrorMessage name="party_category" component="div" className="text-red-500 text-xs mt-1" />
                             </div>
                             <div className="flex items-center">
                                 <label className="flex items-center space-x-2 cursor-pointer">
-                                    <Field type="checkbox" name="is_active" className="rounded bg-white/10 border-white/20 text-green-500 focus:ring-green-500" />
-                                    <span className="text-white text-sm">Active</span>
+                                    <Field type="checkbox" name="is_active" className="rounded bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]" />
+                                    <span className="text-[var(--text-primary)] text-sm">Active</span>
                                 </label>
                             </div>
                         </div>
 
-                        <div className="border-t border-white/10 pt-6">
-                            <h3 className="text-lg font-bold text-white mb-4">Pricing Rules</h3>
+                        <div className="border-t border-[var(--border-subtle)] pt-6">
+                            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Pricing Rules</h3>
                             <FieldArray name="items">
                                 {({ remove, push }) => (
                                     <div className="space-y-3">
                                         {values.items.map((item, index) => (
-                                            <div key={index} className="flex gap-3 items-start bg-white/5 p-3 rounded-lg border border-white/5">
+                                            <div key={index} className="flex gap-3 items-start bg-[var(--bg-primary)]/50 p-3 rounded-lg border border-[var(--border-subtle)]">
                                                 <div className="flex-1">
                                                     <Field as="select" name={`items.${index}.product`} className={inputClass}>
                                                         <option value="">Select Product</option>
@@ -122,16 +122,16 @@ export default function PriceListForm() {
                                                             <option key={p.id} value={p.id}>{p.name}</option>
                                                         ))}
                                                     </Field>
-                                                    <ErrorMessage name={`items.${index}.product`} component="div" className="text-red-400 text-xs" />
+                                                    <ErrorMessage name={`items.${index}.product`} component="div" className="text-red-500 text-xs" />
                                                 </div>
                                                 <div className="w-24">
                                                     <Field type="number" name={`items.${index}.min_qty`} className={inputClass} placeholder="Min Qty" />
                                                 </div>
                                                 <div className="w-32">
                                                     <Field type="number" name={`items.${index}.price`} className={inputClass} placeholder="Price ({getCurrencySymbol()})" />
-                                                    <ErrorMessage name={`items.${index}.price`} component="div" className="text-red-400 text-xs" />
+                                                    <ErrorMessage name={`items.${index}.price`} component="div" className="text-red-500 text-xs" />
                                                 </div>
-                                                <button type="button" onClick={() => remove(index)} className="p-2 text-red-400 hover:text-red-300">
+                                                <button type="button" onClick={() => remove(index)} className="p-2 text-red-500 hover:text-red-600">
                                                     <TrashIcon className="w-5 h-5" />
                                                 </button>
                                             </div>
@@ -139,7 +139,7 @@ export default function PriceListForm() {
                                         <button
                                             type="button"
                                             onClick={() => push({ product: "", price: "", min_qty: 1 })}
-                                            className="mt-2 text-sm text-green-400 hover:text-green-300 flex items-center gap-1"
+                                            className="mt-2 text-sm text-[var(--accent-primary)] hover:opacity-80 flex items-center gap-1 font-semibold"
                                         >
                                             <PlusIcon className="w-4 h-4" /> Add Item
                                         </button>
@@ -148,11 +148,11 @@ export default function PriceListForm() {
                             </FieldArray>
                         </div>
 
-                        <div className="flex justify-end pt-6 border-t border-white/10">
+                        <div className="flex justify-end pt-6 border-t border-[var(--border-subtle)]">
                             <button
                                 type="submit"
                                 disabled={mutation.isPending}
-                                className="btn-primary shadow-lg shadow-green-500/20"
+                                className="btn-primary"
                             >
                                 {mutation.isPending ? "Saving..." : "Save Price List"}
                             </button>

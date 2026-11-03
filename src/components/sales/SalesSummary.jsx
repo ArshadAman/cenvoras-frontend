@@ -1,34 +1,50 @@
 import React, { useState } from "react";
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
-import {useQuery } from "@tanstack/react-query";
+import { getCurrencySymbol } from '../../utils/currency';
+import { getTodayKolkata, getKolkataMonthBounds } from '../../utils/date';
+import { useQuery } from "@tanstack/react-query";
 import { getSalesAnalytics, getSalesInvoices, getOverdueSalesInvoices } from "../../api/sales";
 import { 
   CurrencyRupeeIcon, 
   CalendarIcon, 
   ChartBarIcon, 
   ShoppingBagIcon,
-  ExclamationTriangleIcon 
+  ExclamationTriangleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  SparklesIcon,
+  ClockIcon
 } from "@heroicons/react/24/outline";
 
 export default function SalesSummary() {
   const [dateFilter, setDateFilter] = useState("today"); // "today", "month", "custom"
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("sales_analytics_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
 
-  const formatLocalDate = (dateObj) => {
-    const y = dateObj.getFullYear();
-    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const d = String(dateObj.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+  const toggleCollapse = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sales_analytics_collapsed", String(next));
+      } catch {
+        // ignore storage error
+      }
+      return next;
+    });
   };
 
-  const todayStr = formatLocalDate(new Date());
+  const todayStr = getTodayKolkata();
+  const { from: monthStartStr } = getKolkataMonthBounds();
   const [customRange, setCustomRange] = useState({ start: todayStr, end: todayStr });
 
   const getDates = () => {
     if (dateFilter === "today") return { start_date: todayStr, end_date: todayStr };
     if (dateFilter === "month") {
-      const d = new Date();
-      d.setDate(1);
-      return { start_date: formatLocalDate(d), end_date: todayStr };
+      return { start_date: monthStartStr, end_date: todayStr };
     }
     if (dateFilter === "custom") {
       return { start_date: customRange.start, end_date: customRange.end };
@@ -38,7 +54,7 @@ export default function SalesSummary() {
 
   const dates = getDates();
 
-  const { data: analyticsRes, isLoading: analyticsLoading } = useQuery({
+  const { data: analyticsRes, isLoading: analyticsLoading, isFetching: analyticsFetching } = useQuery({
     queryKey: ["salesAnalytics", dates],
     queryFn: () => getSalesAnalytics(dates),
   });
@@ -69,198 +85,292 @@ export default function SalesSummary() {
   
   const topCustomers = Object.entries(customerTotals)
     .sort(([,a], [,b]) => b - a)
-    .slice(0, 3);
+    .slice(0, 4);
 
   const minDate = "2024-01-01"; 
   const maxDate = todayStr;
 
-  if (analyticsLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-4">
-        {Array(4).fill(0).map((_, i) => (
-          <div key={i} className="bento-card p-5 animate-pulse">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-white/10 rounded-xl"></div>
-              <div className="ml-4 flex-1 space-y-2">
-                <div className="h-4 bg-white/10 rounded w-1/2"></div>
-                <div className="h-6 bg-white/10 rounded w-3/4"></div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   const selectedRevenue = analytics.total_revenue || 0;
   const selectedCount = analytics.total_invoices || 0;
-  const overallMonthRevenue = analytics.this_month_revenue || 0;
+  // Prefer net (incl. GST − credit notes) — same as dashboard / AI sales_mtd
+  const overallMonthRevenue =
+    analytics.this_month_revenue_net
+    ?? analytics.sales_mtd?.net
+    ?? analytics.this_month_revenue
+    ?? 0;
 
-  const cardTitle = dateFilter === 'today' ? "Today's Sales" : dateFilter === 'month' ? "This Month's Sales" : "Custom Range Sales";
+  const cardTitle = dateFilter === 'today' ? "Today's Sales" : dateFilter === 'month' ? "This Month's Sales" : "Period Sales";
 
   const summaryCards = [
     {
       label: cardTitle,
       value: selectedCount,
-      subValue: `${getCurrencySymbol()}${selectedRevenue.toLocaleString()}`,
-      icon: <CurrencyRupeeIcon className="w-6 h-6 text-cyan-400" />,
-      color: 'cyan'
+      subValue: `${getCurrencySymbol()}${Number(selectedRevenue).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`,
+      icon: <CurrencyRupeeIcon className="w-5 h-5 text-[var(--accent-primary)]" />,
+      badgeText: dateFilter === 'today' ? 'Live Today' : 'Selected'
     },
     {
       label: 'Overall This Month',
       value: analytics.this_month_invoices || 0,
-      subValue: `${getCurrencySymbol()}${overallMonthRevenue.toLocaleString()}`,
-      icon: <CalendarIcon className="w-6 h-6 text-green-400" />,
-      color: 'green'
+      subValue: `${getCurrencySymbol()}${Number(overallMonthRevenue).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`,
+      icon: <CalendarIcon className="w-5 h-5 text-[var(--status-success)]" />,
+      badgeText: 'MTD Volume'
     },
     {
       label: 'Avg. Invoice Value',
-      value: `${getCurrencySymbol()}${selectedCount > 0 ? (selectedRevenue / selectedCount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}`,
-      subValue: 'For selected period',
-      icon: <ChartBarIcon className="w-6 h-6 text-blue-400" />,
-      color: 'blue'
+      value: `${getCurrencySymbol()}${selectedCount > 0 ? (selectedRevenue / selectedCount).toLocaleString('en-IN', { maximumFractionDigits: 0 }) : 0}`,
+      subValue: selectedCount > 0 ? `Across ${selectedCount} invoices` : 'No invoices in period',
+      icon: <ChartBarIcon className="w-5 h-5 text-[var(--status-info)]" />,
+      badgeText: 'Average'
     },
     {
       label: 'Active Invoices',
       value: invoices.filter(inv => inv.status !== 'draft').length,
-      subValue: 'Based on recent activity',
-      icon: <ShoppingBagIcon className="w-6 h-6 text-purple-400" />,
-      color: 'purple'
+      subValue: `${invoices.filter(inv => inv.status === 'draft').length} draft in queue`,
+      icon: <ShoppingBagIcon className="w-5 h-5 text-[var(--accent-primary)]" />,
+      badgeText: 'Pipeline'
     }
   ];
 
   return (
-    <div className="space-y-6 mb-8 mt-2">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[#111] border border-white/10">
-         <div className="flex items-center gap-4">
-             <h3 className="text-white font-medium">Analytics Filter</h3>
-             <select 
-               className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
-               value={dateFilter}
-               onChange={e => setDateFilter(e.target.value)}
-             >
-                <option value="today">Today</option>
-                <option value="month">This Month</option>
-                <option value="custom">Custom Date Range</option>
-             </select>
-         </div>
-
-         {dateFilter === "custom" && (
-             <div className="flex items-center gap-2">
-                <input 
-                  type="date"
-                  min={minDate}
-                  max={maxDate}
-                  className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
-                  value={customRange.start}
-                  onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
-                />
-                <span className="text-gray-500">to</span>
-                <input 
-                  type="date"
-                  min={customRange.start || minDate}
-                  max={maxDate}
-                  className="bg-[#111] text-white text-sm border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-cyan-500"
-                  value={customRange.end}
-                  onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
-                />
-             </div>
-         )}
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {summaryCards.map((card, i) => (
-          <div key={i} className="bento-card p-6 flex flex-col justify-between group hover:border-white/20 transition-colors">
-            <div className="flex justify-between items-start mb-4">
-               <div className={`p-3 rounded-xl bg-${card.color}-400/10 border border-${card.color}-400/20`}>
-                  {card.icon}
-               </div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white mb-1 tracking-tight">{card.value}</div>
-              <div className="text-sm font-medium text-cyan-300 mb-1">{card.subValue}</div>
-              <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">{card.label}</div>
-            </div>
+    <div className="space-y-5 mb-8 mt-2 transition-all duration-300">
+      {/* Analytics Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse"></div>
+            <h3 className="text-[var(--text-primary)] text-sm font-bold tracking-tight">Sales Analytics</h3>
           </div>
-        ))}
+
+          {!isCollapsed && (
+            <div className="flex items-center gap-1.5 bg-[var(--bg-primary)] p-1 rounded-xl border border-[var(--border-subtle)]">
+              {[
+                { id: "today", label: "Today" },
+                { id: "month", label: "This Month" },
+                { id: "custom", label: "Custom" },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setDateFilter(tab.id)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                    dateFilter === tab.id
+                      ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm"
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {analyticsFetching && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--status-info)]/15 border border-[var(--status-info)]/30 text-[var(--status-info)] text-xs font-bold animate-pulse">
+              <SparklesIcon className="w-3 h-3" />
+              <span>Updating...</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {!isCollapsed && dateFilter === "custom" && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <input 
+                type="date"
+                min={minDate}
+                max={maxDate}
+                className="bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs border border-[var(--border-subtle)] rounded-lg px-2.5 py-1.5 outline-none focus:border-[var(--accent-primary)]"
+                value={customRange.start}
+                onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
+              />
+              <span className="text-[var(--text-muted)] text-xs">to</span>
+              <input 
+                type="date"
+                min={customRange.start || minDate}
+                max={maxDate}
+                className="bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs border border-[var(--border-subtle)] rounded-lg px-2.5 py-1.5 outline-none focus:border-[var(--accent-primary)]"
+                value={customRange.end}
+                onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
+              />
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={toggleCollapse}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] rounded-xl transition-all cursor-pointer select-none"
+            title={isCollapsed ? "Expand Analytics" : "Collapse Analytics"}
+          >
+            <span>{isCollapsed ? "Show Analytics" : "Hide Analytics"}</span>
+            {isCollapsed ? <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" /> : <ChevronUpIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />}
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Top Customers */}
-        <div className="lg:col-span-2 bento-card p-6">
-          <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-2">Top Customers</h3>
-          <div className="space-y-4">
-            {topCustomers.length > 0 ? (
-              topCustomers.map(([customer, amount], index) => (
-                <div key={customer} className="flex justify-between items-center p-3 rounded-lg hover:bg-white/5 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg ${
-                      index === 0 ? 'bg-yellow-500/80' : index === 1 ? 'bg-gray-400/80' : 'bg-orange-400/80'
-                    }`}>
-                      {index + 1}
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-white block">{customer}</span>
-                      <span className="text-xs text-gray-400">Customer</span>
-                    </div>
+      {!isCollapsed && (
+        <div className="space-y-5 transition-all duration-300">
+          {/* Summary Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {summaryCards.map((card, i) => (
+              <div 
+                key={i} 
+                className="relative overflow-hidden rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-5 flex flex-col justify-between group transition-all duration-300 hover:border-[var(--border-default)] shadow-sm"
+              >
+                <div className="flex justify-between items-start mb-3 relative z-10">
+                  <div className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                    {card.icon}
                   </div>
-                  <span className="text-sm font-bold text-cyan-400">
-                    {getCurrencySymbol()}{amount.toLocaleString()}
+                  <span className="text-xs font-black uppercase tracking-wider text-[var(--text-muted)] bg-[var(--bg-primary)] px-2 py-0.5 rounded-md border border-[var(--border-subtle)]">
+                    {card.badgeText}
                   </span>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">No customer data available</div>
-            )}
+
+                <div className="relative z-10">
+                  {analyticsLoading ? (
+                    <div className="space-y-2 animate-pulse">
+                      <div className="h-7 bg-[var(--bg-surface-hover)] rounded-lg w-1/2"></div>
+                      <div className="h-4 bg-[var(--bg-surface-hover)] rounded-md w-3/4"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-2xl font-black text-[var(--text-primary)] tracking-tight font-mono font-tabular mb-1">
+                        {card.value}
+                      </div>
+                      <div className="text-sm font-semibold text-[var(--text-secondary)] font-mono font-tabular mb-1">
+                        {card.subValue}
+                      </div>
+                      <div className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                        {card.label}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Secondary Row: Top Customers & Action Required */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Top Customers */}
+            <div className="lg:col-span-2 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-5 flex flex-col justify-between shadow-sm">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)] mb-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-sm font-bold text-[var(--text-primary)] tracking-tight">Top Customers</h4>
+                  <span className="text-xs font-black uppercase tracking-wider text-[var(--text-muted)] bg-[var(--bg-primary)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
+                    By Volume
+                  </span>
+                </div>
+                <span className="text-xs text-[var(--text-muted)]">Total Billed</span>
+              </div>
+
+              <div className="space-y-2.5">
+                {analyticsLoading ? (
+                  Array(3).fill(0).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] animate-pulse">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[var(--bg-surface-hover)]"></div>
+                        <div className="h-4 bg-[var(--bg-surface-hover)] rounded w-32"></div>
+                      </div>
+                      <div className="h-4 bg-[var(--bg-surface-hover)] rounded w-20"></div>
+                    </div>
+                  ))
+                ) : topCustomers.length > 0 ? (
+                  topCustomers.map(([customer, amount], index) => {
+                    const initials = customer
+                      .split(" ")
+                      .slice(0, 2)
+                      .map(w => w[0])
+                      .join("")
+                      .toUpperCase() || "C";
+
+                    return (
+                      <div 
+                        key={customer} 
+                        className="flex justify-between items-center p-2.5 rounded-xl bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] transition-all"
+                      >
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
+                            index === 0 ? 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30' : 
+                            index === 1 ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 
+                            index === 2 ? 'bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30' :
+                            'bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] border border-[var(--text-secondary)]/30'
+                          }`}>
+                            {initials}
+                          </div>
+                          <div className="truncate">
+                            <span className="text-sm font-semibold text-[var(--text-primary)] truncate block">{customer}</span>
+                            <span className="text-xs text-[var(--text-muted)] font-medium">Rank #{index + 1}</span>
+                          </div>
+                        </div>
+                        <span className="text-sm font-bold text-[var(--text-primary)] tabular-nums shrink-0 ml-4">
+                          {getCurrencySymbol()}{Number(amount).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-[var(--text-muted)] text-xs">No customer sales data available yet</div>
+                )}
+              </div>
+            </div>
+
+            {/* Overdue Invoices Alert */}
+            <div className="rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-5 flex flex-col justify-between shadow-sm">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)] mb-4">
+                <div className="flex items-center gap-2">
+                  <ExclamationTriangleIcon className="w-4 h-4 text-[var(--status-danger)]" />
+                  <h4 className="text-sm font-bold text-[var(--text-primary)] tracking-tight">Action Required</h4>
+                </div>
+                {overdueCount > 0 && (
+                  <span className="text-xs font-black uppercase tracking-wider text-[var(--status-danger)] bg-[var(--status-danger)]/15 px-2 py-0.5 rounded-full border border-[var(--status-danger)]/30">
+                    {overdueCount} Overdue
+                  </span>
+                )}
+              </div>
+
+              {overdueCount > 0 ? (
+                <div className="flex-1 flex flex-col justify-between">
+                  <div className="space-y-2 overflow-y-auto max-h-52 pr-1 custom-scrollbar">
+                    {overduePreview.map((invoice) => (
+                      <div 
+                        key={invoice.id} 
+                        className="rounded-xl border border-[var(--status-danger)]/30 bg-[var(--status-danger)]/10 p-2.5 hover:bg-[var(--status-danger)]/15 transition-colors"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-bold text-[var(--text-primary)] truncate">#{invoice.invoice_number || 'Invoice'}</p>
+                          <span className="text-xs font-semibold text-[var(--status-danger)] whitespace-nowrap bg-[var(--status-danger)]/20 px-1.5 py-0.5 rounded">
+                            {invoice.days_overdue}d overdue
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1 text-xs">
+                          <span className="text-[var(--text-secondary)] truncate max-w-[140px]">{invoice.customer_name || 'Customer'}</span>
+                          <span className="text-[var(--status-danger)] font-bold tabular-nums">
+                            {getCurrencySymbol()}{Number(invoice.outstanding_amount || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {overdueCount > overduePreview.length && (
+                    <div className="mt-2 text-center text-xs text-[var(--text-muted)] font-medium">
+                      +{overdueCount - overduePreview.length} more overdue invoices
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center my-auto">
+                  <div className="w-10 h-10 bg-[var(--status-success)]/10 rounded-full flex items-center justify-center mb-2 border border-[var(--status-success)]/20">
+                    <CurrencyRupeeIcon className="w-5 h-5 text-[var(--status-success)]" />
+                  </div>
+                  <p className="text-[var(--text-primary)] text-xs font-bold">Collections Healthy</p>
+                  <p className="text-[var(--text-muted)] text-xs mt-0.5">No overdue customer invoices</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-
-        {/* Overdue Alerts */}
-        <div className="bento-card p-6 min-h-[24rem]">
-           <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-2 flex items-center gap-2">
-             <ExclamationTriangleIcon className="w-5 h-5 text-red-400" /> Action Required
-           </h3>
-           
-           {overdueCount > 0 ? (
-             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 h-[18.5rem] flex flex-col">
-               <div className="flex items-start gap-3">
-                 <div className="flex-1">
-                   <p className="text-red-200 font-medium mb-1">Overdue Invoices</p>
-                   <p className="text-red-300/70 text-sm">
-                     You have <span className="font-bold text-white">{overdueCount}</span> invoices that are overdue.
-                   </p>
-                    {overduePreview.length > 0 && (
-                      <div className="mt-3 space-y-2 overflow-y-auto pr-1 custom-scrollbar max-h-[12.5rem]">
-                        {overduePreview.map((invoice) => (
-                          <div key={invoice.id} className="rounded-lg border border-red-400/20 bg-black/20 px-3 py-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="text-xs font-semibold text-white truncate">{invoice.invoice_number || 'Invoice'}</p>
-                              <p className="text-[11px] text-red-200/90 whitespace-nowrap">{invoice.days_overdue}d overdue</p>
-                            </div>
-                            <p className="text-xs text-red-200/90 truncate">{invoice.customer_name || 'Unknown Customer'}</p>
-                            <p className="text-xs text-red-300/90">Outstanding: {getCurrencySymbol()}{Number(invoice.outstanding_amount || 0).toLocaleString()}</p>
-                          </div>
-                        ))}
-                        {overdueCount > overduePreview.length && (
-                          <p className="text-[11px] text-red-300/80">+{overdueCount - overduePreview.length} more overdue invoices</p>
-                        )}
-                      </div>
-                    )}
-                 </div>
-               </div>
-             </div>
-           ) : (
-             <div className="flex flex-col items-center justify-center h-48 text-center">
-                <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-3">
-                  <CurrencyRupeeIcon className="w-6 h-6 text-green-400" />
-                </div>
-                <p className="text-white font-medium">All caught up!</p>
-                <p className="text-gray-400 text-sm mt-1">No overdue invoices found.</p>
-             </div>
-           )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

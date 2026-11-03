@@ -12,6 +12,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import Purchase from './pages/Purchase'
 import PurchaseOrders from './pages/PurchaseOrders'
+import VendorPayments from './pages/VendorPayments'
 import Sales from './pages/Sales'
 import Quotations from './pages/Quotations'
 import Inventory from './pages/Inventory'
@@ -21,8 +22,10 @@ import Payments from './pages/Payments'
 import Ledger from './pages/Ledger'
 import Profile from './pages/Profile'
 import SalesOrderList from './pages/SalesOrderList'
+import DeliveryChallanList from './pages/DeliveryChallanList'
 import ComingSoon from './pages/ComingSoon'
 import BOMList from './pages/inventory/BOMList'
+import BarcodeGenerator from './pages/inventory/BarcodeGenerator'
 import StockJournalList from './pages/inventory/StockJournalList'
 import BatchListPage from './pages/inventory/BatchListPage'
 import PriceListList from './pages/inventory/PriceListList'
@@ -56,6 +59,7 @@ import PayrollRuns from './pages/hr/PayrollRuns'
 import Payslips from './pages/hr/Payslips'
 import HRDashboard from './pages/hr/HRDashboard'
 import AdvancesLoans from './pages/hr/AdvancesLoans'
+import AllowancesBonuses from './pages/hr/AllowancesBonuses'
 import HRDocuments from './pages/hr/HRDocuments'
 import HRMSSettings from './pages/hr/HRMSSettings'
 import HRReports from './pages/hr/HRReports'
@@ -65,14 +69,19 @@ import EmployeePortal from './pages/employee/EmployeePortal'
 
 // Critical Gap Pages
 import GSTDashboard from './pages/reports/GSTDashboard'
+import GSTShieldPage from './pages/reports/GSTShieldPage'
 import GSTAndHSNGuide from './pages/GSTAndHSNGuide'
 import TaxRegister from './pages/reports/TaxRegister'
 import CreditNoteList from './pages/CreditNoteList'
 import DebitNoteList from './pages/DebitNoteList'
 import ProfitLossStatement from './pages/reports/ProfitLossStatement'
 import BalanceSheet from './pages/reports/BalanceSheet'
+import TrialBalance from './pages/TrialBalance'
+import GSTR3B from './pages/reports/GSTR3B'
 import BankReconciliation from './pages/financial/BankReconciliation'
 import ManualJournal from './pages/financial/ManualJournal'
+import ReAuthenticateModal from './components/auth/ReAuthenticateModal'
+import OfflineBanner from './components/common/OfflineBanner'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -108,7 +117,9 @@ function App() {
 
   return (
     <Router>
-      <ToastContainer position="top-right" autoClose={3000} theme="dark" newestOnTop style={{ zIndex: 2147483647 }} />
+      <ToastContainer position="top-right" autoClose={3000} limit={2} pauseOnFocusLoss={false} theme="dark" newestOnTop style={{ zIndex: 2147483647 }} />
+      <OfflineBanner />
+      <ReAuthenticateModal />
       <Routes>
         <Route
           path="/"
@@ -155,6 +166,10 @@ function App() {
           element={isAuthenticated ? <ModuleProtectedRoute moduleKey="purchases"><PurchaseOrders /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
+          path="/vendor-payments"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="purchases"><VendorPayments /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
           path="/sales"
           element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><Sales /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
@@ -168,7 +183,7 @@ function App() {
         />
         <Route
           path="/delivery-challans"
-          element={isAuthenticated ? <ComingSoon /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><DeliveryChallanList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/inventory"
@@ -176,7 +191,11 @@ function App() {
         />
         <Route
           path="/boms"
-          element={isAuthenticated ? <Navigate to="/coming-soon" replace /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><BOMList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/inventory/barcodes"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="inventory"><BarcodeGenerator /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/stock-journals"
@@ -252,6 +271,10 @@ function App() {
           element={isAuthenticated ? <TaxRegister /> : <Navigate to="/" replace />}
         />
         <Route
+          path="/reports/gst-shield"
+          element={isAuthenticated ? <GSTShieldPage /> : <Navigate to="/" replace />}
+        />
+        <Route
           path="/credit-notes"
           element={isAuthenticated ? <ModuleProtectedRoute moduleKey="sales"><CreditNoteList /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
@@ -266,6 +289,26 @@ function App() {
         <Route
           path="/reports/balance-sheet"
           element={isAuthenticated ? <BalanceSheet /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/reports/trial-balance"
+          element={isAuthenticated ? <TrialBalance /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/trial-balance"
+          element={isAuthenticated ? <TrialBalance /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/reports/gstr-3b"
+          element={isAuthenticated ? <GSTR3B /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/gstr-3b"
+          element={isAuthenticated ? <GSTR3B /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/gst/gstr-3b"
+          element={isAuthenticated ? <GSTR3B /> : <Navigate to="/" replace />}
         />
         <Route
           path="/bank-reconciliation"
@@ -325,8 +368,12 @@ function App() {
           element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><PayrollRuns /></ModuleProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
+          path="/hr/allowances-bonuses"
+          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><AllowancesBonuses /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+        />
+        <Route
           path="/hr/advances-loans"
-          element={isAuthenticated ? <ModuleProtectedRoute moduleKey="hr"><AdvancesLoans /></ModuleProtectedRoute> : <Navigate to="/" replace />}
+          element={<Navigate to="/hr/allowances-bonuses" replace />}
         />
         <Route
           path="/hr/documents"

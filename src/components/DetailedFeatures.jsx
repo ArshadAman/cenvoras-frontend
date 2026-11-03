@@ -5,96 +5,89 @@ import {
   DocumentChartBarIcon, 
   UserGroupIcon, 
   Cog6ToothIcon,
-  CheckCircleIcon,
-  PresentationChartLineIcon,
-  ClipboardDocumentCheckIcon,
-  TruckIcon,
-  ReceiptRefundIcon,
-  ShieldCheckIcon,
-  ChatBubbleLeftRightIcon
+  CheckIcon,
 } from '@heroicons/react/24/outline';
 
 const categories = [
   {
     id: 'sales',
-    title: 'Sales & Billing',
+    title: 'Sales & Invoicing',
     icon: BanknotesIcon,
-    description: 'Fast, compliant billing and end-to-end sales management.',
+    description: 'Create GST bills in seconds and track payments without manual effort.',
     features: [
-      { name: 'Sales Invoices', desc: 'Create Tax ready sales invoices with beautiful inbuilt professional templates.' },
-      { name: 'Quotations', desc: 'Create quotations, send to customers, and convert to sales orders in one click.' },
-      { name: 'Sales Orders', desc: 'Manage orders created from quotations, and convert them to invoices seamlessly.' },
-      { name: 'Credit Notes', desc: 'Generate and manage credit notes for returned goods or billing errors.' },
-      { name: 'Warranty Management', desc: 'View active, expiring, and critical warranty counts. Search by invoice or customer.' },
-      { name: 'Payment Collection', desc: 'Track todays collection, monthly, till date. Record payments against invoices and see dues.' },
+      { name: 'Fast GST Invoices', desc: 'Generate accurate, professional tax invoices with auto-calculated CGST, SGST, and IGST.' },
+      { name: 'Quotations & Estimates', desc: 'Create quotations, share them via WhatsApp or email, and turn them into invoices in one click.' },
+      { name: 'Sales Orders', desc: 'Track pending customer orders and convert them directly into completed sales.' },
+      { name: 'Credit Notes', desc: 'Easily issue credit notes for returned goods or rate differences.' },
+      { name: 'Customer Balances & Dues', desc: 'See who owes you money, overdue dates, and record partial or full payments.' },
+      { name: 'Warranty Tracking', desc: 'Keep track of product warranties, active coverage, and claim histories.' },
     ]
   },
   {
     id: 'inventory',
-    title: 'Inventory & Purchasing',
+    title: 'Stock & Purchasing',
     icon: ArchiveBoxIcon,
-    description: 'Complete stock control, purchasing, and vendor management.',
+    description: 'Keep your stock counts accurate with automated updates on every purchase and sale.',
     features: [
-      { name: 'Inventory Control', desc: 'Add/update inventory, bulk upload, check stocks, and auto-update on sales/purchases.' },
-      { name: 'Purchase Bills & Orders', desc: 'Create purchase orders and bills. Auto-updates your inventory instantly.' },
-      { name: 'Vendors Management', desc: 'Add, view, and update vendors. Auto-add vendors while creating purchase bills.' },
-      { name: 'Multi-Warehouse', desc: 'Add and manage multiple warehouses across different locations.' },
-      { name: 'Debit Notes', desc: 'Create and view debit notes for purchase returns or adjustments.' },
-      { name: 'Stock Journal', desc: 'Create stock journals for internal transfers or adjustments.' },
+      { name: 'Live Stock Tracking', desc: 'Stock quantities update automatically whenever an invoice or purchase bill is created.' },
+      { name: 'Purchase Bills & Orders', desc: 'Record incoming stock from suppliers and maintain clear purchase histories.' },
+      { name: 'Supplier Management', desc: 'Store supplier details, payment terms, and purchase records in one clean list.' },
+      { name: 'Low Stock Alerts', desc: 'Get clear notifications when items drop below your reorder level before running out.' },
+      { name: 'Debit Notes & Returns', desc: 'Issue debit notes for returned goods or adjustments with suppliers.' },
+      { name: 'Stock Adjustments', desc: 'Easily adjust quantities for damaged items, physical count checks, or write-offs.' },
     ]
   },
   {
     id: 'accounting',
-    title: 'Accounting & Reports',
+    title: 'Accounting & GST Reports',
     icon: DocumentChartBarIcon,
-    description: 'Deep insights, ledgers, and automated compliance.',
+    description: 'Simple financial statements and tax summaries without complex accounting rules.',
     features: [
-      { name: 'Business Ledger', desc: 'Check business Ledger and make manual journal adjustments easily.' },
-      { name: 'GST & Tax Compliance', desc: 'Built-in Tax Registers and GST Compliance reports.' },
-      { name: 'Financial Statements', desc: 'Generate P&L statements, Item-wise P&L, and Balance Sheets in a click.' },
-      { name: 'Stock Valuation', desc: 'Get accurate stock valuations and detailed stock ledgers.' },
-      { name: 'Inventory Reports', desc: 'Track expiry stock, shortage management, and dead stocks.' },
+      { name: 'Customer & Vendor Ledgers', desc: 'Clear running account statements showing every transaction, debit, credit, and balance.' },
+      { name: 'GST Filing Reports', desc: 'Export GSTR-1 and GSTR-3B summaries ready for your CA or tax portal filing.' },
+      { name: 'Profit & Loss Statement', desc: 'Know your exact gross and net profit across any date range with clear cost breakdowns.' },
+      { name: 'Item-wise Profitability', desc: 'See which products make you the highest profit and which ones barely break even.' },
+      { name: 'Stock Valuation', desc: 'Get accurate total stock values anytime for insurance or balance sheet purposes.' },
+      { name: 'Payment Records', desc: 'Track cash, bank transfers, UPI, and cheques with automatic ledger entry.' },
     ]
   },
   {
     id: 'hr',
-    title: 'HR & Team',
+    title: 'Staff & Permissions',
     icon: UserGroupIcon,
-    description: 'Manage employees, salaries, tasks, and attendance.',
+    description: 'Control what your team can see and do while keeping operations smooth.',
     features: [
-      { name: 'Employee Management', desc: 'Create employees, assign salary structures, and give increments.' },
-      { name: 'Departments & Roles', desc: 'Create and organize Departments and Designations.' },
-      { name: 'Task Assignment', desc: 'Assign tasks to employees. Employees receive email updates and can mark tasks as completed.' },
-      { name: 'Leaves & Attendance', desc: 'Accept/reject leave applications via email. Employees can mark attendance.' },
-      { name: 'Employee Portal', desc: 'Employees login to check attendance, apply for leaves, and raise queries to HR.' },
-      { name: 'Query Management', desc: 'View, resolve, or reject employee queries with automated email updates.' },
+      { name: 'Role-Based Access', desc: 'Give billing staff access only to invoices, while keeping cost prices and profit hidden.' },
+      { name: 'Staff Directory', desc: 'Manage your staff list, designations, phone numbers, and joining details.' },
+      { name: 'Task Management', desc: 'Assign daily business tasks to staff members and check when they are completed.' },
+      { name: 'Attendance & Leaves', desc: 'Track daily attendance records and approve employee leave requests easily.' },
+      { name: 'Staff Self-Service', desc: 'Employees can log in with their own account to view assigned tasks and attendance.' },
+      { name: 'Unlimited Staff Logins', desc: 'Add all your team members without paying extra monthly seat fees.' },
     ]
   },
   {
     id: 'admin',
-    title: 'Business Administration',
+    title: 'Business Controls',
     icon: Cog6ToothIcon,
-    description: 'Intelligent dashboards, access control, and business tools.',
+    description: 'Daily overview, customer records, and complete history of every change.',
     features: [
-      { name: 'Intelligent Dashboard', desc: 'Todays pulse, overall summary, low stock alerts, and expiring items count.' },
-      { name: 'Profit & Forecast', desc: 'Profit Finder (Top 5 best sellers), Sales Forecasts, and Restock Predictions.' },
-      { name: 'Customer Management', desc: 'Add, view, and edit customers. Auto-add customers during invoice creation.' },
-      { name: 'Access Control', desc: 'Super admin can add team members and assign specific permissions (sales, inventory).' },
-      { name: 'Business Tools', desc: 'Send email notifications and automated payment reminders for outstanding balances.' },
-      { name: 'Audit Logs', desc: 'Track every action: who did it, when, what changed (e.g., creating/deleting invoices).' },
+      { name: 'Daily Business Summary', desc: 'See today’s total sales, collections, pending payments, and critical stock at a glance.' },
+      { name: 'Customer Profiles', desc: 'Save customer GSTIN, billing addresses, phone numbers, and credit limits.' },
+      { name: 'Audit History', desc: 'See who created, edited, or deleted any invoice or price, along with the exact timestamp.' },
+      { name: 'Quick Search', desc: 'Find any invoice, customer, or product in milliseconds with instant keyboard search.' },
+      { name: 'Data Export', desc: 'Download your customer lists, stock sheets, and invoices in standard Excel or CSV anytime.' },
+      { name: 'Daily Backups', desc: 'Your database is backed up automatically so your business records stay safe.' },
     ]
   }
 ];
 
 export default function DetailedFeatures() {
   const [activeCategory, setActiveCategory] = useState(categories[0].id);
-
   const activeData = categories.find(c => c.id === activeCategory);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 opacity-0 animate-fade-up delay-200 scroll-animate w-full">
-      
-      {/* Sidebar / Vertical Tabs */}
+    <div className="flex flex-col lg:flex-row gap-8 w-full">
+      {/* Category Navigation */}
       <div className="w-full lg:w-1/3 flex flex-col gap-2">
         {categories.map((cat) => {
           const isActive = activeCategory === cat.id;
@@ -102,20 +95,20 @@ export default function DetailedFeatures() {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`text-left p-5 rounded-2xl border transition-all duration-300 flex items-start gap-4 group ${
+              className={`text-left p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
                 isActive 
-                  ? 'bg-gradient-to-r from-cyan-900/20 to-purple-900/10 border-purple-500/30 shadow-[0_0_30px_-5px_rgba(168,85,247,0.2)] transform translate-x-2' 
-                  : 'bg-[#0a0a0a] border-white/5 hover:border-white/10 hover:bg-[#111]'
+                  ? 'bg-[var(--bg-surface)] border-[var(--border-default)] text-[var(--text-primary)] shadow-md' 
+                  : 'bg-[var(--bg-primary)]/60 border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)]'
               }`}
             >
-              <div className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-gray-400 group-hover:text-white'}`}>
-                <cat.icon className="w-6 h-6" />
+              <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${isActive ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)]' : 'bg-[var(--bg-primary)] text-[var(--text-muted)]'}`}>
+                <cat.icon className="w-5 h-5" />
               </div>
               <div>
-                <h4 className={`text-lg font-bold mb-1 transition-colors ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`}>
+                <h4 className={`text-sm font-semibold mb-0.5 ${isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
                   {cat.title}
                 </h4>
-                <p className={`text-sm transition-colors ${isActive ? 'text-gray-300' : 'text-gray-600'}`}>
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed line-clamp-2">
                   {cat.description}
                 </p>
               </div>
@@ -124,37 +117,27 @@ export default function DetailedFeatures() {
         })}
       </div>
 
-      {/* Content Area */}
+      {/* Feature Details Panel */}
       <div className="w-full lg:w-2/3">
-        <div className="bg-[#0a0a0a] rounded-[2rem] border border-white/5 p-8 md:p-10 h-full relative overflow-hidden group">
-          
-          {/* Subtle Glow Background */}
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
-          
-          <div className="mb-10 flex items-center gap-4">
-            <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-              {activeData && <activeData.icon className="w-8 h-8 text-cyan-400" />}
-            </div>
-            <div>
-              <h3 className="text-3xl font-bold text-white">{activeData?.title}</h3>
-              <p className="text-gray-500 mt-1">{activeData?.description}</p>
-            </div>
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl p-6 sm:p-8 h-full">
+          <div className="mb-6 pb-5 border-b border-[var(--border-subtle)]">
+            <h3 className="text-xl font-bold text-[var(--text-primary)] font-display">{activeData?.title}</h3>
+            <p className="text-[var(--text-muted)] text-sm mt-1">{activeData?.description}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {activeData?.features.map((feature, idx) => (
-              <div key={idx} className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
-                <div className="flex items-start gap-3">
-                  <CheckCircleIcon className="w-5 h-5 text-purple-400 mt-0.5 shrink-0" />
+              <div key={idx} className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/60">
+                <div className="flex items-start gap-2.5">
+                  <CheckIcon className="w-4 h-4 text-[var(--accent-primary)] mt-1 shrink-0" />
                   <div>
-                    <h5 className="text-white font-semibold mb-2">{feature.name}</h5>
-                    <p className="text-sm text-gray-400 leading-relaxed">{feature.desc}</p>
+                    <h5 className="text-[var(--text-primary)] text-sm font-semibold mb-1">{feature.name}</h5>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">{feature.desc}</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          
         </div>
       </div>
     </div>

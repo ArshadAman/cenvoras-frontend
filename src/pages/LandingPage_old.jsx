@@ -531,7 +531,7 @@ export default function LandingPage() {
           ))}
           <br className="hidden md:block" />
           {['g','r','o','w','t','h'].map((letter, i) => (
-            <span key={`growth-${i}`} className="canv-hero-letter inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#1a2341] to-[#7fd3f7]">
+            <span key={`growth-${i}`} className="canv-hero-letter inline-block text-blue-600">
               {letter}
             </span>
           ))}

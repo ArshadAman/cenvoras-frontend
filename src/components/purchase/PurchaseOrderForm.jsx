@@ -3,26 +3,54 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createPurchaseOrder, updatePurchaseOrder } from "../../api/purchase_orders";
 import { getProducts } from "../../api/purchase";
-import { getVendors } from "../../api/vendors";
+import { getVendors, createVendor } from "../../api/vendors";
+import { formatErrorMessage } from "../../utils/toastUtils";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component (Reused logic)
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showManufacturer = true }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const descRef = useRef(null);
+  const descValue = values.items[idx]?.description ?? values.items[idx]?.product_description ?? "";
+  const hasDescription = Boolean(String(descValue).trim());
+  const [descExpanded, setDescExpanded] = useState(hasDescription);
+  const [focusDesc, setFocusDesc] = useState(false);
+
+  useEffect(() => {
+    if (hasDescription) setDescExpanded(true);
+  }, [hasDescription]);
+
+  useEffect(() => {
+    if (focusDesc && descExpanded && descRef.current) {
+      descRef.current.focus();
+      setFocusDesc(false);
+    }
+  }, [focusDesc, descExpanded]);
+
+  useEffect(() => {
+    setInputValue(values.items[idx]?.product || "");
+  }, [values.items[idx]?.product]);
 
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
+    setFieldValue(`items.${idx}.manufacturer`, product.manufacturer || "");
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     setFieldValue(`items.${idx}.price`, product.purchase_price ?? product.price ?? 0);
+    setFieldValue(`items.${idx}.tax`, product.tax ?? 0);
+    setFieldValue(`items.${idx}.description`, product.description || "");
+    setFieldValue(`items.${idx}.product_description`, product.description || "");
     const quantity = values.items[idx]?.quantity || 1;
-    const amount = quantity * (product.purchase_price ?? product.price ?? 0);
+    const price = product.purchase_price ?? product.price ?? 0;
+    const tax = Number(product.tax ?? 0);
+    const taxable = quantity * price;
+    const amount = taxable + (taxable * tax) / 100;
     setFieldValue(`items.${idx}.amount`, amount);
     setFieldValue(`items.${idx}.isExistingProduct`, true);
     setInputValue(product.name);
@@ -40,6 +68,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product`, value);
     setFieldValue(`items.${idx}.isExistingProduct`, false);
     setFieldValue(`items.${idx}.product_id`, null);
+    setFieldValue(`items.${idx}.description`, "");
+    setFieldValue(`items.${idx}.product_description`, "");
     setSelectedIndex(-1);
 
     if (value.trim()) {
@@ -58,34 +88,80 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       <Field name={`items.${idx}.product`}>
         {({ field, meta }) => (
           <div>
-            <input
-              {...field}
-              value={inputValue}
-              onChange={handleInputChange}
-              placeholder="Product name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all text-sm"
-              autoComplete="off"
-            />
+            <div className="relative">
+              <input
+                {...field}
+                value={inputValue}
+                onChange={handleInputChange}
+                placeholder="Product name"
+                className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all text-sm ${!descExpanded && !hasDescription ? "!pr-7" : ""}`}
+                autoComplete="off"
+              />
+              {!descExpanded && !hasDescription && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  title="Add note"
+                  aria-label="Add note"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setDescExpanded(true);
+                    setFocusDesc(true);
+                  }}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm leading-none px-1"
+                >
+                  +
+                </button>
+              )}
+            </div>
+            {(descExpanded || hasDescription) && (
+              <textarea
+                ref={descRef}
+                rows={1}
+                value={descValue}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFieldValue(`items.${idx}.description`, val);
+                  setFieldValue(`items.${idx}.product_description`, val);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                }}
+                onFocus={(e) => {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                }}
+                onBlur={(e) => {
+                  if (!e.target.value.trim()) setDescExpanded(false);
+                }}
+                placeholder="Enter a description / note..."
+                className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:bg-[var(--bg-primary)] rounded px-1.5 py-0.5 text-[var(--text-muted)] placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic mt-1"
+              />
+            )}
             {meta.touched && meta.error && (
-              <div className="text-red-400 text-xs mt-1">{meta.error}</div>
+              <div className="text-[var(--text-primary)] text-xs mt-1">{meta.error}</div>
+            )}
+            {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
+              <div className="text-xs text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
+                ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
+              </div>
             )}
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+        <div className="absolute z-50 mt-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
           {filteredProducts.map((product, index) => (
             <div
               key={product.id}
-              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
+              className={`px-4 py-3 cursor-pointer text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors ${
                 index === selectedIndex 
-                  ? 'bg-cyan-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-[var(--bg-primary)] text-[var(--accent-primary)] font-bold' 
+                  : 'text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
               }`}
               onClick={() => selectProduct(product)}
             >
               <div className="font-medium">{product.name}</div>
-              <div className="text-gray-500 text-xs mt-0.5">
+              <div className="text-[var(--text-muted)] text-xs mt-0.5">
                 Unit: {product.unit} | Price: {getCurrencySymbol()}{product.purchase_price ?? product.price}
               </div>
             </div>
@@ -102,6 +178,9 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.vendor_name || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [showNewVendorModal, setShowNewVendorModal] = useState(false);
+  const [isCreatingVendor, setIsCreatingVendor] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setInputValue(values.vendor_name || "");
@@ -127,7 +206,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
         v.name?.toLowerCase().includes(value.toLowerCase())
       );
       setFilteredVendors(filtered);
-      setShowDropdown(filtered.length > 0);
+      setShowDropdown(true);
     } else {
       setShowDropdown(false);
     }
@@ -149,38 +228,83 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
                 }
               }}
               placeholder="Vendor name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
             />
             {meta.touched && meta.error && (
-              <div className="text-red-400 text-sm mt-1">{meta.error}</div>
+              <div className="text-[var(--text-primary)] text-sm mt-1">{meta.error}</div>
             )}
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+        <div className="absolute z-50 mt-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
           {filteredVendors.slice(0, 50).map((vendor, index) => (
             <div
               key={vendor.id}
-              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
+              className={`px-4 py-3 cursor-pointer text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors ${
                 index === selectedIndex
-                  ? 'bg-cyan-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-[var(--bg-primary)] text-[var(--accent-primary)] font-bold' 
+                  : 'text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
               }`}
               onClick={() => selectVendor(vendor)}
             >
               <div className="font-medium">{vendor.name}</div>
-              <div className="text-gray-500 text-xs mt-0.5">
+              <div className="text-[var(--text-muted)] text-xs mt-0.5">
                 {vendor.email && `${vendor.email} | `}
                 {vendor.address} {vendor.gstin && `| GSTIN: ${vendor.gstin}`}
               </div>
             </div>
           ))}
-          {filteredVendors.length === 0 && (
-            <div className="px-4 py-2 text-xs text-gray-500 text-center italic border-t border-white/5">
-              No matching vendors found.
+          {inputValue.trim() && !(vendors || []).some((v) => v.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()) && (
+            <div
+              className="px-4 py-3 cursor-pointer text-sm border-t border-[var(--border-subtle)] text-[var(--accent-primary)] font-medium hover:bg-[var(--bg-primary)]"
+              onClick={() => {
+                setShowNewVendorModal(true);
+                setShowDropdown(false);
+              }}
+            >
+              ➕ Add New Vendor: "{inputValue}"
             </div>
           )}
+        </div>
+      )}
+      {showNewVendorModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70" onClick={() => setShowNewVendorModal(false)}></div>
+          <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5">
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Add New Vendor</h3>
+            <input type="text" defaultValue={inputValue} id="po-new-vendor-name" className="w-full mb-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)]" placeholder="Vendor name" />
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setShowNewVendorModal(false)} className="btn-secondary px-4 py-2 text-sm">Cancel</button>
+              <button
+                type="button"
+                disabled={isCreatingVendor}
+                onClick={async () => {
+                  const name = document.getElementById('po-new-vendor-name')?.value?.trim();
+                  if (!name) {
+                    toast.error('Vendor name is required');
+                    return;
+                  }
+                  setIsCreatingVendor(true);
+                  try {
+                    const created = await createVendor({ name });
+                    const vendor = created?.data || created;
+                    queryClient.invalidateQueries({ queryKey: ["vendors"] });
+                    toast.success(`Vendor "${vendor.name || name}" added`);
+                    selectVendor(vendor);
+                    setShowNewVendorModal(false);
+                  } catch (err) {
+                    toast.error(formatErrorMessage(err, "Failed to create vendor"));
+                  } finally {
+                    setIsCreatingVendor(false);
+                  }
+                }}
+                className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {isCreatingVendor ? "Adding..." : "Add Vendor"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -189,7 +313,7 @@ function VendorAutocomplete({ values, setFieldValue, vendors }) {
 
 const PurchaseOrderSchema = Yup.object().shape({
   vendor_name: Yup.string().required("Vendor name is required"),
-  po_number: Yup.string().required("PO number is required"),
+  po_number: Yup.string(),
   expected_date: Yup.string().required("Expected date is required"),
   items: Yup.array().of(
     Yup.object().shape({
@@ -206,6 +330,8 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
   const queryClient = useQueryClient();
   const isEdit = !!editData;
   const submitLockRef = useRef(false);
+  const [showManufacturer, setShowManufacturer] = useState(true);
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
   
   const { data: productsResult } = useQuery({ 
       queryKey: ["products"], 
@@ -255,18 +381,18 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-cyan-900/20 animate-fade-up border border-white/10 bg-[#111]">
-        <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl animate-fade-up border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+        <div className="flex justify-between items-center p-8 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
           <div>
-            <h2 className="text-xl font-bold text-white mb-1">
+            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1">
               {isEdit ? "Edit Purchase Order" : "New Purchase Order"}
             </h2>
-             <p className="text-xs text-gray-400">
+             <p className="text-xs text-[var(--text-muted)]">
                Create a new purchase order for a vendor.
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10">
+          <button onClick={onClose} className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors">
            <span className="text-2xl">×</span>
           </button>
         </div>
@@ -275,45 +401,77 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
           initialValues={{
             vendor_id: editData?.vendor?.id || editData?.vendor || null,
             vendor_name: editData?.vendor_display_name || editData?.vendor_name || "",
-            po_number: editData?.po_number || `PO-${Date.now()}`,
+            po_number: editData?.po_number || "",
             expected_date: editData?.expected_date || new Date().toLocaleDateString('sv-SE'),
             notes: editData?.notes || "",
             
             items: editData?.items?.map(item => ({
+              id: item.id,
+              source_item_id: item.source_item_id || null,
               product: item.product_display_name || item.product_name || item.product || "",
               product_id: item.product || null,
+              manufacturer: item.manufacturer || item.product_detail?.manufacturer || "",
+              description: item.description || item.product_description || "",
+              product_description: item.description || item.product_description || "",
               quantity: item.quantity || 1,
               price: item.price || 0,
+              tax: item.tax ?? 0,
               amount: item.amount || (item.quantity * item.price) || 0,
               unit: item.unit || "pcs",
               isExistingProduct: !!(item.product),
             })) || [{
               product: "",
               product_id: null,
+              manufacturer: "",
+              description: "",
+              product_description: "",
               quantity: 1,
               price: 0,
+              tax: 0,
               amount: 0,
               unit: "pcs",
               isExistingProduct: false,
             }]
           }}
           validationSchema={PurchaseOrderSchema}
-          onSubmit={async (values, { setSubmitting }) => {
+          onSubmit={async (values, { setSubmitting, setFieldError }) => {
             if (submitLockRef.current || createMutation.isPending || updateMutation.isPending) {
+              return;
+            }
+            const vendorNameTrimmed = (values.vendor_name || '').trim().toLowerCase();
+            const isSavedVendorInDb = Boolean(
+              values.vendor_id ||
+              (vendors || []).some((v) => v.id && (v.name || '').trim().toLowerCase() === vendorNameTrimmed)
+            );
+            if (!isSavedVendorInDb) {
+              setFieldError('vendor_name', 'Save this vendor first before creating a bill or purchase order.');
+              toast.error('Save this vendor first before creating a bill or purchase order.');
+              setSubmitting(false);
               return;
             }
             submitLockRef.current = true;
             try {
-               const processedItems = values.items.map(item => ({
+               const processedItems = values.items.map(item => {
+                  const qty = Math.max(1, Number(item.quantity) || 1);
+                  const price = Number(item.price) || 0;
+                  const tax = Number(item.tax) || 0;
+                  const taxable = qty * price;
+                  const amount = Number((taxable + (taxable * tax) / 100).toFixed(2));
+                  return {
+                  ...(item.id ? { id: item.id } : {}),
+                  ...(item.source_item_id ? { source_item_id: item.source_item_id } : {}),
                   product: item.product_id, // PrimaryKeyRelatedField expects ID
                   product_name: item.product,
-                  quantity: Math.max(1, Number(item.quantity) || 1),
-                  price: Number(item.price),
-                  amount: Number(item.amount),
+                  description: (item.description || item.product_description || "").trim(),
+                  product_description: (item.description || item.product_description || "").trim(),
+                  quantity: qty,
+                  price: price,
+                  amount: amount,
                   unit: item.unit,
                   discount: 0,
-                  tax: 0,
-               }));
+                  tax: tax,
+               };
+               });
                
                const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
 
@@ -346,17 +504,46 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                      {/* Header */}
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Vendor *</label>
+                           <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase">Vendor *</label>
                            <VendorAutocomplete values={values} setFieldValue={setFieldValue} vendors={vendors} />
                         </div>
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">PO Number</label>
-                           <Field name="po_number" className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white" />
+                           <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase">PO Number</label>
+                           <Field name="po_number" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)]" />
                         </div>
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Expected Date</label>
-                           <Field name="expected_date" type="date" className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white [color-scheme:dark]" />
+                           <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase">Expected Date</label>
+                           <Field name="expected_date" type="date" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)]" />
                         </div>
+                   </div>
+
+                   {/* Items Header */}
+                   <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+                     <h3 className="text-base font-bold text-[var(--text-primary)]">Order Items</h3>
+                     <div className="relative">
+                       <button
+                         type="button"
+                         onClick={() => setShowColumnPicker((prev) => !prev)}
+                         className="px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-primary)] text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                       >
+                         Columns
+                       </button>
+
+                       {showColumnPicker && (
+                         <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 shadow-2xl">
+                           <div className="mb-2 text-xs uppercase tracking-wide text-[var(--text-muted)]">Show/Hide Columns</div>
+                           <label className="flex items-center gap-2 py-1 text-sm text-[var(--text-primary)] cursor-pointer">
+                             <input
+                               type="checkbox"
+                               checked={showManufacturer}
+                               onChange={() => setShowManufacturer((prev) => !prev)}
+                               className="h-3.5 w-3.5 rounded border-[var(--border-subtle)] bg-transparent text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]"
+                             />
+                             <span>Manufacturer</span>
+                           </label>
+                         </div>
+                       )}
+                     </div>
                    </div>
 
                    {/* Items */}
@@ -364,62 +551,81 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                     {({ push, remove }) => (
                         <div className="space-y-4">
                             {values.items.map((item, index) => (
-                                <div key={index} className="grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-xl border border-white/5">
+                                <div key={index} className="grid grid-cols-12 items-end bg-[var(--bg-primary)] py-2 rounded-xl border border-[var(--border-subtle)] [&>div]:border-r [&>div]:border-[var(--border-subtle)] [&>div:last-child]:border-r-0 [&>div]:px-2">
                                     <div className="col-span-4">
-                                        <label className="block text-xs text-gray-400 mb-1">Product</label>
-                                        <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
+                                        <label className="block text-xs text-[var(--text-muted)] mb-1 text-center">Product</label>
+                                        <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} showManufacturer={showManufacturer} />
                                     </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-xs text-gray-400 mb-1">Qty</label>
-                                        <Field name={`items.${index}.quantity`} type="number" min="1" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white" 
+                                    <div className="col-span-1">
+                                        <label className="block text-xs text-[var(--text-muted)] mb-1 text-center">Qty</label>
+                                        <Field name={`items.${index}.quantity`} type="number" min="1" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-center text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)]" 
                                             onChange={e => {
                                             const qty = Math.max(1, Number(e.target.value) || 1);
+                                            const price = Number(values.items[index].price || 0);
+                                            const tax = Number(values.items[index].tax || 0);
+                                            const taxable = qty * price;
                                                 setFieldValue(`items.${index}.quantity`, qty);
-                                                setFieldValue(`items.${index}.amount`, qty * (values.items[index].price || 0));
+                                                setFieldValue(`items.${index}.amount`, taxable + (taxable * tax) / 100);
                                             }}
                                         />
                                     </div>
                                     <div className="col-span-2">
-                                        <label className="block text-xs text-gray-400 mb-1">Price</label>
-                                        <Field name={`items.${index}.price`} type="number" className="w-full bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-white"
+                                        <label className="block text-xs text-[var(--text-muted)] mb-1 text-center">Price</label>
+                                        <Field name={`items.${index}.price`} type="number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-center text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)]"
                                             onChange={e => {
-                                                const price = e.target.value;
+                                                const price = Number(e.target.value) || 0;
+                                                const qty = Number(values.items[index].quantity || 0);
+                                                const tax = Number(values.items[index].tax || 0);
+                                                const taxable = qty * price;
                                                 setFieldValue(`items.${index}.price`, price);
-                                                setFieldValue(`items.${index}.amount`, (values.items[index].quantity || 0) * price);
+                                                setFieldValue(`items.${index}.amount`, taxable + (taxable * tax) / 100);
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="col-span-1">
+                                        <label className="block text-xs text-[var(--text-muted)] mb-1 text-center">GST %</label>
+                                        <Field name={`items.${index}.tax`} type="number" min="0" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-center text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)]"
+                                            onChange={e => {
+                                                const tax = Number(e.target.value) || 0;
+                                                const qty = Number(values.items[index].quantity || 0);
+                                                const price = Number(values.items[index].price || 0);
+                                                const taxable = qty * price;
+                                                setFieldValue(`items.${index}.tax`, tax);
+                                                setFieldValue(`items.${index}.amount`, taxable + (taxable * tax) / 100);
                                             }}
                                         />
                                     </div>
                                     <div className="col-span-2">
-                                        <label className="block text-xs text-gray-400 mb-1">Amount</label>
-                                        <div className="px-3 py-2 text-white font-mono bg-[#111]/50 border border-white/5 rounded-lg">
+                                        <label className="block text-xs text-[var(--text-muted)] mb-1 text-right">Amount</label>
+                                        <div className="px-3 py-2 text-right text-[var(--text-primary)] font-mono bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg">
                                             {Number(values.items[index].amount || 0).toFixed(2)}
                                         </div>
                                     </div>
                                     <div className="col-span-2 flex justify-end">
-                                        <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-300 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
+                                        <button type="button" onClick={() => remove(index)} className="btn-secondary text-xs px-3 py-2 rounded-lg transition-colors">
                                             Remove
                                         </button>
                                     </div>
                                 </div>
                             ))}
-                            <button type="button" onClick={() => push({ product: "", quantity: 1, price: 0, amount: 0, unit: "pcs" })} className="text-cyan-400 hover:text-cyan-300 text-sm font-medium mt-2">
+                            <button type="button" onClick={() => push({ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: 1, price: 0, tax: 0, amount: 0, unit: "pcs", isExistingProduct: false })} className="text-[var(--accent-primary)] hover:underline text-sm font-medium mt-2">
                                 + Add Item
                             </button>
                         </div>
                     )}
                    </FieldArray>
 
-                   <div className="pt-4 border-t border-white/10">
-                     <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Notes</label>
-                     <Field name="notes" as="textarea" rows="2" className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white" placeholder="Optional notes for this purchase order..." />
+                   <div className="pt-4 border-t border-[var(--border-subtle)]">
+                     <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase">Notes</label>
+                     <Field name="notes" as="textarea" rows="2" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)]" placeholder="Optional notes for this purchase order..." />
                    </div>
 
                    {/* Footer Actions */}
-                   <div className="flex justify-between items-center pt-6 border-t border-white/10">
-                        <div className="text-xl font-bold text-white">
+                   <div className="flex justify-between items-center pt-6 border-t border-[var(--border-subtle)]">
+                        <div className="text-xl font-bold text-[var(--text-primary)]">
                           Total: {getCurrencySymbol()}{values.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0).toFixed(2)}
                         </div>
-                        <button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending} className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50">
+                        <button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending} className="btn-primary px-8 py-3 rounded-xl font-semibold transition-all shadow-lg disabled:opacity-50">
                           {(isSubmitting || createMutation.isPending || updateMutation.isPending) ? "Saving..." : "Save Purchase Order"}
                         </button>
                    </div>

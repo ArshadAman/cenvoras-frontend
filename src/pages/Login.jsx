@@ -4,14 +4,15 @@ import * as Yup from 'yup';
 import api from '../api/api.js';
 import Loader from '../components/Loader';
 import { Link } from 'react-router-dom';
-import { ArrowRightIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, ShieldCheckIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import Seo from '../components/Seo';
+import AuthPrismCanvas from '../components/3d/AuthPrismCanvas';
+import BrandLogo from '../components/common/BrandLogo';
 
 const LoginSchema = Yup.object().shape({
-  username: Yup.string().required('Required'),
-  password: Yup.string().min(6, 'Too short!').required('Required'),
+  username: Yup.string().required('Please enter your email address'),
+  password: Yup.string().min(6, 'Password must be at least 6 characters').required('Please enter your password'),
 });
-
 
 export default function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
@@ -29,11 +30,11 @@ export default function Login({ onLogin }) {
         window.google.accounts.id.renderButton(
           document.getElementById("googleSignInDiv"),
           { 
-            theme: "filled_blue", 
+            theme: "outline", 
             size: "large", 
             width: "100%",
             text: "signin_with",
-            shape: "pill"
+            shape: "rectangular"
           }
         );
       } else {
@@ -65,193 +66,231 @@ export default function Login({ onLogin }) {
 
         if (onLogin) onLogin(false);
       } else {
-        setGoogleError('Failed to login with Google: No token received');
+        setGoogleError('Could not log in with Google. Please try again.');
       }
     } catch (err) {
       console.error(err);
-      setGoogleError(err?.response?.data?.error || 'Google Sign-in failed. Please try again.');
+      setGoogleError(err?.response?.data?.error || 'Google sign-in failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white font-sans flex overflow-hidden">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-body flex flex-col justify-between">
       <Seo
-        title="Login"
-        description="Sign in to Cenvora to access billing, inventory, GST, and reporting tools."
+        title="Sign In | Cenvora"
+        description="Sign in to your Cenvora account to manage invoices, stock, and customer ledgers."
         canonicalPath="/login"
         noindex
       />
       {loading && <Loader />}
-      
-      {/* Left Side - Visual & Testimonial (Hidden on Mobile) */}
-      <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 bg-[#020617] overflow-hidden">
-        {/* Abstract Background Mesh */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-cyan-900/20 via-[#0f172a] to-blue-900/20"></div>
-          <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-cyan-500/10 rounded-full blur-[120px] animate-pulse-slow"></div>
-          <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] bg-blue-600/10 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
-          {/* Grid Pattern Overlay */}
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-        </div>
 
-        {/* Brand Logo */}
-        <Link to="/" className="relative z-10 flex items-center hover:opacity-90 transition-opacity">
-          <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain" />
-        </Link>
+      <div className="flex-1 flex w-full">
+        {/* Left Side: 50% Interactive 3D Showcase Panel (Desktop Only) */}
+        <div className="hidden lg:flex lg:w-1/2 relative bg-[var(--bg-surface)] border-r border-[var(--border-subtle)] p-12 flex-col justify-between overflow-hidden">
+          {/* Ambient Lighting */}
+          <div className="absolute -top-32 -left-32 w-96 h-96 bg-[var(--accent-primary)]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[var(--accent-primary)]/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Testimonial / Value Prop */}
-        <div className="relative z-10 max-w-lg">
-          <h2 className="text-3xl font-bold leading-relaxed mb-6 font-light italic text-slate-300">
-            "Calculations used to take hours, especially with CGST/SGST splitting. With Cenvora, my staff can raise GST bills in seconds and manage stock from one screen. It saved us at least 15 hours a week."
-          </h2>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-cyan-500/20">
-              RM
-            </div>
-            <div>
-              <p className="font-semibold text-white">Rajesh K. Mehta</p>
-              <p className="text-slate-400 text-sm">Managing Director, Mehta Traders</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Links */}
-        <div className="relative z-10 flex gap-6 text-sm text-slate-500">
-          <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-          <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-        </div>
-      </div>
-
-      {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-[#0f172a] relative">
-        {/* Mobile Navbar (Only visible on mobile) */}
-        <nav className="absolute top-0 left-0 w-full p-6 lg:hidden flex justify-between items-center z-20">
-          <Link to="/" className="flex items-center">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
-          </Link>
-        </nav>
-
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-white tracking-tight">Welcome back</h2>
-            <p className="mt-2 text-slate-400">
-              Please enter your details to sign in.
-            </p>
-          </div>
-
-          <Formik
-            initialValues={{ username: '', password: '', rememberMe: false }}
-            validationSchema={LoginSchema}
-            onSubmit={async (values, { setSubmitting, setFieldError }) => {
-              setLoading(true);
-              try {
-                const payload = {
-                  username: values.username,
-                  password: values.password,
-                };
-                const response = await api.post('/users/login/', payload);
-                const token = response.data.token || response.data.access;
-                if (token) {
-                  localStorage.setItem('token', token);
-                  localStorage.setItem('refresh', response.data.refresh);
-                  
-                  // Extract and store role for easy access
-                  try {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    localStorage.setItem('role', payload.role || 'admin'); // Default to admin if missing
-                  } catch (e) {
-                    console.error("Failed to parse token", e);
-                  }
-
-                  if (onLogin) onLogin(values.rememberMe);
-                } else {
-                  setFieldError('username', 'No token received');
-                }
-              } catch {
-                setFieldError('username', 'Invalid credentials');
-              }
-              setLoading(false);
-              setSubmitting(false);
-            }}
-          >
-            {({ isSubmitting }) => (
-              <Form className="mt-8 space-y-6">
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Email Address</label>
-                    <Field
-                      type="text"
-                      name="username"
-                      className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                      placeholder="Enter your email address"
-                    />
-                    <ErrorMessage name="username" component="div" className="text-red-400 text-xs mt-1" />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
-                    <div className="relative">
-                      <Field
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                        placeholder="Enter your password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors text-sm font-medium"
-                      >
-                        {showPassword ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
-                    <ErrorMessage name="password" component="div" className="text-red-400 text-xs mt-1" />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <Field type="checkbox" name="rememberMe" className="w-4 h-4 rounded border-slate-600 bg-[#1e293b] text-cyan-500 focus:ring-cyan-500 focus:ring-offset-0" />
-                    <span className="text-slate-400 group-hover:text-slate-300 transition-colors">Remember me</span>
-                  </label>
-                  <Link to="/forgot-password" className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors">Forgot password?</Link>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3.5 bg-cyan-600 hover:bg-cyan-500 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? 'Signing in...' : 'Sign in'}
-                  {!isSubmitting && <ArrowRightIcon className="w-5 h-5" />}
-                </button>
-
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-800"></div>
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-[#0f172a] px-2 text-slate-400 font-medium">Or continue with</span>
-                  </div>
-                </div>
-
-                {googleError && (
-                  <div className="text-red-400 text-xs text-center font-medium mt-2">{googleError}</div>
-                )}
-
-                <div id="googleSignInDiv" className="w-full flex justify-center min-h-[44px]"></div>
-              </Form>
-            )}
-          </Formik>
-
-          <p className="text-center text-sm text-slate-400">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-cyan-400 font-bold hover:text-cyan-300 transition-colors">
-              Sign up for free
+          {/* Top Brand Tagline */}
+          <div className="relative z-10">
+            <Link to="/" className="inline-flex items-center gap-2 hover:opacity-90 transition-opacity">
+              <BrandLogo className="h-12 sm:h-14 w-auto" />
             </Link>
-          </p>
+            <div className="mt-8">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--accent-primary)] text-xs font-semibold mb-3">
+                <ShieldCheckIcon className="w-4 h-4 text-[var(--accent-primary)]" />
+                GST-Ready Business Cloud
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight leading-snug font-display">
+                Accelerate your daily billing, stock, and customer accounts.
+              </h2>
+            </div>
+          </div>
+
+          {/* Center 3D Interactive Canvas */}
+          <div className="relative z-10 my-4 flex items-center justify-center">
+            <AuthPrismCanvas />
+          </div>
+
+          {/* Bottom Trust Indicators */}
+          <div className="relative z-10 border-t border-[var(--border-subtle)] pt-6">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
+                <div className="text-lg font-bold text-[var(--text-primary)] font-mono">₹1.2M+</div>
+                <div className="text-xs text-[var(--text-muted)] mt-0.5">Daily Invoiced</div>
+              </div>
+              <div className="p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
+                <div className="text-lg font-bold text-[var(--status-success)] font-mono">99.98%</div>
+                <div className="text-xs text-[var(--text-muted)] mt-0.5">Uptime SLA</div>
+              </div>
+              <div className="p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
+                <div className="text-lg font-bold text-[var(--accent-primary)] font-mono">100%</div>
+                <div className="text-xs text-[var(--text-muted)] mt-0.5">GST Compliant</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Auth Form */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative">
+          <div className="w-full max-w-md">
+            {/* Mobile Header */}
+            <div className="lg:hidden text-center mb-8">
+              <Link to="/" className="inline-block hover:opacity-90 transition-opacity mb-4">
+                <BrandLogo className="h-10 sm:h-11 w-auto mx-auto" />
+              </Link>
+              <h2 className="text-xl font-bold text-[var(--text-primary)] font-display">Sign in to Cenvora</h2>
+            </div>
+
+            {/* Auth Glass Card */}
+            <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+              <div className="mb-6">
+                <h1 className="text-2xl font-extrabold text-[var(--text-primary)] tracking-tight font-display">Welcome back</h1>
+                <p className="text-xs text-[var(--text-muted)] mt-1.5">Sign in to your account to access your workspace</p>
+              </div>
+
+              <Formik
+                initialValues={{ username: '', password: '', rememberMe: false }}
+                validationSchema={LoginSchema}
+                onSubmit={async (values, { setSubmitting, setFieldError }) => {
+                  setLoading(true);
+                  try {
+                    const payload = {
+                      username: values.username,
+                      password: values.password,
+                    };
+                    const response = await api.post('/users/login/', payload);
+                    const token = response.data.token || response.data.access;
+                    if (token) {
+                      localStorage.setItem('token', token);
+                      localStorage.setItem('refresh', response.data.refresh);
+                      
+                      try {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        localStorage.setItem('role', payload.role || 'admin');
+                      } catch (e) {
+                        console.error("Failed to parse token", e);
+                      }
+
+                      if (onLogin) onLogin(values.rememberMe);
+                    } else {
+                      setFieldError('username', 'No login token received.');
+                    }
+                  } catch {
+                    setFieldError('username', 'Invalid email or password. Please try again.');
+                  }
+                  setLoading(false);
+                  setSubmitting(false);
+                }}
+              >
+                {({ isSubmitting }) => (
+                  <Form className="space-y-4">
+                    <div>
+                      <label className="form-label">
+                        Email Address
+                      </label>
+                      <Field
+                        type="email"
+                        name="username"
+                        className="form-input"
+                        placeholder="name@company.com"
+                      />
+                      <ErrorMessage name="username" component="div" className="form-error" />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="form-label !mb-0">
+                          Password
+                        </label>
+                        <Link to="/forgot-password" className="text-xs text-[var(--accent-primary)] hover:underline transition-colors font-medium">
+                          Forgot password?
+                        </Link>
+                      </div>
+                      <div className="relative">
+                        <Field
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          className="form-input pr-16"
+                          placeholder="••••••••"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1"
+                        >
+                          {showPassword ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                      <ErrorMessage name="password" component="div" className="form-error" />
+                    </div>
+
+                    <div className="flex items-center text-xs text-[var(--text-muted)] pt-1">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <Field 
+                          type="checkbox" 
+                          name="rememberMe" 
+                          className="w-4 h-4 rounded border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--accent-primary)] focus:ring-0" 
+                        />
+                        <span>Remember me on this device</span>
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full mt-2 py-3 btn-primary font-bold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          <span>Signing in...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Sign In</span>
+                          <ArrowRightIcon className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </button>
+
+                    <div className="relative my-5">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-[var(--border-subtle)]"></div>
+                      </div>
+                      <div className="relative flex justify-center text-xs text-[var(--text-muted)] font-medium">
+                        <span className="bg-[var(--bg-surface)] px-3">or continue with</span>
+                      </div>
+                    </div>
+
+                    {googleError && (
+                      <div className="text-[var(--status-danger)] text-xs text-center">{googleError}</div>
+                    )}
+
+                    <div id="googleSignInDiv" className="w-full flex justify-center min-h-[40px]"></div>
+                  </Form>
+                )}
+              </Formik>
+
+              <div className="mt-8 pt-6 border-t border-[var(--border-subtle)] text-center text-xs text-[var(--text-muted)]">
+                Don't have an account?{' '}
+                <Link to="/signup" className="text-[var(--text-primary)] font-semibold hover:text-[var(--accent-primary)] transition-colors">
+                  Start 14-day free trial
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-8 text-center text-xs text-[var(--text-muted)]">
+              <Link to="/" className="hover:text-[var(--text-primary)] transition-colors">
+                &larr; Back to Cenvora homepage
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

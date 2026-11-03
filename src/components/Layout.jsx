@@ -1,8 +1,10 @@
+import { canAccessModule } from '../utils/modulePermissions';
 import React, { useState, useEffect } from "react";
 import ErrorBoundary from './ErrorBoundary'
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
 import { getUserProfile } from '../api/users';
+import GstStatusConfirmBanner from './GstStatusConfirmBanner';
 import { getSubscriptionEntitlements } from '../api/subscription';
 import UpgradePromptModal from './subscription/UpgradePromptModal';
 import { getCountryCode } from '../utils/currency';
@@ -25,6 +27,7 @@ import {
   ArrowUturnRightIcon,
   ReceiptPercentIcon,
   BuildingLibraryIcon,
+  ScaleIcon,
   ShieldCheckIcon,
   ChatBubbleLeftRightIcon,
   BuildingOfficeIcon,
@@ -33,12 +36,89 @@ import {
   CalendarDaysIcon,
   FolderIcon,
   AdjustmentsHorizontalIcon,
+  GiftIcon,
+  TruckIcon,
+  ChevronDownIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
+  ArrowRightOnRectangleIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 import OnboardingWizard from './OnboardingWizard';
+import CommandPalette from './common/CommandPalette';
+import ThemeToggle from './common/ThemeToggle';
+import BrandLogo from './common/BrandLogo';
 
 export default function Layout({ children, onLogout }) {
   const location = useLocation();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("sidebar_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sidebar_collapsed", String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // Keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) {
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // Keyboard shortcut Ctrl+K or Cmd+K to toggle Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const [collapsedSections, setCollapsedSections] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sidebar_collapsed_sections");
+      const parsed = saved ? JSON.parse(saved) : {};
+      return (parsed && typeof parsed === 'object') ? parsed : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const toggleSection = (title) => {
+    setCollapsedSections((prev) => {
+      const safePrev = (prev && typeof prev === 'object') ? prev : {};
+      const updated = { ...safePrev, [title]: !safePrev[title] };
+      try {
+        localStorage.setItem("sidebar_collapsed_sections", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
   const handleSignOut = () => {
     if (onLogout) {
       onLogout();
@@ -121,6 +201,7 @@ export default function Layout({ children, onLogout }) {
         { path: "/sales", label: "Sales Invoices", icon: CurrencyRupeeIcon, roles: [] },
         { path: "/quotations", label: "Quotations", icon: DocumentTextIcon, roles: [], upgradePlan: 'Pro', upgradeText: 'Quotations are available on Pro and above.' },
         { path: "/sales-orders", label: "Sales Orders", icon: ShoppingBagIcon, roles: [] },
+        { path: "/delivery-challans", label: "Delivery Challans", icon: TruckIcon, roles: [] },
         { path: "/credit-notes", label: "Credit Notes", icon: ArrowUturnLeftIcon, roles: [] },
         { path: "/warranty", label: "Warranty", icon: ShieldCheckIcon, roles: [] },
         { path: "/customers", label: "Customers", icon: UsersIcon, roles: [] },
@@ -132,6 +213,7 @@ export default function Layout({ children, onLogout }) {
       items: [
         { path: "/purchase", label: "Purchase Bills", icon: ShoppingBagIcon, roles: [] },
         { path: "/purchase-orders", label: "Purchase Orders", icon: BuildingLibraryIcon, roles: [] },
+        { path: "/vendor-payments", label: "Vendor Payments", icon: BuildingLibraryIcon, roles: [] },
         { path: "/debit-notes", label: "Debit Notes", icon: ArrowUturnRightIcon, roles: [] },
       ]
     },
@@ -141,6 +223,8 @@ export default function Layout({ children, onLogout }) {
         { path: "/inventory", label: "Inventory", icon: CubeIcon, roles: [] },
         { path: "/stock-journals", label: "Stock Journals", icon: ClipboardDocumentListIcon, roles: [] },
         { path: "/warehouses", label: "Warehouses", icon: CubeIcon, roles: [], featureKey: 'warehouse', upgradePlan: 'Business', upgradeText: 'Warehouses are available on the Business plan.' },
+        { path: "/boms", label: "Bill of Materials", icon: ClipboardDocumentListIcon, roles: [] },
+        { path: "/inventory/barcodes", label: "Barcodes", icon: CubeIcon, roles: [] },
       ]
     },
     {
@@ -148,6 +232,7 @@ export default function Layout({ children, onLogout }) {
       items: [
         { path: "/payments", label: "Payments", icon: BanknotesIcon, roles: [] },
         { path: "/ledger", label: "Ledger", icon: BookOpenIcon, roles: [] },
+        { path: "/reports/trial-balance", label: "Trial Balance", icon: ScaleIcon, roles: [] },
         { path: "/reports", label: "Reports", icon: ChartBarIcon, roles: [] },
         { path: "/gst", label: country === 'IN' ? "GST Dashboard" : "Tax & VAT", icon: ReceiptPercentIcon, roles: [] },
         { path: "/gst-hsn-guide", label: country === 'IN' ? "HSN & GST Guide" : "Tax Codes Guide", icon: BookOpenIcon, roles: [] },
@@ -161,7 +246,7 @@ export default function Layout({ children, onLogout }) {
         { path: "/hr/payroll", label: "Payroll", icon: CurrencyRupeeIcon, roles: [] },
         { path: "/hr/attendance", label: "Attendance", icon: ClockIcon, roles: [] },
         { path: "/hr/leave-applications", label: "Leave", icon: CalendarDaysIcon, roles: [] },
-        { path: "/hr/advances-loans", label: "Advances & Loans", icon: BanknotesIcon, roles: [] },
+        { path: "/hr/allowances-bonuses", label: "Allowances & Bonus", icon: GiftIcon, roles: [] },
         { path: "/hr/documents", label: "Documents", icon: FolderIcon, roles: [] },
         { path: "/hr/reports", label: "Reports", icon: BookOpenIcon, roles: [] },
         { path: "/hr/settings", label: "Settings", icon: AdjustmentsHorizontalIcon, roles: [] }
@@ -203,7 +288,7 @@ export default function Layout({ children, onLogout }) {
     }
   }, [isProfileIncomplete]);
 
-  const { data: subscriptionData } = useQuery({
+  const { data: subscriptionData, isLoading: entitlementsLoading, isFetched: entitlementsFetched } = useQuery({
     queryKey: ['subscription-entitlements'],
     queryFn: getSubscriptionEntitlements,
     enabled: !!role,
@@ -214,9 +299,22 @@ export default function Layout({ children, onLogout }) {
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
   const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
-  const currentPlanCode = (entitlements.plan?.code || profileData?.profile?.plan_code || 'free').toLowerCase();
-  const isVipAccess = String(currentPlanName).toLowerCase().includes('vip');
-  const isFreePlan = currentPlanCode === 'free' || currentPlanCode === 'starter';
+  // Prefer profile plan while entitlements load — never flash "locked on Free" for paid tenants
+  const currentPlanCode = (
+    entitlements.plan?.code
+    || profileData?.profile?.plan_code
+    || (entitlementsFetched ? 'free' : '')
+  ).toLowerCase();
+  const isVipAccess = Boolean(
+    entitlements.is_vip
+    || entitlements.plan?.is_vip
+    || String(currentPlanName).toLowerCase().includes('vip')
+  );
+  const displayPlanName = isVipAccess ? 'VIP Lifetime' : currentPlanName;
+  // R21: no plan badge until the subscription has loaded (avoids a STARTER -> VIP flash).
+  const planBadgeReady = Boolean(entitlementsFetched);
+  const isFreePlan = Boolean(currentPlanCode) && (currentPlanCode === 'free' || currentPlanCode === 'starter');
+  const showFreeLock = isFreePlan && !entitlementsLoading && (entitlementsFetched || Boolean(profileData?.profile?.plan_code));
   const pendingPlanStartsAt = entitlements.plan?.pending_plan_starts_at;
   const nextPlanCode = (entitlements.plan?.pending_plan_code || entitlements.plan?.next_plan_code || '').toLowerCase();
   const currentPeriodEnd = entitlements.plan?.current_period_end;
@@ -254,6 +352,21 @@ export default function Layout({ children, onLogout }) {
     return false;
   };
 
+  // Sidebar groups → the module key the route guard checks (same check, UAT P1 #11).
+  const GROUP_MODULE = {
+    'Sales & Trade': 'sales',
+    'Purchasing': 'purchases',
+    'Inventory & Logistics': 'inventory',
+    'Financials': 'financials',
+    'HRMS': 'hr',
+  };
+  const profileLoaded = role === 'admin' || Boolean(profileData?.profile);
+  const groupHiddenByPermission = (groupTitle) => {
+    const moduleKey = GROUP_MODULE[groupTitle];
+    if (!moduleKey || !profileLoaded) return false;
+    return !canAccessModule(role, permissions, moduleKey);
+  };
+
   const getManagerModulePermission = (groupTitle) => {
     if (groupTitle === 'Sales & Trade') return permissions.sales;
     if (groupTitle === 'Purchasing') return permissions.purchases;
@@ -276,12 +389,14 @@ export default function Layout({ children, onLogout }) {
     };
   };
 
-  // Filter structural groups by roles only; manager module permissions are shown as locked items.
+  // Filter groups by role and by the same module permission the route guard uses.
   const filteredGroups = navigationGroups.map(group => {
     // Strict role-based isolation
     if (role === 'hr' && group.title !== 'HR & Payroll' && group.title !== 'System') return null;
     if (role === 'employee' && group.title !== 'Employee Portal' && group.title !== 'System') return null;
     if (role !== 'employee' && group.title === 'Employee Portal') return null;
+    // Hide modules the route guard would block for this role.
+    if (groupHiddenByPermission(group.title)) return null;
 
     const validItems = group.items.filter(item => {
       // 1. Role Check
@@ -298,144 +413,343 @@ export default function Layout({ children, onLogout }) {
 
 
   return (
-    <div className="flex min-h-screen bg-black text-white font-sans selection:bg-purple-500/30">
+    <div className="flex min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans selection:bg-[var(--accent-primary)]/30">
       {/* Background Texture Grid */}
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
 
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex flex-col w-72 glass-sidebar z-50 h-screen sticky top-0">
+      <aside className={`hidden md:flex flex-col glass-sidebar z-50 h-screen sticky top-0 transition-[width] duration-300 ease-in-out select-none overflow-x-hidden ${
+        isSidebarCollapsed ? 'w-20' : 'w-72'
+      }`}>
         
-        {/* Logo Area */}
-        <div className="h-24 flex items-center px-6 border-b border-white/5">
-          <div className="flex items-center justify-between w-full gap-2">
-            <Link to="/" className="flex items-center">
-              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain transform origin-left" />
-            </Link>
-            <span
-              className={`shrink-0 px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
-                isVipAccess
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
-                  : 'bg-white/10 text-gray-300 border-white/10'
-              }`}
-              title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${currentPlanName}`}
-            >
-              {isVipAccess ? 'VIP Access' : `${currentPlanName} Plan`}
-            </span>
-          </div>
+        {/* Logo & Collapse Header Area */}
+        <div className={`h-20 flex items-center border-b border-[var(--border-subtle)] transition-all duration-300 shrink-0 ${
+          isSidebarCollapsed ? 'justify-center px-2' : 'justify-between px-5'
+        }`}>
+          {!isSidebarCollapsed ? (
+            <div className="flex items-center justify-between w-full gap-2 overflow-hidden">
+              <Link to="/" className="flex items-center min-w-0" title="Cenvora Home">
+                <BrandLogo 
+                  className="h-11 sm:h-12 w-auto object-contain transform origin-left transition-transform duration-300" 
+                />
+              </Link>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {planBadgeReady && (
+                <span
+                  className={`px-2 py-0.5 rounded-md text-xs font-bold tracking-wider uppercase border truncate max-w-[85px] ${
+                    isVipAccess
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+                      : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-default)]'
+                  }`}
+                  title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
+                >
+                  {isVipAccess ? 'VIP' : displayPlanName}
+                </span>
+                )}
+                <button
+                  type="button"
+                  onClick={toggleSidebar}
+                  className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] rounded-lg transition-colors cursor-pointer"
+                  title="Collapse sidebar (Ctrl+B)"
+                  aria-label="Collapse sidebar"
+                >
+                  <ChevronDoubleLeftIcon className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-1 w-full py-1">
+              <Link to="/" className="flex items-center justify-center hover:opacity-80 transition-opacity" title="Cenvora Home">
+                <BrandLogo 
+                  iconOnly
+                  className="w-11 h-11 p-0.5 rounded-xl object-contain transition-transform hover:scale-105" 
+                />
+              </Link>
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] rounded-md transition-colors cursor-pointer"
+                title="Expand sidebar (Ctrl+B)"
+                aria-label="Expand sidebar"
+              >
+                <ChevronDoubleRightIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
         
-        {/* Navigation — scrollable middle section */}
-        <nav className="flex-1 min-h-0 px-4 py-8 space-y-8 overflow-y-auto custom-scrollbar">
-          {filteredGroups.map((group, groupIdx) => (
-            <div key={groupIdx} className="space-y-1">
-              {/* Category Header */}
-              <h3 className="px-4 text-[11px] font-bold uppercase tracking-wider text-gray-500/80 mb-3">
-                {group.title}
-              </h3>
-              
-              {/* Category Items */}
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
-
-                const baseClass = `flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
-                }`;
-                
-                if (isLocked) {
-                  return (
-                    <button
-                      key={item.path}
-                      type="button"
-                      disabled
-                      aria-disabled="true"
-                      title={lockDescription}
-                      onClick={() => setUpgradeModal({
-                        open: true,
-                        title: 'Upgrade required',
-                        featureName: item.label,
-                        description: item.upgradeText || lockDescription,
-                        targetPlanName: item.upgradePlan || 'Pro',
-                        targetPlanCode: resolvePlanCode(item.upgradePlan),
-                        ctaLabel: '',
-                        subtitle: '',
-                      })}
-                      className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
-                    >
-                      <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
-                      <span className="text-sm flex-1">{item.label}</span>
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
-                    </button>
-                  );
-                }
-
-                return (
-                  <Link 
-                    key={item.path}
-                    to={item.path} 
-                    className={baseClass}
-                  >
-                    <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
-                    <span className="text-sm">{item.label}</span>
-                  </Link>
-                );
-              })}
+        {/* Quick Search / Command Palette Trigger */}
+        <div className={`pt-3 pb-1 shrink-0 ${isSidebarCollapsed ? 'px-2 flex justify-center' : 'px-3.5'}`}>
+          <button
+            type="button"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className={`flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all text-xs font-medium cursor-pointer ${
+              isSidebarCollapsed ? 'p-2 justify-center w-full' : 'w-full px-3 py-2 justify-between'
+            }`}
+            title="Quick Search & Actions (⌘K / Ctrl+K)"
+          >
+            <div className="flex items-center gap-2 truncate">
+              <MagnifyingGlassIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" />
+              {!isSidebarCollapsed && <span>Quick Search...</span>}
             </div>
-          ))}
+            {!isSidebarCollapsed && (
+              <kbd className="text-xs font-mono px-1.5 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-default)]">⌘K</kbd>
+            )}
+          </button>
+        </div>
+
+        {/* Navigation — scrollable middle section */}
+        <nav className={`flex-1 min-h-0 py-4 space-y-4 overflow-y-auto custom-scrollbar transition-all duration-300 ${
+          isSidebarCollapsed ? 'px-2' : 'px-3.5'
+        }`}>
+          {filteredGroups.map((group, groupIdx) => {
+            const hasActiveItem = group.items.some((item) => location.pathname === item.path);
+            const isCollapsed = !hasActiveItem && Boolean(collapsedSections?.[group.title]);
+
+            return (
+              <div key={groupIdx} className="space-y-1">
+                {/* Category Header or Divider */}
+                {!isSidebarCollapsed ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(group.title)}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group mb-1 cursor-pointer select-none"
+                    title={isCollapsed ? `Expand ${group.title}` : `Collapse ${group.title}`}
+                  >
+                    <span className="truncate">{group.title}</span>
+                    <ChevronDownIcon
+                      className={`w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-transform duration-200 shrink-0 ${
+                        isCollapsed ? "-rotate-90" : "rotate-0"
+                      }`}
+                    />
+                  </button>
+                ) : (
+                  groupIdx > 0 && <div className="border-t border-[var(--border-default)] my-2 mx-1" />
+                )}
+                
+                {/* Category Items with Smooth Accordion Transition */}
+                <div className={`grid transition-[grid-template-rows,opacity] duration-200 ease-in-out ${
+                  isCollapsed && !isSidebarCollapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
+                }`}>
+                  <div className="overflow-hidden space-y-1">
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path;
+                      const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
+
+                      if (isSidebarCollapsed) {
+                        // Collapsed Rail Item with Floating Tooltip
+                        if (isLocked) {
+                          return (
+                            <button
+                              key={item.path}
+                              type="button"
+                              disabled
+                              aria-disabled="true"
+                              title={lockDescription}
+                              onClick={() => setUpgradeModal({
+                                open: true,
+                                title: 'Upgrade required',
+                                featureName: item.label,
+                                description: item.upgradeText || lockDescription,
+                                targetPlanName: item.upgradePlan || 'Pro',
+                                targetPlanCode: resolvePlanCode(item.upgradePlan),
+                                ctaLabel: '',
+                                subtitle: '',
+                              })}
+                              className="relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 opacity-60 cursor-not-allowed text-gray-500 hover:bg-white/[0.02]"
+                            >
+                              <Icon className="w-5 h-5 shrink-0 text-gray-500" />
+                              <div className="fixed left-[76px] px-3 py-1.5 bg-[#141416] text-white text-xs font-medium rounded-lg shadow-2xl border border-white/10 opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-2">
+                                <span>{item.label}</span>
+                                <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] uppercase">{lockLabel}</span>
+                              </div>
+                            </button>
+                          );
+                        }
+
+                        return (
+                          <Link 
+                            key={item.path}
+                            to={item.path} 
+                            className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
+                              isActive
+                                ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold'
+                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
+                            }`}
+                            title={item.label}
+                          >
+                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)] group-hover/nav:text-[var(--text-primary)]'}`} />
+                            <div className="fixed left-[76px] px-3 py-1.5 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-lg shadow-2xl border border-[var(--border-default)] opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-2">
+                              <span>{item.label}</span>
+                            </div>
+                          </Link>
+                        );
+                      }
+
+                      // Expanded Sidebar Item
+                      const baseClass = `flex items-center gap-3 px-3.5 py-2 rounded-xl font-medium transition-all duration-200 ${
+                        isActive
+                          ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold shadow-sm'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
+                      }`;
+                      
+                      if (isLocked) {
+                        return (
+                          <button
+                            key={item.path}
+                            type="button"
+                            disabled
+                            aria-disabled="true"
+                            title={lockDescription}
+                            onClick={() => setUpgradeModal({
+                              open: true,
+                              title: 'Upgrade required',
+                              featureName: item.label,
+                              description: item.upgradeText || lockDescription,
+                              targetPlanName: item.upgradePlan || 'Pro',
+                              targetPlanCode: resolvePlanCode(item.upgradePlan),
+                              ctaLabel: '',
+                              subtitle: '',
+                            })}
+                            className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
+                          >
+                            <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
+                            <span className="text-sm flex-1 truncate">{item.label}</span>
+                            <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] uppercase shrink-0">{lockLabel}</span>
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <Link 
+                          key={item.path}
+                          to={item.path} 
+                          className={baseClass}
+                          title={item.label}
+                        >
+                          <Icon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
+                          <span className="text-sm truncate flex-1">{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </nav>
         
         {/* Bottom section — always visible, never scrolls away */}
-        <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/5 space-y-2">
-          <Link
-            to="/contact"
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
-              location.pathname === '/contact'
-                ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
-            }`}
-          >
-            <ChatBubbleLeftRightIcon className={`w-5 h-5 transition-colors duration-200 ${
-              location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500'
-            }`} />
-            <span className="text-sm flex-1">Contact Us</span>
-          </Link>
+        <div className={`flex-shrink-0 pt-2 pb-4 border-t border-[var(--border-default)] space-y-2 transition-all duration-300 ${
+          isSidebarCollapsed ? 'px-2 flex flex-col items-center' : 'px-3.5'
+        }`}>
+          {/* Theme Toggle */}
+          <div className="w-full flex justify-center py-1">
+            <ThemeToggle showLabel={!isSidebarCollapsed} />
+          </div>
 
-          {/* Coming Soon Button */}
-          <Link
-            to="/coming-soon"
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
-              location.pathname === '/coming-soon'
-                ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white shadow-sm ring-1 ring-white/10'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.03]'
-            }`}
-          >
-            <BeakerIcon className={`w-5 h-5 transition-colors duration-200 ${
-              location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500'
-            }`} />
-            <span className="text-sm flex-1">Coming Soon</span>
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">New</span>
-          </Link>
+          {!isSidebarCollapsed ? (
+            <>
+              <Link
+                to="/contact"
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+                  location.pathname === '/contact'
+                    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
+                }`}
+                title="Contact Us"
+              >
+                <ChatBubbleLeftRightIcon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${
+                  location.pathname === '/contact' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'
+                }`} />
+                <span className="text-sm flex-1 truncate">Contact Us</span>
+              </Link>
 
-          {/* Sign Out */}
-          <button
-            onClick={handleSignOut}
-            className="w-full px-4 py-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-medium rounded-xl transition-all duration-200 text-sm flex items-center justify-center gap-2"
-          >
-            Sign Out
-          </button>
+              {/* Coming Soon Button */}
+              <Link
+                to="/coming-soon"
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
+                  location.pathname === '/coming-soon'
+                    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
+                }`}
+                title="Coming Soon"
+              >
+                <BeakerIcon className={`w-5 h-5 shrink-0 transition-colors duration-200 ${
+                  location.pathname === '/coming-soon' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'
+                }`} />
+                <span className="text-sm flex-1 truncate">Coming Soon</span>
+                <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase shrink-0">New</span>
+              </Link>
+
+              {/* Sign Out */}
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="btn-secondary !w-full !text-xs !py-2.5 flex items-center justify-center gap-2 cursor-pointer"
+                title="Sign Out"
+              >
+                <ArrowRightOnRectangleIcon className="w-4 h-4 shrink-0" />
+                <span>Sign Out</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/contact"
+                className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
+                  location.pathname === '/contact'
+                    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
+                }`}
+                title="Contact Us"
+              >
+                <ChatBubbleLeftRightIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/contact' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)] group-hover/nav:text-[var(--text-primary)]'}`} />
+                <div className="fixed left-[76px] px-3 py-1.5 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-lg shadow-2xl border border-[var(--border-default)] opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap">
+                  Contact Us
+                </div>
+              </Link>
+
+              <Link
+                to="/coming-soon"
+                className={`relative group/nav flex items-center justify-center w-full p-2.5 rounded-xl font-medium transition-all duration-200 ${
+                  location.pathname === '/coming-soon'
+                    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--accent-primary)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60'
+                }`}
+                title="Coming Soon"
+              >
+                <BeakerIcon className={`w-5 h-5 shrink-0 ${location.pathname === '/coming-soon' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)] group-hover/nav:text-[var(--text-primary)]'}`} />
+                <div className="fixed left-[76px] px-3 py-1.5 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-lg shadow-2xl border border-[var(--border-default)] opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap flex items-center gap-1.5">
+                  <span>Coming Soon</span>
+                  <span className="px-1 py-0.5 rounded text-xs font-bold bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)]">NEW</span>
+                </div>
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="relative group/nav flex items-center justify-center w-full p-2.5 btn-secondary !py-2.5 rounded-xl cursor-pointer"
+                title="Sign Out"
+              >
+                <ArrowRightOnRectangleIcon className="w-4 h-4 shrink-0" />
+                <div className="fixed left-[76px] px-3 py-1.5 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-lg shadow-2xl border border-[var(--border-default)] opacity-0 group-hover/nav:opacity-100 translate-x-1 group-hover/nav:translate-x-0 pointer-events-none transition-all duration-150 z-[100] whitespace-nowrap">
+                  Sign Out
+                </div>
+              </button>
+            </>
+          )}
         </div>
       </aside>
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Mobile Header */}
-        <header className="md:hidden sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 h-16">
+        <header className="md:hidden sticky top-0 z-40 bg-[var(--bg-surface)] backdrop-blur-xl border-b border-[var(--border-default)] flex items-center justify-between px-4 h-16 text-[var(--text-primary)]">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
           >
             {isMobileMenuOpen ? (
               <XMarkIcon className="w-6 h-6" />
@@ -445,19 +759,29 @@ export default function Layout({ children, onLogout }) {
           </button>
           
           <Link to="/" className="flex items-center">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
+            <BrandLogo className="h-9 sm:h-10 w-auto object-contain" />
           </Link>
           
-          <span
-            className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${
-              isVipAccess
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
-                : 'bg-white/10 text-gray-300 border-white/10'
-            }`}
-            title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${currentPlanName}`}
-          >
-            {isVipAccess ? 'VIP' : currentPlanName}
-          </span>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+              title="Search commands (⌘K)"
+              aria-label="Search commands"
+            >
+              <MagnifyingGlassIcon className="w-5 h-5 text-[var(--text-secondary)]" />
+            </button>
+            {planBadgeReady && (
+            <span
+              className="px-2 py-1 rounded-md text-xs font-bold tracking-wider uppercase border bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-default)]"
+              title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
+            >
+              {isVipAccess ? 'VIP' : displayPlanName}
+            </span>
+            )}
+          </div>
         </header>
 
         {/* Mobile Menu Overlay */}
@@ -474,106 +798,120 @@ export default function Layout({ children, onLogout }) {
           
           {/* Mobile Sidebar */}
           <div 
-            className={`absolute top-0 bottom-0 left-0 w-72 bg-[#111] border-r border-white/10 transform transition-transform duration-300 flex flex-col ${
+            className={`absolute top-0 bottom-0 left-0 w-72 bg-[var(--bg-surface)] border-r border-[var(--border-default)] transform transition-transform duration-300 flex flex-col ${
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
-            <div className="h-20 flex items-center justify-between px-6 border-b border-white/10">
-              <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
+            <div className="h-20 flex items-center justify-between px-6 border-b border-[var(--border-default)]">
+              <BrandLogo className="h-10 sm:h-11 w-auto object-contain" />
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 -mr-2 text-gray-400 hover:text-white"
+                className="p-2 -mr-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
             
-            <nav className="flex-1 min-h-0 px-4 py-6 space-y-6 overflow-y-auto custom-scrollbar">
-              {filteredGroups.map((group, groupIdx) => (
-                <div key={groupIdx} className="space-y-1">
-                  <h3 className="px-4 text-[11px] font-bold uppercase tracking-wider text-gray-500/80 mb-2">
-                    {group.title}
-                  </h3>
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
-                    const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
-                    const baseClass = `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
-                        : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                    }`;
-                    
-                    if (isLocked) {
-                      return (
-                        <button
-                          key={item.path}
-                          type="button"
-                          disabled
-                          aria-disabled="true"
-                          title={lockDescription}
-                          onClick={() => setUpgradeModal({
-                            open: true,
-                            title: 'Upgrade required',
-                            featureName: item.label,
-                            description: item.upgradeText || lockDescription,
-                            targetPlanName: item.upgradePlan || 'Pro',
-                            targetPlanCode: resolvePlanCode(item.upgradePlan),
-                            ctaLabel: '',
-                            subtitle: '',
-                          })}
-                          className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
-                        >
-                          <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
-                          <span className="text-sm flex-1">{item.label}</span>
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">{lockLabel}</span>
-                        </button>
-                      );
-                    }
+            <nav className="flex-1 min-h-0 px-4 py-6 space-y-4 overflow-y-auto custom-scrollbar">
+              {filteredGroups.map((group, groupIdx) => {
+                const hasActiveItem = group.items.some((item) => location.pathname === item.path);
+                const isCollapsed = !hasActiveItem && Boolean(collapsedSections?.[group.title]);
 
-                    if (item.isComingSoon) {
+                return (
+                  <div key={groupIdx} className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleSection(group.title)}
+                      className="w-full flex items-center justify-between px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group mb-1 cursor-pointer select-none"
+                    >
+                      <span>{group.title}</span>
+                      <ChevronDownIcon
+                        className={`w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-transform duration-200 ${
+                          isCollapsed ? "-rotate-90" : "rotate-0"
+                        }`}
+                      />
+                    </button>
+                    {!isCollapsed && group.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path;
+                      const { isLocked, lockLabel, lockDescription } = getSidebarLockState(group.title, item.path, item.featureKey);
+                      const baseClass = `flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                        isActive
+                          ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold'
+                          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]/60 hover:text-[var(--text-primary)]'
+                      }`;
+                      
+                      if (isLocked) {
+                        return (
+                          <button
+                            key={item.path}
+                            type="button"
+                            disabled
+                            aria-disabled="true"
+                            title={lockDescription}
+                            onClick={() => setUpgradeModal({
+                              open: true,
+                              title: 'Upgrade required',
+                              featureName: item.label,
+                              description: item.upgradeText || lockDescription,
+                              targetPlanName: item.upgradePlan || 'Pro',
+                              targetPlanCode: resolvePlanCode(item.upgradePlan),
+                              ctaLabel: '',
+                              subtitle: '',
+                            })}
+                            className={`${baseClass} w-full text-left cursor-not-allowed opacity-70`}
+                          >
+                            <Icon className={`w-5 h-5 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
+                            <span className="text-sm flex-1">{item.label}</span>
+                            <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] uppercase">{lockLabel}</span>
+                          </button>
+                        );
+                      }
+
+                      if (item.isComingSoon) {
+                        return (
+                          <Link 
+                            key={item.label}
+                            to="/coming-soon"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={baseClass}
+                          >
+                            <Icon className="w-5 h-5 text-[var(--text-muted)]" />
+                            <span className="text-sm flex-1">{item.label}</span>
+                            <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase">Soon</span>
+                          </Link>
+                        );
+                      }
+
                       return (
                         <Link 
-                          key={item.label}
-                          to="/coming-soon"
+                          key={item.path}
+                          to={item.path} 
                           onClick={() => setIsMobileMenuOpen(false)}
                           className={baseClass}
                         >
-                          <Icon className="w-5 h-5 text-gray-500" />
-                          <span className="text-sm flex-1">{item.label}</span>
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">Soon</span>
+                          <Icon className={`w-5 h-5 ${isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
+                          <span className="text-sm">{item.label}</span>
                         </Link>
                       );
-                    }
-
-                    return (
-                      <Link 
-                        key={item.path}
-                        to={item.path} 
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={baseClass}
-                      >
-                        <Icon className={`w-5 h-5 ${isActive ? 'text-purple-400' : 'text-gray-500'}`} />
-                        <span className="text-sm">{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ))}
+                    })}
+                  </div>
+                );
+              })}
             </nav>
 
             {/* Bottom section — always pinned */}
-            <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/10 space-y-2">
+            <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-[var(--border-default)] space-y-2">
               <Link
                 to="/contact"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
                   location.pathname === '/contact'
-                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                    ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]/60 hover:text-[var(--text-primary)]'
                 }`}
               >
-                <ChatBubbleLeftRightIcon className={`w-5 h-5 ${location.pathname === '/contact' ? 'text-purple-400' : 'text-gray-500'}`} />
+                <ChatBubbleLeftRightIcon className={`w-5 h-5 ${location.pathname === '/contact' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                 <span className="text-sm flex-1">Contact Us</span>
               </Link>
 
@@ -582,17 +920,17 @@ export default function Layout({ children, onLogout }) {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 w-full ${
                   location.pathname === '/coming-soon'
-                    ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 text-white ring-1 ring-white/10'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                    ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--accent-primary)] font-bold'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]/60 hover:text-[var(--text-primary)]'
                 }`}
               >
-                <BeakerIcon className={`w-5 h-5 ${location.pathname === '/coming-soon' ? 'text-purple-400' : 'text-gray-500'}`} />
+                <BeakerIcon className={`w-5 h-5 ${location.pathname === '/coming-soon' ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
                 <span className="text-sm flex-1">Coming Soon</span>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 uppercase">New</span>
+                <span className="px-1.5 py-0.5 rounded text-xs font-bold tracking-wider bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] uppercase">New</span>
               </Link>
               <button
                 onClick={() => { handleSignOut(); setIsMobileMenuOpen(false); }}
-                className="w-full px-4 py-3 bg-red-500/10 text-red-400 font-medium rounded-xl text-sm"
+                className="w-full btn-secondary !py-2.5 !text-sm flex items-center justify-center cursor-pointer"
               >
                 Sign Out
               </button>
@@ -657,17 +995,17 @@ export default function Layout({ children, onLogout }) {
             </div>
           )}
 
-          {isFreePlan && !isAllowedFreeRoute(location.pathname) ? (
+          {showFreeLock && !isAllowedFreeRoute(location.pathname) ? (
             <div className="p-6 md:p-10">
-              <div className="max-w-2xl rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
-                <h2 className="text-2xl font-bold text-white mb-2">This section is locked on Free</h2>
-                <p className="text-sm text-gray-300 mb-4">
+              <div className="max-w-2xl rounded-2xl border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-6">
+                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">This section is locked on Free</h2>
+                <p className="text-sm text-[var(--text-secondary)] mb-4">
                   Your Free plan can access only Sales Invoices, Customers, and Profile. Upgrade to unlock dashboard, inventory, reports, integrations, and advanced features.
                 </p>
                 <div className="flex gap-3">
                   <Link
                     to="/sales"
-                    className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors text-sm font-medium"
+                    className="btn-secondary !text-sm"
                   >
                     Go to Sales Invoices
                   </Link>
@@ -683,7 +1021,7 @@ export default function Layout({ children, onLogout }) {
                       ctaLabel: '',
                       subtitle: '',
                     })}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 transition-all text-sm font-semibold"
+                    className="btn-primary !text-sm"
                   >
                     Upgrade Plan
                   </button>
@@ -691,7 +1029,10 @@ export default function Layout({ children, onLogout }) {
               </div>
             </div>
           ) : (
-            children
+            <>
+              <GstStatusConfirmBanner profileData={profileData} isAdmin={role === 'admin'} />
+              {children}
+            </>
           )}
           </main>
         </ErrorBoundary>
@@ -715,6 +1056,11 @@ export default function Layout({ children, onLogout }) {
           onClose={() => setShowOnboarding(false)} 
         />
       )}
+
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+      />
     </div>
   );
 }

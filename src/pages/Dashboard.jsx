@@ -23,13 +23,14 @@ import GstShieldSection from '../components/dashboard/GstShieldSection'
 import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
 import ExpiryCard from '../components/dashboard/ExpiryCard'
 import { getSubscriptionEntitlements } from '../api/subscription'
+import { getKolkataMonthBounds } from '../utils/date'
 import { getGSTR1Export } from '../api/gst'
 import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 // Skeleton for loading
 function SkeletonCard() {
   return (
-    <div className="bento-card !p-6 flex flex-col justify-between h-40 animate-pulse bg-white/5 border-white/5">
+    <div className="bento-card !p-6 flex flex-col justify-between h-40 animate-pulse bg-[var(--bg-surface)] border-[var(--border-subtle)]">
       <div className="flex justify-between items-start">
         <div className="h-10 w-10 bg-white/10 rounded-xl"></div>
       </div>
@@ -100,7 +101,7 @@ export default function Dashboard({ onLogout }) {
   
   const { data: sales, isLoading: loadingSales, refetch: refetchSales } = useQuery({
     queryKey: ['recent-sales'],
-    queryFn: () => api.get('/billing/sales-invoices/?ordering=-invoice_date&limit=5').then(res => res.data)
+    queryFn: () => api.get('/billing/sales-invoices/?status=final&ordering=-invoice_date&limit=5').then(res => res.data)
   });
   
   const { data: purchases, isLoading: loadingPurchases, refetch: refetchPurchases } = useQuery({
@@ -133,9 +134,7 @@ export default function Dashboard({ onLogout }) {
   };
 
   const handleDownloadReportForCA = async () => {
-    const today = new Date();
-    const toDate = today.toISOString().split('T')[0];
-    const fromDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    const { from: fromDate, to: toDate } = getKolkataMonthBounds();
 
     try {
       const gstr1Data = await getGSTR1Export(fromDate, toDate);
@@ -152,37 +151,42 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
-  // Legacy card data
+  // Financial Ticker Card Data
   const cardData = [
     {
-      label: 'Total Sales',
+      label: metrics?.sales_label || 'Sales this month (incl. GST)',
       value: metrics?.total_sales != null ? `${getCurrencySymbol()}${Number(metrics.total_sales).toLocaleString('en-IN')}` : '--',
-      icon: <CurrencyRupeeIcon className="w-6 h-6 text-cyan-400" />,
-      color: 'text-cyan-400'
+      subtitle: metrics?.sales_taxable_net != null
+        ? `${metrics.sales_taxable_label || 'Taxable (excl. GST, net of CNs)'}: ${getCurrencySymbol()}${Number(metrics.sales_taxable_net).toLocaleString('en-IN')}`
+        : null,
+      icon: <CurrencyRupeeIcon className="w-6 h-6 text-[var(--status-info)]" />,
+      color: 'text-[var(--status-info)]'
     },
     {
       label: 'Total Purchases',
       value: metrics?.total_purchases != null ? `${getCurrencySymbol()}${Number(metrics.total_purchases).toLocaleString('en-IN')}` : '--',
-      icon: <ShoppingBagIcon className="w-6 h-6 text-purple-400" />,
-      color: 'text-purple-400'
+      icon: <ShoppingBagIcon className="w-6 h-6 text-[var(--accent-secondary)]" />,
+      color: 'text-[var(--accent-secondary)]'
     },
     {
       label: 'Inventory Value',
       value: metrics?.total_inventory_value != null ? `${getCurrencySymbol()}${Number(metrics.total_inventory_value).toLocaleString('en-IN')}` : '--',
-      icon: <CubeIcon className="w-6 h-6 text-blue-400" />,
-      color: 'text-blue-400'
+      icon: <CubeIcon className="w-6 h-6 text-[var(--accent-primary)]" />,
+      color: 'text-[var(--accent-primary)]'
     },
     {
       label: 'Low Stock Items',
       value: metrics?.low_stock_count ?? '--',
-      icon: <ExclamationTriangleIcon className="w-6 h-6 text-red-400" />,
-      color: 'text-red-400'
+      icon: <ExclamationTriangleIcon className="w-6 h-6 text-[var(--status-danger)]" />,
+      color: 'text-[var(--status-danger)]'
     },
     {
-      label: metrics?.gst_payable < 0 ? 'GST Credit' : 'GST Payable',
-      value: metrics?.gst_payable != null ? (metrics.gst_payable < 0 ? `${getCurrencySymbol()}${Math.abs(metrics.gst_payable).toLocaleString()}` : `${getCurrencySymbol()}${metrics.gst_payable.toLocaleString()}`) : '--',
-      icon: <BanknotesIcon className="w-6 h-6 text-yellow-400" />,
-      color: metrics?.gst_payable < 0 ? 'text-green-400' : 'text-yellow-400'
+      label: metrics?.gst_label || (metrics?.gst_payable < 0 ? 'GST Credit (3B 4C this month)' : 'GST Payable'),
+      value: metrics?.gst_payable != null
+        ? `${getCurrencySymbol()}${Math.abs(Number(metrics.gst_payable)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : '--',
+      icon: <BanknotesIcon className="w-6 h-6 text-[var(--status-warning)]" />,
+      color: metrics?.gst_payable < 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-warning)]'
     },
   ];
 
@@ -229,7 +233,7 @@ export default function Dashboard({ onLogout }) {
   }, [stockPointsRaw, lowStock]);
 
   const stockTotal = stockSplitData.reduce((sum, item) => sum + Number(item.value || 0), 0);
-  const stockColors = ['#22d3ee', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#14b8a6'];
+  const stockColors = ['var(--accent-primary)', 'var(--accent-secondary)', 'var(--status-info)', 'var(--status-success)', 'var(--status-warning)', 'var(--status-danger)', 'var(--text-muted)'];
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
   const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
@@ -245,16 +249,16 @@ export default function Dashboard({ onLogout }) {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
-              <SparklesIcon className="w-8 h-8 text-cyan-400" />
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-3">
+              <SparklesIcon className="w-8 h-8 text-[var(--accent-primary)]" />
               {(profileData?.profile?.business_name || profileData?.profile?.parent_business_name) 
                 ? `${profileData.profile.business_name || profileData.profile.parent_business_name} Smart Dashboard` 
                 : 'Smart Dashboard'}
             </h1>
-            <p className="text-gray-400 text-sm">Your intelligent business assistant</p>
-            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-300">
-              <span className="text-cyan-400 font-semibold">{currentPlanName}</span>
-              <span className="text-gray-500">plan active</span>
+            <p className="text-[var(--text-muted)] text-sm">Your intelligent business assistant</p>
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1 text-xs text-[var(--text-secondary)]">
+              <span className="text-[var(--accent-primary)] font-semibold">{currentPlanName}</span>
+              <span className="text-[var(--text-muted)]">plan active</span>
             </div>
           </div>
           
@@ -262,14 +266,14 @@ export default function Dashboard({ onLogout }) {
             <button 
               onClick={handleRefreshAll}
               disabled={isRefreshing}
-              className="btn-secondary text-sm py-2 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white disabled:opacity-50 flex items-center gap-2"
+              className="btn-secondary text-sm py-2 px-4 flex items-center gap-2"
             >
               <ArrowPathIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
             <button 
               onClick={() => handleQuickAction('sale')} 
-              className="btn-primary text-sm py-2 px-4 shadow-lg shadow-cyan-500/20"
+              className="btn-primary text-sm py-2 px-4"
             >
               <PlusIcon className="w-4 h-4"/> Record Sales
             </button>
@@ -284,20 +288,23 @@ export default function Dashboard({ onLogout }) {
 
         {/* 2. LEGACY OVERVIEW CARDS (Total Sales, Purchases, etc.) */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Overall Summary</h2>
+          <h2 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-4">Overall Financial Summary</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {loadingMetrics
               ? Array(5).fill(0).map((_, i) => <SkeletonCard key={i} />)
               : cardData.map((card, i) => (
-                  <div key={i} className="bento-card !p-6 flex flex-col justify-between group hover:border-white/20 transition-colors">
+                  <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 sm:p-6 flex flex-col justify-between group hover:border-[var(--accent-primary)]/40 transition-all shadow-sm">
                     <div className="flex justify-between items-start mb-4">
-                      <div className={`p-3 rounded-xl bg-white/5 ${card.color}`}>
+                      <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] ${card.color}`}>
                         {card.icon}
                       </div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-white mb-1 tracking-tight">{card.value}</div>
-                      <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">{card.label}</div>
+                      <div className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-primary)] mb-1 tracking-tight font-mono font-tabular">{card.value}</div>
+                      <div className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider">{card.label}</div>
+                      {card.subtitle ? (
+                        <div className="text-[10px] text-[var(--text-secondary)] mt-1 font-medium normal-case">{card.subtitle}</div>
+                      ) : null}
                     </div>
                   </div>
               ))
@@ -337,17 +344,17 @@ export default function Dashboard({ onLogout }) {
           {/* Sales vs Purchases Chart */}
           <div className="bento-card lg:col-span-2 !p-6">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <ChartBarIcon className="w-5 h-5 text-gray-400" /> Sales vs Purchases
+              <h3 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+                <ChartBarIcon className="w-5 h-5 text-[var(--text-muted)]" /> Sales vs Purchases
               </h3>
             </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={salesChartData} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
-                  <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                  <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="3 3" />
+                  <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
                   <YAxis
-                    stroke="#9ca3af"
+                    stroke="var(--text-muted)"
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
@@ -355,29 +362,29 @@ export default function Dashboard({ onLogout }) {
                     tickFormatter={(value) => formatCurrency(value)}
                   />
                   <Tooltip 
-                    contentStyle={{ background: '#0b0f16', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', color: '#fff' }}
-                    labelStyle={{ color: '#fff', fontWeight: 600 }}
-                    itemStyle={{ color: '#e5e7eb' }}
+                    contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', color: 'var(--text-primary)' }}
+                    labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                    itemStyle={{ color: 'var(--text-secondary)' }}
                     formatter={(value, key) => [formatCurrency(value), key]}
                   />
-                  <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px', color: '#d1d5db' }} iconType="circle" />
+                  <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px', color: 'var(--text-secondary)' }} iconType="circle" />
                   <Line
                     type="monotone"
                     dataKey="Sales"
-                    stroke="#22d3ee"
+                    stroke="var(--accent-primary)"
                     strokeWidth={3}
                     connectNulls
-                    dot={{ r: 3, fill: '#22d3ee', strokeWidth: 0 }}
-                    activeDot={{ r: 7, fill: '#22d3ee', stroke: '#fff', strokeWidth: 1 }}
+                    dot={{ r: 3, fill: 'var(--accent-primary)', strokeWidth: 0 }}
+                    activeDot={{ r: 7, fill: 'var(--accent-primary)', stroke: 'var(--bg-primary)', strokeWidth: 1 }}
                   />
                   <Line
                     type="monotone"
                     dataKey="Purchases"
-                    stroke="#a855f7"
+                    stroke="var(--accent-secondary)"
                     strokeWidth={3}
                     connectNulls
-                    dot={{ r: 3, fill: '#a855f7', strokeWidth: 0 }}
-                    activeDot={{ r: 7, fill: '#a855f7', stroke: '#fff', strokeWidth: 1 }}
+                    dot={{ r: 3, fill: 'var(--accent-secondary)', strokeWidth: 0 }}
+                    activeDot={{ r: 7, fill: 'var(--accent-secondary)', stroke: 'var(--bg-primary)', strokeWidth: 1 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -386,8 +393,8 @@ export default function Dashboard({ onLogout }) {
 
           {/* Stock Splits Pie */}
           <div className="bento-card !p-6">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-6">
-              <CubeIcon className="w-5 h-5 text-gray-400" /> Stock Splits
+            <h3 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2 mb-6">
+              <CubeIcon className="w-5 h-5 text-[var(--text-muted)]" /> Stock Splits
             </h3>
             <div className="h-64 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
@@ -412,15 +419,15 @@ export default function Dashboard({ onLogout }) {
                       <Cell
                         key={`cell-${index}`}
                         fill={stockColors[index % stockColors.length]}
-                        stroke={index === activeStockIndex ? '#ffffff' : 'rgba(0,0,0,0)'}
+                        stroke={index === activeStockIndex ? 'var(--text-primary)' : 'rgba(0,0,0,0)'}
                         strokeWidth={index === activeStockIndex ? 1.4 : 0}
                       />
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{ background: '#0b0f16', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', color: '#fff' }}
-                    labelStyle={{ color: '#fff', fontWeight: 600 }}
-                    itemStyle={{ color: '#e5e7eb' }}
+                    contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', color: 'var(--text-primary)' }}
+                    labelStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                    itemStyle={{ color: 'var(--text-secondary)' }}
                     formatter={(value, name) => {
                       const qty = Number(value || 0);
                       const pct = stockTotal > 0 ? ((qty / stockTotal) * 100).toFixed(1) : '0.0';
@@ -437,34 +444,34 @@ export default function Dashboard({ onLogout }) {
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Sales */}
           <div className="bento-card !p-0 overflow-hidden">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">Recent Sales</h3>
-              <button onClick={() => navigate('/sales')} className="text-xs text-cyan-400 hover:text-cyan-300">View All</button>
+            <div className="p-6 border-b border-[var(--border-subtle)] flex justify-between items-center">
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">Recent Sales</h3>
+              <button onClick={() => navigate('/sales')} className="text-xs text-[var(--accent-primary)] hover:underline font-semibold">View All</button>
             </div>
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-[var(--border-subtle)]">
               {(loadingSales ? Array(5).fill({}) : (Array.isArray(sales) ? sales : sales?.data || sales?.results || [])).slice(0, 5).map((invoice, i) =>
                 loadingSales ? (
                   <div key={i} className="p-4 animate-pulse flex gap-4">
-                    <div className="h-10 w-10 bg-white/5 rounded-full"></div>
+                    <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 w-1/3 bg-white/5 rounded"></div>
-                      <div className="h-3 w-1/4 bg-white/5 rounded"></div>
+                      <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
+                      <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
                     </div>
                   </div>
                 ) : (
-                  <div key={invoice.id || i} className="p-4 flex justify-between items-center hover:bg-white/[0.02] transition-colors cursor-pointer" onClick={() => navigate(`/sales/${invoice.id}`)}>
+                  <div key={invoice.id || i} className="p-4 flex justify-between items-center hover:bg-[var(--bg-primary)]/40 transition-colors cursor-pointer" onClick={() => navigate(`/sales/${invoice.id}`)}>
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-400">
+                      <div className="h-10 w-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--status-info)]">
                         <CurrencyRupeeIcon className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-white">{invoice.customer_name || 'Walk-in Customer'}</div>
-                        <div className="text-xs text-gray-500">{invoice.invoice_number}</div>
+                        <div className="text-sm font-semibold text-[var(--text-primary)]">{invoice.customer_name || 'Walk-in Customer'}</div>
+                        <div className="text-xs text-[var(--text-muted)]">{invoice.invoice_number}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-white">{getCurrencySymbol()}{invoice.total_amount}</div>
-                      <div className="text-xs text-gray-500">{invoice.invoice_date}</div>
+                      <div className="text-sm font-bold text-[var(--text-primary)]">{formatCurrency(invoice.total_amount)}</div>
+                      <div className="text-xs text-[var(--text-muted)]">{invoice.invoice_date}</div>
                     </div>
                   </div>
                 )
@@ -474,34 +481,34 @@ export default function Dashboard({ onLogout }) {
 
           {/* Latest Purchases */}
           <div className="bento-card !p-0 overflow-hidden">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">Latest Purchases</h3>
-              <button onClick={() => navigate('/purchase')} className="text-xs text-purple-400 hover:text-purple-300">View All</button>
+            <div className="p-6 border-b border-[var(--border-subtle)] flex justify-between items-center">
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">Latest Purchases</h3>
+              <button onClick={() => navigate('/purchase')} className="text-xs text-[var(--accent-primary)] hover:underline font-semibold">View All</button>
             </div>
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-[var(--border-subtle)]">
               {(loadingPurchases ? Array(5).fill({}) : (Array.isArray(purchases) ? purchases : purchases?.data || purchases?.results || [])).slice(0, 5).map((bill, i) =>
                 loadingPurchases ? (
                   <div key={i} className="p-4 animate-pulse flex gap-4">
-                    <div className="h-10 w-10 bg-white/5 rounded-full"></div>
+                    <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 w-1/3 bg-white/5 rounded"></div>
-                      <div className="h-3 w-1/4 bg-white/5 rounded"></div>
+                      <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
+                      <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
                     </div>
                   </div>
                 ) : (
-                  <div key={bill.id || i} className="p-4 flex justify-between items-center hover:bg-white/[0.02] transition-colors cursor-pointer" onClick={() => navigate(`/purchases/${bill.id}`)}>
+                  <div key={bill.id || i} className="p-4 flex justify-between items-center hover:bg-[var(--bg-primary)]/40 transition-colors cursor-pointer" onClick={() => navigate(`/purchases/${bill.id}`)}>
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400">
+                      <div className="h-10 w-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-secondary)]">
                         <ShoppingBagIcon className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-white">{bill.vendor_name || 'Vendor'}</div>
-                        <div className="text-xs text-gray-500">{bill.bill_number}</div>
+                        <div className="text-sm font-semibold text-[var(--text-primary)]">{bill.vendor_name || 'Vendor'}</div>
+                        <div className="text-xs text-[var(--text-muted)]">{bill.bill_number}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-white">{getCurrencySymbol()}{bill.total_amount}</div>
-                      <div className="text-xs text-gray-500">{bill.bill_date}</div>
+                      <div className="text-sm font-bold text-[var(--text-primary)]">{formatCurrency(bill.total_amount)}</div>
+                      <div className="text-xs text-[var(--text-muted)]">{bill.bill_date}</div>
                     </div>
                   </div>
                 )

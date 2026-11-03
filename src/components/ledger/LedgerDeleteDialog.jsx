@@ -5,8 +5,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteLedgerEntry } from '../../api/ledger';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
+import useEscKey from '../../hooks/useEscStack';
 
 export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
+  useEscKey(onClose, isOpen, 20);
   const queryClient = useQueryClient();
   const isDebitEntry = Number(entry?.debit || 0) > 0;
 
@@ -57,14 +59,14 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
   if (!isOpen || !entry) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-xl shadow-2xl shadow-red-900/20 animate-fade-up">
-        <div className="p-8">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl animate-fade-up overflow-hidden my-auto">
+        <div className="p-5 sm:p-6">
           <div className="flex items-center gap-4">
-            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-500/10 border border-red-500/20">
+            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-xl bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)]">
               <svg 
-                className="h-6 w-6 text-red-400" 
+                className="h-6 w-6 text-[var(--status-danger)]" 
                 fill="none" 
                 viewBox="0 0 24 24" 
                 stroke="currentColor"
@@ -78,87 +80,87 @@ export default function LedgerDeleteDialog({ isOpen, onClose, entry }) {
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] font-display tracking-tight">
                 Delete Ledger Entry
               </h3>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-[var(--text-secondary)] mt-1">
                  Are you sure you want to delete this ledger entry?
               </p>
             </div>
           </div>
 
           {/* Entry Details */}
-          <div className="mt-6 p-4 bg-[#1a1a1a] rounded-lg border border-white/5">
+          <div className="mt-6 p-4 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)]">
             <div className="text-sm space-y-3">
               <div className="flex justify-between">
-                <span className="font-medium text-gray-400">Date:</span>
-                <span className="text-white font-medium">{formatDate(entry.date)}</span>
+                <span className="font-medium text-[var(--text-secondary)]">Date:</span>
+                <span className="text-[var(--text-primary)] font-medium">{formatDate(entry.date)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium text-gray-400">Customer:</span>
-                <span className="text-white font-medium">
+                <span className="font-medium text-[var(--text-secondary)]">Customer:</span>
+                <span className="text-[var(--text-primary)] font-medium">
                   {entry.customer?.name || 'Unknown Customer'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium text-gray-400">Description:</span>
-                <span className="text-white font-medium truncate ml-2" title={entry.description}>
+                <span className="font-medium text-[var(--text-secondary)]">Description:</span>
+                <span className="text-[var(--text-primary)] font-medium truncate ml-2" title={entry.description}>
                   {entry.description}
                 </span>
               </div>
               {entry.debit > 0 && (
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-400">Debit:</span>
-                  <span className="text-red-400 font-bold">
+                  <span className="font-medium text-[var(--text-secondary)]">Debit:</span>
+                  <span className="text-[var(--status-danger)] font-bold">
                     {formatCurrency(entry.debit)}
                   </span>
                 </div>
               )}
               {entry.credit > 0 && (
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-400">Credit:</span>
-                  <span className="text-green-400 font-bold">
+                  <span className="font-medium text-[var(--text-secondary)]">Credit:</span>
+                  <span className="text-[var(--status-success)] font-bold">
                     {formatCurrency(entry.credit)}
                   </span>
                 </div>
               )}
-              <div className="flex justify-between border-t border-white/10 pt-2 mt-2">
-                <span className="font-medium text-gray-400">Balance:</span>
-                <span className="text-white font-bold">
+              <div className="flex justify-between border-t border-[var(--border-subtle)] pt-2 mt-2">
+                <span className="font-medium text-[var(--text-secondary)]">Balance:</span>
+                <span className="text-[var(--text-primary)] font-bold">
                   {formatCurrency(entry.balance)}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-xs text-amber-200">
+          <div className="mt-4 p-3 rounded-xl border border-[var(--status-warning)]/30 bg-[var(--status-warning)]/10 text-xs text-[var(--status-warning)] font-medium">
             Deletion policy: debit entries are blocked; credit entries linked to bills are only deletable when bill status is pending.
           </div>
 
           {isDebitEntry && (
-            <div className="mt-3 p-3 rounded-lg border border-red-500/20 bg-red-500/5 text-xs text-red-300">
+            <div className="mt-3 p-3 rounded-xl border border-[var(--status-danger)]/30 bg-[var(--status-danger)]/10 text-xs text-[var(--status-danger)] font-medium">
               This entry has a debit amount and cannot be deleted.
             </div>
           )}
         </div>
 
         {/* Actions */}
-        <div className="p-6 bg-black/20 flex justify-end gap-3 rounded-b-xl border-t border-white/5">
+        <div className="px-5 py-3.5 sm:px-6 sm:py-4 bg-[var(--bg-surface)] flex justify-end gap-3 border-t border-[var(--border-subtle)]">
           <button
             type="button"
             onClick={onClose}
-            disabled={deleteEntryMutation.isLoading}
-            className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium"
+            disabled={deleteEntryMutation.isPending}
+            className="btn-secondary text-sm px-4 py-2 rounded-xl"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleDelete}
-            disabled={deleteEntryMutation.isLoading || isDebitEntry}
-            className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 rounded-lg text-sm font-bold transition-all shadow-lg shadow-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={deleteEntryMutation.isPending || isDebitEntry}
+            className="btn-destructive !text-sm !py-2 !px-4 !normal-case !tracking-normal !font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {deleteEntryMutation.isLoading ? (
+            {deleteEntryMutation.isPending ? (
               <span className="flex items-center gap-2">
                 <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

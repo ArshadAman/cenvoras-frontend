@@ -12,8 +12,35 @@ export const createDeliveryChallan = (data) =>
 export const updateDeliveryChallan = (id, data) => 
   api.put(`/billing/delivery-challans/${id}/`, data).then(res => res.data);
 
+export const patchDeliveryChallan = (id, data) => 
+  api.patch(`/billing/delivery-challans/${id}/`, data).then(res => res.data);
+
 export const deleteDeliveryChallan = (id) => 
   api.delete(`/billing/delivery-challans/${id}/`).then(res => res.data);
 
+export const getNextDeliveryChallanNumber = (prefix) =>
+  api.get("/billing/delivery-challans/next-number/", {
+    params: prefix ? { prefix } : undefined,
+  }).then(res => res.data);
+
+export const convertOrderToChallan = (orderId, data = {}) =>
+  api.post(`/billing/sales-orders/${orderId}/convert_to_challan/`, data).then(res => res.data);
+
 export const convertToInvoice = (id) =>
   api.post(`/billing/delivery-challans/${id}/convert_to_invoice/`).then(res => res.data);
+
+export const bulkConvertToInvoice = (challanIds) =>
+  api.post(`/billing/delivery-challans/bulk-convert-to-invoice/`, { challan_ids: challanIds }).then(res => res.data);
+
+export const bulkDeleteDeliveryChallans = (ids) =>
+  api.post(`/billing/delivery-challans/bulk-delete/`, { ids }).then(res => res.data);
+
+export const getDeliveryChallanPdf = (id, payload) => {
+  if (payload) {
+    const body = typeof payload === 'object' && ('html' in payload || 'template' in payload)
+      ? payload
+      : { template: payload };
+    return api.post(`/billing/delivery-challans/${id}/pdf/`, body, { responseType: 'blob' });
+  }
+  return api.get(`/billing/delivery-challans/${id}/pdf/`, { responseType: 'blob' });
+};

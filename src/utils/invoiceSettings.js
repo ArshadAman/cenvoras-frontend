@@ -40,8 +40,16 @@ export const defaultInvoiceTemplate = {
     fontFamily: 'Inter, system-ui, sans-serif',
     headerFont: 'Inter, system-ui, sans-serif',
     companyNameSize: 24,
+    companyAddressSize: 9,
     invoiceTitleSize: 18,
     sectionTitleSize: 12,
+    customerNameSize: 12,
+    addressSize: 12,
+    tableHeaderSize: 10,
+    tableBodySize: 12,
+    totalsSize: 12,
+    bankDetailsSize: 12,
+    footerSize: 9,
     bodySize: 11,
     smallSize: 9,
     lineHeight: 1.5,
@@ -114,6 +122,8 @@ export const defaultInvoiceTemplate = {
     { id: 'quantity', label: 'QTY', width: '7%', show: true, align: 'center' },
     { id: 'free_qty', label: 'Free', width: '7%', show: false, align: 'center' },
     { id: 'unit', label: 'Unit', width: '8%', show: false, align: 'center' },
+    { id: 'make', label: 'Make', width: '10%', show: false, align: 'left' },
+    { id: 'pack_size', label: 'Pack Size', width: '10%', show: false, align: 'left' },
     { id: 'price', label: 'UNIT PRICE', width: '14%', show: true, align: 'right' },
     { id: 'discount', label: 'Disc.', width: '9%', show: false, align: 'right' },
     { id: 'tax', label: 'TAX', width: '9%', show: true, align: 'center' },
@@ -136,12 +146,14 @@ export const templatePresets = [
     ...defaultInvoiceTemplate,
     id: 'classic',
     name: 'Classic Professional',
+    isDefault: true,
     layout: { ...defaultInvoiceTemplate.layout, layoutType: 'classic' },
   },
   {
     ...defaultInvoiceTemplate,
     id: 'professional',
     name: 'Professional (Marico Style)',
+    isDefault: false,
     layout: { ...defaultInvoiceTemplate.layout, layoutType: 'professional' },
     colors: {
       ...defaultInvoiceTemplate.colors,
@@ -150,19 +162,9 @@ export const templatePresets = [
   },
   {
     ...defaultInvoiceTemplate,
-    id: 'genz',
-    name: 'GenZ Modern (Google Style)',
-    layout: { ...defaultInvoiceTemplate.layout, layoutType: 'genz' },
-    colors: {
-      ...defaultInvoiceTemplate.colors,
-      primary: '#4285F4',
-      secondary: '#4285F4',
-    },
-  },
-  {
-    ...defaultInvoiceTemplate,
     id: 'service',
     name: 'Service Template (LTIMindtree)',
+    isDefault: false,
     layout: { ...defaultInvoiceTemplate.layout, layoutType: 'service' },
     colors: {
       ...defaultInvoiceTemplate.colors,
@@ -173,6 +175,7 @@ export const templatePresets = [
     ...defaultInvoiceTemplate,
     id: 'legend',
     name: 'Legend Corporate (ITC Style)',
+    isDefault: false,
     layout: { ...defaultInvoiceTemplate.layout, layoutType: 'legend' },
     colors: {
       ...defaultInvoiceTemplate.colors,
@@ -184,132 +187,212 @@ export const templatePresets = [
     ...defaultInvoiceTemplate,
     id: 'billship',
     name: 'Bill To - Ship To (Flipkart Style)',
+    isDefault: false,
     layout: { ...defaultInvoiceTemplate.layout, layoutType: 'billship' },
     colors: {
       ...defaultInvoiceTemplate.colors,
       primary: '#facc15',
     },
   },
-  {
-    ...defaultInvoiceTemplate,
-    id: 'modern',
-    name: 'Modern Minimal',
-    layout: { ...defaultInvoiceTemplate.layout, layoutType: 'classic' },
-    colors: {
-      ...defaultInvoiceTemplate.colors,
-      primary: '#000000',
-      secondary: '#333333',
-      accent: '#6366f1',
-      tableHeader: '#f1f5f9',
-      totalRow: '#6366f1',
-    },
-    styles: {
-      ...defaultInvoiceTemplate.styles,
-      borderRadius: 8,
-      headerStyle: 'minimal',
-      tableStyle: 'minimal',
-    },
-  },
 ];
 
-// Storage keys
-const STORAGE_KEY = 'cenvora_invoice_templates';
-const ACTIVE_TEMPLATE_KEY = 'cenvora_active_template';
+/** Presets removed from the product; strip from localStorage on load. */
+const DEPRECATED_TEMPLATE_IDS = new Set(['modern', 'genz']);
 
-// Get all saved templates
-export const getInvoiceTemplates = () => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Auto-inject missing templates from presets (to handle app updates)
-      const existingIds = new Set(parsed.map(t => t.id));
-      const missingPresets = templatePresets.filter(p => !existingIds.has(p.id));
-      
-      if (missingPresets.length > 0) {
-        const merged = [...parsed, ...missingPresets];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-        return merged;
-      }
-      return parsed;
-    }
-    // Return default presets if nothing stored
-    return templatePresets;
-  } catch (error) {
-    console.error('Error loading invoice templates:', error);
-    return templatePresets;
+// Storage keys — templates are isolated per document section
+const LEGACY_STORAGE_KEY = 'cenvora_invoice_templates';
+
+export const documentTypeToSectionKey = (documentType) => {
+  switch (documentType) {
+    case 'quotation':
+      return 'quotation';
+    case 'delivery_challan':
+      return 'delivery_challan';
+    case 'sales_order':
+    case 'proforma':
+      return 'sales_order';
+    case 'invoice':
+    case 'sales_invoice':
+    default:
+      return 'sales_invoice';
   }
 };
 
-// Get active template
-export const getActiveTemplate = () => {
+const sectionTemplatesKey = (sectionKey) => `cenvora_invoice_templates_${sectionKey || 'sales_invoice'}`;
+
+const deepClonePresets = () => JSON.parse(JSON.stringify(templatePresets));
+
+const pruneDeprecatedTemplates = (parsed) => {
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter((t) => t && !DEPRECATED_TEMPLATE_IDS.has(t.id));
+};
+
+const mergeMissingPresets = (parsed) => {
+  const pruned = pruneDeprecatedTemplates(parsed);
+  const existingIds = new Set(pruned.map((t) => t.id));
+  const missingPresets = templatePresets
+    .filter((p) => !existingIds.has(p.id))
+    .map((p) => JSON.parse(JSON.stringify(p)));
+  if (missingPresets.length === 0) return pruned;
+  return [...pruned, ...missingPresets];
+};
+
+const applySingleDefault = (templates, activeId) => {
+  if (!Array.isArray(templates) || templates.length === 0) return templates || [];
+  const preferred =
+    (activeId && templates.some((t) => t.id === activeId) && activeId) ||
+    templates.find((t) => t.isDefault)?.id ||
+    templates[0].id;
+  return templates.map((t) => ({ ...t, isDefault: t.id === preferred }));
+};
+
+/**
+ * Load templates for a single section. Never shares writes across sections.
+ * On first access: clone from legacy shared pool (if any), else deep-clone presets.
+ */
+export const getInvoiceTemplates = (sectionKey = 'sales_invoice') => {
   try {
-    const activeId = localStorage.getItem(ACTIVE_TEMPLATE_KEY);
-    const templates = getInvoiceTemplates();
-    
-    if (activeId) {
-      const template = templates.find(t => t.id === activeId);
-      if (template) return template;
+    const key = sectionTemplatesKey(sectionKey);
+    const scopedActive = localStorage.getItem(`cenvora_active_template_${sectionKey}`);
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const parsed = applySingleDefault(mergeMissingPresets(JSON.parse(stored)), scopedActive);
+      localStorage.setItem(key, JSON.stringify(parsed));
+      return parsed;
     }
-    
-    // Return first template or default
+
+    // One-time seed from legacy shared pool so existing customizations aren't lost
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      const cloned = applySingleDefault(
+        mergeMissingPresets(JSON.parse(JSON.stringify(JSON.parse(legacy)))),
+        scopedActive
+      );
+      localStorage.setItem(key, JSON.stringify(cloned));
+      return cloned;
+    }
+
+    const presets = applySingleDefault(deepClonePresets(), scopedActive);
+    localStorage.setItem(key, JSON.stringify(presets));
+    return presets;
+  } catch (error) {
+    console.error('Error loading invoice templates:', error);
+    return applySingleDefault(deepClonePresets(), 'classic');
+  }
+};
+
+/** @deprecated Prefer getActiveTemplateForSection — kept for callers without a section */
+export const getActiveTemplate = (sectionKey = 'sales_invoice') => {
+  return getActiveTemplateForSection({ sectionKey });
+};
+
+// Scoped template resolution per section (no cross-section / global fallback)
+export const getActiveTemplateForSection = ({
+  sectionKey = 'sales_invoice',
+  documentTemplateId = null,
+  customerTemplates = null,
+  userDefaultTemplates = null,
+} = {}) => {
+  try {
+    const templates = getInvoiceTemplates(sectionKey);
+
+    // 1. Per-document explicit override
+    if (documentTemplateId) {
+      const match = templates.find((t) => t.id === documentTemplateId);
+      if (match) return match;
+    }
+
+    // 2. Customer's preferred template for this section
+    if (customerTemplates && customerTemplates[sectionKey]) {
+      const match = templates.find((t) => t.id === customerTemplates[sectionKey]);
+      if (match) return match;
+    }
+
+    // 3. User's section default
+    if (userDefaultTemplates && userDefaultTemplates[sectionKey]) {
+      const match = templates.find((t) => t.id === userDefaultTemplates[sectionKey]);
+      if (match) return match;
+    }
+
+    // 4. Scoped localStorage active for this section only
+    const scopedKey = `cenvora_active_template_${sectionKey}`;
+    const scopedId = localStorage.getItem(scopedKey);
+    if (scopedId) {
+      const match = templates.find((t) => t.id === scopedId);
+      if (match) return match;
+    }
+
+    const flaggedDefault = templates.find((t) => t.isDefault);
+    if (flaggedDefault) return flaggedDefault;
+
     return templates[0] || defaultInvoiceTemplate;
   } catch (error) {
-    console.error('Error loading active template:', error);
+    console.error('Error loading active template for section:', error);
     return defaultInvoiceTemplate;
   }
 };
 
-// Set active template
-export const setActiveTemplate = (templateId) => {
+// Set active template scoped to section
+export const setActiveTemplateForSection = (sectionKey, templateId) => {
   try {
-    localStorage.setItem(ACTIVE_TEMPLATE_KEY, templateId);
+    if (!sectionKey || !templateId) return false;
+    const scopedKey = `cenvora_active_template_${sectionKey}`;
+    localStorage.setItem(scopedKey, templateId);
+    const templates = applySingleDefault(getInvoiceTemplates(sectionKey), templateId);
+    localStorage.setItem(sectionTemplatesKey(sectionKey), JSON.stringify(templates));
     return true;
   } catch (error) {
-    console.error('Error setting active template:', error);
+    console.error('Error setting active template for section:', error);
     return false;
   }
 };
 
-// Save template
-export const saveInvoiceTemplate = (template) => {
+/** @deprecated Use setActiveTemplateForSection — writes sales_invoice section only */
+export const setActiveTemplate = (templateId, sectionKey = 'sales_invoice') => {
+  return setActiveTemplateForSection(sectionKey, templateId);
+};
+
+// Save template within a section store only
+export const saveInvoiceTemplate = (template, sectionKey = 'sales_invoice') => {
   try {
-    const templates = getInvoiceTemplates();
-    const existingIndex = templates.findIndex(t => t.id === template.id);
-    
+    const templates = getInvoiceTemplates(sectionKey);
+    const existingIndex = templates.findIndex((t) => t.id === template.id);
+
     const updatedTemplate = {
       ...template,
       updatedAt: new Date().toISOString(),
     };
-    
+
     if (existingIndex >= 0) {
       templates[existingIndex] = updatedTemplate;
     } else {
       updatedTemplate.createdAt = new Date().toISOString();
       templates.push(updatedTemplate);
     }
-    
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
-    return updatedTemplate;
+
+    const activeId = localStorage.getItem(`cenvora_active_template_${sectionKey}`);
+    const normalized = applySingleDefault(templates, activeId);
+    localStorage.setItem(sectionTemplatesKey(sectionKey), JSON.stringify(normalized));
+    return normalized.find((t) => t.id === updatedTemplate.id) || updatedTemplate;
   } catch (error) {
     console.error('Error saving invoice template:', error);
     return null;
   }
 };
 
-// Delete template
-export const deleteInvoiceTemplate = (templateId) => {
+// Delete template within a section
+export const deleteInvoiceTemplate = (templateId, sectionKey = 'sales_invoice') => {
   try {
-    const templates = getInvoiceTemplates();
-    const filtered = templates.filter(t => t.id !== templateId);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-    
-    // If deleted was active, set first as active
-    const activeId = localStorage.getItem(ACTIVE_TEMPLATE_KEY);
+    const templates = getInvoiceTemplates(sectionKey);
+    const filtered = templates.filter((t) => t.id !== templateId);
+    localStorage.setItem(sectionTemplatesKey(sectionKey), JSON.stringify(filtered));
+
+    const scopedKey = `cenvora_active_template_${sectionKey}`;
+    const activeId = localStorage.getItem(scopedKey);
     if (activeId === templateId && filtered.length > 0) {
-      setActiveTemplate(filtered[0].id);
+      setActiveTemplateForSection(sectionKey, filtered[0].id);
     }
-    
+
     return true;
   } catch (error) {
     console.error('Error deleting invoice template:', error);
@@ -317,50 +400,78 @@ export const deleteInvoiceTemplate = (templateId) => {
   }
 };
 
-// Create new template from preset
-export const createTemplateFromPreset = (presetId, name) => {
-  const preset = templatePresets.find(p => p.id === presetId) || defaultInvoiceTemplate;
+// Create new template from preset (section-scoped)
+export const createTemplateFromPreset = (presetId, name, sectionKey = 'sales_invoice') => {
+  const preset = templatePresets.find((p) => p.id === presetId) || defaultInvoiceTemplate;
   const newTemplate = {
-    ...preset,
+    ...JSON.parse(JSON.stringify(preset)),
     id: `custom_${Date.now()}`,
     name: name || `Custom Template ${Date.now()}`,
     isDefault: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  return saveInvoiceTemplate(newTemplate);
+  return saveInvoiceTemplate(newTemplate, sectionKey);
 };
 
-// Duplicate template
-export const duplicateTemplate = (templateId) => {
-  const templates = getInvoiceTemplates();
-  const source = templates.find(t => t.id === templateId);
-  
+// Duplicate template within a section
+export const duplicateTemplate = (templateId, sectionKey = 'sales_invoice') => {
+  const templates = getInvoiceTemplates(sectionKey);
+  const source = templates.find((t) => t.id === templateId);
+
   if (!source) return null;
-  
+
   const duplicate = {
-    ...source,
+    ...JSON.parse(JSON.stringify(source)),
     id: `custom_${Date.now()}`,
     name: `${source.name} (Copy)`,
     isDefault: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  
-  return saveInvoiceTemplate(duplicate);
+
+  return saveInvoiceTemplate(duplicate, sectionKey);
 };
 
-// Reset to defaults
-export const resetToDefaults = () => {
+// Reset one section to default presets
+export const resetToDefaults = (sectionKey = 'sales_invoice') => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(templatePresets));
-    setActiveTemplate('classic');
+    localStorage.setItem(sectionTemplatesKey(sectionKey), JSON.stringify(deepClonePresets()));
+    setActiveTemplateForSection(sectionKey, 'classic');
     return true;
   } catch (error) {
     console.error('Error resetting templates:', error);
     return false;
   }
 };
+
+export const formatLinkedChallanEntries = (invoice) => {
+  const formatDate = (value) => {
+    if (!value) return '';
+    try {
+      return new Date(value).toLocaleDateString('en-IN');
+    } catch {
+      return String(value);
+    }
+  };
+  const raw = invoice?.delivery_challans || invoice?.challans;
+  if (Array.isArray(raw) && raw.length > 0) {
+    return raw
+      .map((c) => {
+        const num = c?.challan_number || c?.number || c?.delivery_challan_number || '';
+        const date = formatDate(c?.challan_date || c?.date);
+        if (!num && !date) return null;
+        return date ? `${num} - ${date}` : String(num);
+      })
+      .filter(Boolean);
+  }
+  const number = invoice?.challan_number || invoice?.delivery_challan_number || '';
+  if (!number) return [];
+  const date = formatDate(invoice?.challan_date);
+  return [date ? `${number} - ${date}` : number];
+};
+
+export const formatLinkedChallanList = (invoice) => formatLinkedChallanEntries(invoice).join(' ; ');
 
 // Number to words converter for Indian currency
 export const numberToWords = (num) => {
@@ -408,24 +519,75 @@ export const numberToWords = (num) => {
 };
 
 export const amountInWords = (amount) => {
-  const rupees = Math.floor(amount);
-  const paise = Math.round((amount - rupees) * 100);
-  
-  let result = numberToWords(rupees) + ' Rupees';
-  if (paise > 0) {
-    result += ' and ' + numberToWords(paise) + ' Paise';
+  if (amount == null || isNaN(amount)) return 'Zero Rupees Only';
+
+  // Round to 2 decimal places to eliminate IEEE-754 floating-point artifacts (e.g. 251999.99999999997)
+  const cleanAmount = Math.round((Number(amount) || 0) * 100) / 100;
+  if (cleanAmount === 0) return 'Zero Rupees Only';
+
+  const isNegative = cleanAmount < 0;
+  const absAmount = Math.abs(cleanAmount);
+  const rupees = Math.floor(absAmount);
+  const paise = Math.round((absAmount - rupees) * 100);
+
+  let result = '';
+  if (isNegative) result += 'Minus ';
+
+  if (rupees > 0) {
+    result += numberToWords(rupees) + (rupees === 1 ? ' Rupee' : ' Rupees');
   }
+
+  if (paise > 0) {
+    const paiseUnit = paise === 1 ? ' Paisa' : ' Paise';
+    if (rupees > 0) {
+      result += ' and ' + numberToWords(paise) + paiseUnit;
+    } else {
+      result += numberToWords(paise) + paiseUnit;
+    }
+  }
+
   result += ' Only';
-  
-  return result;
+  return result.trim();
 };
+
+export function resolveTypography(typography = {}) {
+  const smallSize = Number(typography.smallSize) || 9;
+  const bodySize = Number(typography.bodySize) || 11;
+  const pick = (value, fallback) => {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+  };
+
+  return {
+    fontFamily: typography.fontFamily || 'Inter, system-ui, sans-serif',
+    headerFont: typography.headerFont || typography.fontFamily || 'Inter, system-ui, sans-serif',
+    companyNameSize: pick(typography.companyNameSize, 24),
+    companyAddressSize: pick(typography.companyAddressSize, smallSize),
+    invoiceTitleSize: pick(typography.invoiceTitleSize, 18),
+    sectionTitleSize: pick(typography.sectionTitleSize, 12),
+    customerNameSize: pick(typography.customerNameSize, bodySize),
+    addressSize: pick(typography.addressSize, bodySize),
+    tableHeaderSize: pick(typography.tableHeaderSize, smallSize),
+    tableBodySize: pick(typography.tableBodySize, 12),
+    smallSize,
+    bodySize,
+    totalsSize: pick(typography.totalsSize, bodySize),
+    bankDetailsSize: pick(typography.bankDetailsSize, 12),
+    footerSize: pick(typography.footerSize, smallSize),
+    lineHeight: pick(typography.lineHeight, 1.5),
+    letterSpacing: Number(typography.letterSpacing) || 0,
+  };
+}
 
 export default {
   defaultInvoiceTemplate,
   templatePresets,
+  documentTypeToSectionKey,
   getInvoiceTemplates,
   getActiveTemplate,
+  getActiveTemplateForSection,
   setActiveTemplate,
+  setActiveTemplateForSection,
   saveInvoiceTemplate,
   deleteInvoiceTemplate,
   createTemplateFromPreset,
@@ -433,4 +595,7 @@ export default {
   resetToDefaults,
   numberToWords,
   amountInWords,
+  formatLinkedChallanEntries,
+  formatLinkedChallanList,
+  resolveTypography,
 };

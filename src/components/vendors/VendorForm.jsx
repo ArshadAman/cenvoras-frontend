@@ -4,8 +4,12 @@ import * as Yup from "yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createVendor, updateVendor } from "../../api/vendors";
 import { toast } from "react-toastify";
-import { INDIAN_STATES } from "../../utils/constants";
+import { INDIAN_STATES, GST_STATE_CODE_MAP } from "../../utils/constants";
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import useEscKey from "../../hooks/useEscStack";
+import { formatErrorMessage } from "../../utils/toastUtils";
+import { extractFieldErrors } from "../../utils/fieldErrors";
+import { yupGstinOptional } from "../../utils/gstin";
 
 const vendorSchema = Yup.object().shape({
   name: Yup.string()
@@ -17,9 +21,15 @@ const vendorSchema = Yup.object().shape({
     .max(255, "Email must be less than 255 characters"),
   phone: Yup.string()
     .max(20, "Phone number must be less than 20 characters"),
-  gstin: Yup.string()
-    .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, "Invalid GSTIN format")
-    .max(15, "GSTIN must be less than 15 characters"),
+  gstin: yupGstinOptional(Yup).max(15, "GSTIN must be less than 15 characters"),
+  pan: Yup.string()
+    .nullable()
+    .transform((v) => (!v || !String(v).trim() ? null : String(v).trim().toUpperCase()))
+    .test(
+      "pan-format",
+      "Invalid PAN format (e.g. ABCDE1234F)",
+      (v) => !v || /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v)
+    ),
   address: Yup.string()
     .max(500, "Address must be less than 500 characters"),
   meta: Yup.object().shape({
@@ -27,6 +37,7 @@ const vendorSchema = Yup.object().shape({
 });
 
 export default function VendorForm({ isOpen, onClose, editData = null }) {
+  useEscKey(onClose, isOpen, 10);
   const queryClient = useQueryClient();
   const isEdit = !!editData;
 
@@ -38,7 +49,7 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create vendor");
+      toast.error(formatErrorMessage(error, "Failed to create vendor"));
     },
   });
 
@@ -50,11 +61,12 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
       onClose();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update vendor");
+      toast.error(formatErrorMessage(error, "Failed to update vendor"));
     },
   });
 
-  const handleSubmit = async (values, { setSubmitting }) => {
+  const handleSubmit = async (values, { setSubmitting, setFieldError, setStatus }) => {
+    setStatus(undefined);
     // Clean up empty values
     const cleanValues = Object.fromEntries(
       Object.entries(values).filter(([_, value]) => {
@@ -70,7 +82,11 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
         await createMutation.mutateAsync(cleanValues);
       }
     } catch (e) {
-      // Error is handled in the mutation onError callback
+      // Toast is raised in onError; also show the reason inside the dialog (e.g. duplicate GSTIN),
+      // since a toast can be hidden behind the modal.
+      const fieldErrors = extractFieldErrors(e);
+      Object.entries(fieldErrors).forEach(([f, m]) => setFieldError(f, m));
+      setStatus({ formError: fieldErrors.gstin || Object.values(fieldErrors)[0] || formatErrorMessage(e, 'Could not save vendor') });
     } finally {
       setSubmitting(false);
     }
@@ -81,6 +97,7 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
     email: editData?.email || "",
     phone: editData?.phone || "",
     gstin: editData?.gstin || "",
+    pan: editData?.pan || (editData?.gstin && editData.gstin.length >= 12 ? editData.gstin.substring(2, 12) : ""),
     state: editData?.state || "",
     address: editData?.address || "",
     meta: {
@@ -91,30 +108,27 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
 
   if (!isOpen) return null;
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+  const inputClass = "form-input";
+  const labelClass = "form-label uppercase tracking-wider";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      ></div>
-
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
       {/* Modal Content */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-blue-900/20 animate-fade-up">
+      <div 
+        className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl animate-fade-up border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] overflow-hidden my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
-          <h2 className="text-xl font-bold text-white">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] sticky top-0 z-20">
+          <h2 className="text-lg font-bold text-[var(--text-primary)] font-display">
             {isEdit ? "Edit Vendor" : "New Vendor"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
           >
-            <XMarkIcon className="w-6 h-6" />
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
@@ -124,8 +138,13 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
           onSubmit={handleSubmit}
           enableReinitialize
         >
-          {({ isSubmitting }) => (
-            <Form className="p-6 md:p-8 space-y-6">
+          {({ isSubmitting, status }) => (
+            <Form className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+              {status?.formError && (
+                <div role="alert" className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                  {status.formError}
+                </div>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Vendor Name */}
@@ -189,14 +208,55 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
                 {/* GSTIN */}
                 <div>
                   <label htmlFor="gstin" className={labelClass}>GSTIN</label>
-                  <Field
-                    id="gstin"
-                    name="gstin"
-                    type="text"
-                    className={inputClass}
-                    placeholder="22AAAAA0000A1Z5"
-                  />
+                  <Field name="gstin">
+                    {({ field, form }) => (
+                      <input
+                        {...field}
+                        id="gstin"
+                        type="text"
+                        className={inputClass}
+                        placeholder="22AAAAA0000A1Z5"
+                        onChange={(e) => {
+                          const val = e.target.value.toUpperCase();
+                          form.setFieldValue('gstin', val);
+                          if (val.length >= 2) {
+                            const code = val.substring(0, 2);
+                            const mappedState = GST_STATE_CODE_MAP[code];
+                            if (mappedState) {
+                              form.setFieldValue('state', mappedState);
+                            }
+                            form.setFieldValue('meta.gst_type', 'registered');
+                          }
+                          if (val.length >= 12 && !form.values.pan) {
+                            form.setFieldValue('pan', val.substring(2, 12));
+                          }
+                        }}
+                      />
+                    )}
+                  </Field>
                   <ErrorMessage name="gstin" component="div" className="mt-1 text-xs text-red-400" />
+                </div>
+
+                {/* PAN — required for 194C 1%/2%; missing PAN → 20% (Sec 206AA) */}
+                <div>
+                  <label htmlFor="pan" className={labelClass}>PAN (TDS)</label>
+                  <Field name="pan">
+                    {({ field, form }) => (
+                      <input
+                        {...field}
+                        id="pan"
+                        type="text"
+                        maxLength={10}
+                        className={inputClass}
+                        placeholder="ABCDE1234F"
+                        onChange={(e) => form.setFieldValue('pan', e.target.value.toUpperCase())}
+                      />
+                    )}
+                  </Field>
+                  <p className="mt-1 text-xs text-gray-500">
+                    4th letter P/H → 194C @ 1%; C/F/others → 2%. Blank → 20% (no PAN).
+                  </p>
+                  <ErrorMessage name="pan" component="div" className="mt-1 text-xs text-red-400" />
                 </div>
 
                 {/* GST Type */}
@@ -246,26 +306,26 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
               </div>
 
               {/* Form Actions */}
-              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-white/10">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full sm:w-auto px-6 py-3 sm:py-2.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+                  className="btn-secondary w-full sm:w-auto px-6 py-2.5 text-xs font-bold uppercase tracking-wider transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
-                  className="btn-primary w-full sm:w-auto py-3 sm:py-2.5 px-8 text-sm font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary w-full sm:w-auto py-2.5 px-8 text-xs font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting || createMutation.isPending || updateMutation.isPending ? (
                     <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      {isEdit ? "Updating..." : "Creating..."}
+                      <span>{isEdit ? "Updating..." : "Creating..."}</span>
                     </span>
                   ) : (
                     isEdit ? "Update Vendor" : "Create Vendor"

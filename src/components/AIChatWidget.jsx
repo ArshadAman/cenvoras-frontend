@@ -155,7 +155,7 @@ export default function AIChatWidget() {
             <h3 className="text-base md:text-lg font-semibold tracking-tight text-white/90 relative z-10 flex items-center gap-2">
               <SparklesIcon className="w-5 h-5 text-cyan-200" /> Cenvora Intelligence
             </h3>
-            <p className="text-[10px] md:text-xs font-medium text-white/40 uppercase tracking-widest relative z-10">Business Copilot</p>
+            <p className="text-xs md:text-xs font-medium text-white/40 uppercase tracking-widest relative z-10">Business Copilot</p>
           </div>
 
           {/* Messages */}
@@ -204,10 +204,10 @@ export default function AIChatWidget() {
                     {msg.action && msg.action.intent === 'create_invoice' && (
                       <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 animate-fade-up">
                         <div className="flex items-center gap-2 mb-3">
-                          <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                            <SparklesIcon className="w-4 h-4 text-cyan-300" />
+                          <div className="w-8 h-8 rounded-full bg-[var(--action-primary-bg)] flex items-center justify-center">
+                            <SparklesIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                           </div>
-                          <p className="text-xs font-semibold text-cyan-100/80 uppercase tracking-wider">
+                          <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                             {msg.action.status === 'success' ? 'Action Completed' : 'AI Draft Prepared'}
                           </p>
                         </div>
@@ -233,7 +233,7 @@ export default function AIChatWidget() {
                               setIsOpen(false);
                               navigate('/sales', { state: { aiDraft: msg.action.entities } });
                             }}
-                            className="w-full py-2.5 rounded-xl bg-cyan-500 text-white text-sm font-medium hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-950/20 active:scale-95"
+                            className="w-full py-2.5 rounded-xl btn-primary text-sm font-medium active:scale-95"
                           >
                             Review & Create Invoice
                           </button>
@@ -247,10 +247,10 @@ export default function AIChatWidget() {
 
             {loading && (
               <div className="flex justify-start">
-                <div className="flex gap-1.5 items-center h-6 px-2 opacity-50">
-                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="flex gap-1.5 items-center h-6 px-2 opacity-60">
+                  <div className="w-1.5 h-1.5 bg-[var(--accent-primary)] rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
+                  <div className="w-1.5 h-1.5 bg-[var(--accent-primary)] rounded-full animate-pulse" style={{ animationDelay: '200ms' }} />
+                  <div className="w-1.5 h-1.5 bg-[var(--accent-primary)] rounded-full animate-pulse" style={{ animationDelay: '400ms' }} />
                 </div>
               </div>
             )}
@@ -269,7 +269,7 @@ export default function AIChatWidget() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Ask intelligence..."
-                className="flex-1 bg-transparent text-sm md:text-[15px] font-light text-white placeholder-white/30 outline-none py-1.5 md:py-2 min-w-0"
+                className="flex-1 bg-transparent text-sm md:text-[15px] font-light text-white placeholder-white/30 outline-none border-none focus:outline-none focus:ring-0 shadow-none py-1.5 md:py-2 min-w-0"
                 disabled={loading}
               />
               <button
@@ -285,7 +285,7 @@ export default function AIChatWidget() {
               </button>
             </div>
             <div className="mt-2 md:mt-3 text-center">
-               <p className="text-[9px] md:text-[10px] uppercase tracking-widest text-white/20 font-medium font-sans">AI can make mistakes. Verify important data.</p>
+               <p className="text-xs md:text-xs uppercase tracking-widest text-white/20 font-medium font-sans">AI can make mistakes. Verify important data.</p>
             </div>
           </div>
         </div>

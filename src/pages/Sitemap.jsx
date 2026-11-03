@@ -2,12 +2,9 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   HomeIcon, 
-  UserPlusIcon, 
-  ArrowRightOnRectangleIcon,
-  ShieldCheckIcon,
-  DocumentTextIcon,
-  MapIcon
+  MapIcon, 
 } from '@heroicons/react/24/outline';
+import PublicNavbar from '../components/PublicNavbar';
 import Seo from '../components/Seo';
 
 export default function Sitemap() {
@@ -15,75 +12,106 @@ export default function Sitemap() {
     window.scrollTo(0, 0);
   }, []);
 
-  const sitemapLinks = [
-    { title: 'Home', path: '/', icon: HomeIcon, desc: 'Cenvora Main Landing Page' },
-    { title: 'Login', path: '/login', icon: ArrowRightOnRectangleIcon, desc: 'Sign into your ERP account' },
-    { title: 'Sign Up', path: '/signup', icon: UserPlusIcon, desc: 'Create a new free trial account' },
-    { title: 'HSN & GST Guide', path: '/gst-hsn-guide', icon: BookOpenIcon, desc: 'Reference for GST rates and HSN codes' },
-    { title: 'Privacy Policy', path: '/privacy', icon: ShieldCheckIcon, desc: 'How we manage and protect your data' },
-    { title: 'Terms of Service', path: '/terms', icon: DocumentTextIcon, desc: 'Legal agreements and billing terms' },
-    { title: 'Sitemap', path: '/sitemap', icon: MapIcon, desc: 'Directory of all public pages' },
+  const sitemapGroups = [
+    {
+      category: 'Main Pages',
+      links: [
+        { title: 'Home / Overview', path: '/', desc: 'Product overview, screenshots, and core benefits.' },
+        { title: 'Features Explorer', path: '/#features', desc: 'Detailed breakdown of sales, stock management, accounting, and staff roles.' },
+        { title: 'Rent vs Own Calculator', path: '/#why-own', desc: 'Interactive comparison between monthly SaaS and one-time perpetual ownership.' },
+        { title: 'Perpetual Pricing', path: '/#pricing', desc: 'Hosted Standard, White-Label Custom Domain, and Enterprise plans.' },
+      ]
+    },
+    {
+      category: 'Free Business Tools',
+      links: [
+        { title: 'HSN & GST Code Lookup', path: '/gst-hsn-guide', desc: 'Search 15,000+ HSN codes and GST tax rate slabs.' },
+      ]
+    },
+    {
+      category: 'Support & Inquiries',
+      links: [
+        { title: 'Contact Us', path: '/contact', desc: 'Book a live screen demo or chat with our team on WhatsApp.' },
+      ]
+    },
+    {
+      category: 'Legal & Privacy',
+      links: [
+        { title: 'Privacy Policy', path: '/privacy', desc: 'DPDP Act compliance, data safety, and zero advertising monetization.' },
+        { title: 'Terms of Service', path: '/terms', desc: 'Perpetual software license agreement and AMC maintenance terms.' },
+      ]
+    },
+    {
+      category: 'User Portals',
+      links: [
+        { title: 'Sign In', path: '/login', desc: 'Log in to your Cenvora account.' },
+        { title: 'Start 14-Day Free Trial', path: '/signup', desc: 'Try Cenvora free for 14 days with zero obligation.' },
+      ]
+    }
   ];
 
   return (
-    <div className="min-h-screen font-sans text-white bg-black selection:bg-purple-500/30">
+    <div className="min-h-screen font-sans text-white bg-black">
       <Seo
-        title="Sitemap"
-        description="Browse the public pages available on Cenvora."
+        title="Sitemap | Cenvora"
+        description="Directory of all public pages, tools, and pricing plans on Cenvora."
         canonicalPath="/sitemap"
       />
-      {/* Background Texture Grid */}
-      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
-      
-      {/* Floating Pill Navbar */}
-      <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center">
-        <div className="glass-nav px-6 py-3 flex items-center justify-between gap-12 max-w-5xl shadow-2xl">
-          <Link to="/" className="hover:opacity-80 transition-opacity flex items-center">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[160px] h-auto object-contain" />
-          </Link>
-          <div className="flex items-center gap-4">
-             <Link to="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Log In</Link>
-             <Link to="/signup" className="text-sm font-semibold bg-white text-black px-4 py-2 rounded-full hover:bg-gray-200 transition-colors">Get Started</Link>
-          </div>
-        </div>
-      </nav>
 
-      <main className="pt-40 pb-20 relative z-10 max-w-4xl mx-auto px-6">
-        <div className="mb-12 border-b border-white/10 pb-8">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-white flex items-center gap-4">
-                <MapIcon className="w-10 h-10 text-cyan-400" />
-                Sitemap
-            </h1>
-            <p className="text-gray-400 text-lg">A complete directory of public pages available on the Cenvora platform.</p>
+      <PublicNavbar
+        links={[
+          { label: 'Home', href: '/' },
+          { label: 'Features', href: '/#features' },
+          { label: 'Pricing', href: '/#pricing' },
+          { label: 'HSN Lookup', href: '/gst-hsn-guide' },
+          { label: 'Contact', href: '/contact' },
+        ]}
+      />
+
+      <main className="mx-auto max-w-4xl px-6 pb-20 pt-32 sm:pt-40">
+        <div className="mb-10 border-b border-zinc-800 pb-6">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            Sitemap
+          </h1>
+          <p className="mt-2 text-xs text-zinc-400">
+            A complete list of public pages on Cenvora.
+          </p>
         </div>
 
-        {/* Link Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {sitemapLinks.map((link) => (
-                <Link 
-                    key={link.path} 
+        <div className="space-y-8">
+          {sitemapGroups.map((group, gIdx) => (
+            <div key={gIdx} className="bg-zinc-950 border border-zinc-800/80 rounded-2xl p-6">
+              <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">
+                {group.category}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {group.links.map((link, lIdx) => (
+                  <Link
+                    key={lIdx}
                     to={link.path}
-                    className="p-6 bg-[#0a0a0a] border border-white/10 rounded-2xl hover:border-cyan-500/50 hover:bg-[#111] transition-all group flex items-start gap-4"
-                >
-                    <div className="p-3 bg-white/5 rounded-xl text-gray-400 group-hover:text-cyan-400 transition-colors mt-1">
-                        <link.icon className="w-6 h-6" />
-                    </div>
+                    className="p-3.5 bg-zinc-900/60 border border-zinc-800/60 rounded-xl hover:bg-zinc-900 hover:border-zinc-700 transition-colors flex flex-col justify-between"
+                  >
                     <div>
-                        <h3 className="text-xl font-bold text-white mb-1 group-hover:text-cyan-400 transition-colors">{link.title}</h3>
-                        <p className="text-sm text-gray-500">{link.desc}</p>
-                        <div className="text-xs font-mono text-gray-600 mt-3 flex items-center gap-1">
-                            <span className="text-gray-400">GET</span> {link.path}
-                        </div>
+                      <div className="text-sm font-semibold text-white">
+                        {link.title}
+                      </div>
+                      <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{link.desc}</p>
                     </div>
-                </Link>
-            ))}
+                    <div className="mt-3 text-xs font-mono text-zinc-500">
+                      {link.path}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
-        
-        <section className="pt-8 border-t border-white/10 mt-12">
-            <Link to="/" className="text-cyan-400 hover:text-cyan-300 font-medium inline-flex items-center gap-2">
-                &larr; Back to Home
-            </Link>
-        </section>
+
+        <div className="mt-12 text-center text-xs text-zinc-600">
+          <Link to="/" className="hover:text-zinc-400 transition-colors">
+            &larr; Back to Cenvora homepage
+          </Link>
+        </div>
       </main>
     </div>
   );

@@ -6,14 +6,34 @@ export const getSalesOrders = (params) =>
 export const getSalesOrder = (id) => 
   api.get(`/billing/sales-orders/${id}/`).then(res => res.data);
 
+export const getNextSalesOrderNumber = (prefix = 'SO') => {
+  const p = typeof prefix === 'object' ? prefix?.prefix || 'SO' : (prefix || 'SO');
+  return api.get(`/billing/sales-orders/next-number/?prefix=${p}`).then(res => res.data);
+};
+
 export const createSalesOrder = (data) => 
   api.post("/billing/sales-orders/", data).then(res => res.data);
 
 export const updateSalesOrder = (id, data) => 
   api.put(`/billing/sales-orders/${id}/`, data).then(res => res.data);
 
+export const patchSalesOrder = (id, data) => 
+  api.patch(`/billing/sales-orders/${id}/`, data).then(res => res.data);
+
 export const deleteSalesOrder = (id) => 
   api.delete(`/billing/sales-orders/${id}/`).then(res => res.data);
 
-export const convertToInvoice = (id) =>
-  api.post(`/billing/sales-orders/${id}/convert_to_invoice/`).then(res => res.data);
+export const convertToInvoice = (id, data = {}) =>
+  api.post(`/billing/sales-orders/${id}/convert_to_invoice/`, data).then(res => res.data);
+
+export const downloadSalesOrderPDF = (id, payload) => {
+  if (payload) {
+    const body = typeof payload === 'object' && ('html' in payload || 'template' in payload)
+      ? payload
+      : { template: payload };
+    return api.post(`/billing/sales-orders/${id}/pdf/`, body, { responseType: 'blob' })
+      .then(res => res.data);
+  }
+  return api.get(`/billing/sales-orders/${id}/pdf/`, { responseType: 'blob' })
+    .then(res => res.data);
+};

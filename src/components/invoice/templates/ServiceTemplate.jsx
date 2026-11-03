@@ -1,7 +1,10 @@
+import { documentTitle, documentDeclaration } from '../../../utils/gstStatus';
 import React, { forwardRef } from 'react';
-import { amountInWords } from '../../../utils/invoiceSettings';
+import PlaceOfSupplyLine from './PlaceOfSupplyLine';
+import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
+import InvoicePrintShell from '../InvoicePrintShell';
 
 // Service Template (LTIMindtree Style)
 const ServiceTemplate = forwardRef(({ 
@@ -9,6 +12,7 @@ const ServiceTemplate = forwardRef(({
 }, ref) => {
   const colors = template.colors || {};
   const typography = template.typography || {};
+  const type = resolveTypography(typography);
   const sections = template.sections || {};
   const content = template.content || {};
   const columns = template.columns || [];
@@ -20,195 +24,395 @@ const ServiceTemplate = forwardRef(({
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const items = invoice.items || [];
+
+  const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
+  const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
+  const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.branch || '';
+  const bankUpi = businessInfo.bank_upi_id || '';
+  const bankQr = businessInfo.bank_qr_code || '';
+  const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
-  const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0);
-  const taxTotal = items.reduce((sum, item) => sum + ((parseFloat(item.quantity||0) * parseFloat(item.price||0) * parseFloat(item.tax||0)) / 100), 0);
-  const finalTotal = subtotal + taxTotal + (parseFloat(invoice.round_off || 0));
+  const roundOff = parseFloat(invoice.round_off || 0) || 0;
+  const subtotal = items.reduce((sum, item) => {
+    const qty = parseFloat(item.quantity || 0);
+    const price = parseFloat(item.price || 0);
+    const discount = parseFloat(item.discount || 0);
+    const lineBase = qty * price;
+    return sum + (lineBase - (lineBase * discount) / 100);
+  }, 0);
+  const taxTotal = items.reduce((sum, item) => {
+    const qty = parseFloat(item.quantity || 0);
+    const price = parseFloat(item.price || 0);
+    const discount = parseFloat(item.discount || 0);
+    const tax = parseFloat(item.tax || 0);
+    const lineBase = qty * price;
+    const taxable = lineBase - (lineBase * discount) / 100;
+    return sum + ((taxable * tax) / 100);
+  }, 0);
+  const finalTotal = invoice.total_amount != null
+    ? parseFloat(invoice.total_amount)
+    : Number((subtotal + taxTotal + roundOff).toFixed(2));
 
   const taxType = getTaxType(invoice, businessInfo);
   const isIGST = taxType === 'igst';
 
-  const planCode = businessInfo.plan_code || 'free';
-  const showWatermarkFooter = planCode !== 'business';
+  const showWatermarkFooter = true;
+
+  const isDeliveryChallan = 
+    invoice.document_type === 'delivery_challan' || 
+    invoice.is_delivery_challan || 
+    content.invoiceTitle === 'DELIVERY CHALLAN' || 
+    Boolean(invoice.challan_number && !invoice.invoice_number);
 
   const primaryColor = colors.primary || '#174A82';
 
   const preferredWidths = {
     serial: '6%',
     description: 'auto',
+    batch: '10%',
     hsn: '12%',
     quantity: '8%',
+    free_qty: '7%',
+    unit: '8%',
+    make: '10%',
+    pack_size: '10%',
     price: '15%',
+    discount: '8%',
     tax: '10%',
     amount: '18%',
   };
 
-  const visibleColumns = columns.filter(col => col.show !== false);
+  const hasAnyDiscount = (items || []).some(item => Number(item?.discount || 0) > 0);
+  const visibleColumns = columns
+    .filter(col => col.show !== false)
+    .filter(col => invoiceSettings.show_item_batch !== false || col.id !== 'batch')
+    .filter(col => invoiceSettings.show_item_hsn !== false || col.id !== 'hsn')
+    .filter(col => invoiceSettings.show_item_free_quantity !== false || col.id !== 'free_qty')
+    .filter(col => (invoiceSettings.show_item_discount !== false && hasAnyDiscount) || col.id !== 'discount')
+    .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
   return (
     <div 
       ref={ref}
+      data-bill-template="true"
+      className="bg-white invoice-sheet"
       style={{
-        width: '210mm', minHeight: '297mm', padding: '15mm', boxSizing: 'border-box',
+        width: '210mm', minHeight: '297mm', margin: '0 auto', padding: '8mm', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#111827',
-        fontFamily: typography.fontFamily || 'Inter, system-ui, sans-serif', fontSize: `${typography.bodySize || 10}px`,
-        transform: `scale(${scale})`, transformOrigin: 'top left',
-        border: `3px solid ${primaryColor}`, borderRadius: '8px'
+        fontFamily: type.fontFamily, fontSize: `${type.bodySize}px`, lineHeight: type.lineHeight,
+        ...(scale && scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : {}),
+        border: `3px solid ${primaryColor}`, borderRadius: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
       }}
     >
+      <InvoicePrintShell
+        theme="service"
+        headerProps={{
+          companyName,
+          companyAddress,
+          companyPhone: businessInfo.phone || '',
+          companyEmail: businessInfo.email || '',
+          companyGST: businessInfo.gstin || '',
+          companyPAN: businessInfo.pan_number || businessInfo.pan || '',
+          companyGEM: businessInfo.gem_id || '',
+          companyDL: businessInfo.dl_number || businessInfo.drug_license_number || '',
+          companyNameColor: primaryColor || '#d11f1f',
+          primaryColor: primaryColor || '#d11f1f',
+          companyNameSize: type.companyNameSize,
+          companyAddressSize: type.companyAddressSize,
+          fontFamily: type.headerFont,
+          smallSize: type.smallSize,
+          companyLogo: template.branding?.logo || '',
+          showLogo: Boolean(sections.showLogo && template.branding?.logo),
+        }}
+      >
       <div className="flex justify-between items-start mb-6">
-        <div>
+        <div className="invoice-first-page-header">
           {sections.showLogo && template.branding?.logo && (
              <img src={template.branding.logo} alt="Logo" style={{ maxHeight: 50 }} className="mb-4" />
           )}
-          <h1 className="font-bold text-2xl mb-1 uppercase tracking-tight" style={{ color: primaryColor }}>{companyName}</h1>
-          {sections.showGST && businessInfo.gstin && <p className="font-bold text-[10px] text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
-          <p className="whitespace-pre-line text-gray-600 text-[11px] mt-2 leading-relaxed" style={{ maxWidth: '300px' }}>{companyAddress}</p>
+          <h1 className="font-bold mb-1 uppercase tracking-tight" style={{ color: primaryColor, fontSize: `${type.companyNameSize}px` }}>{companyName}</h1>
+          <div style={{ fontSize: `${type.companyAddressSize}px` }}>
+          {sections.showGST && businessInfo.gstin && <p className="font-bold text-gray-700">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin}</p>}
+          {businessInfo.pan_number && <p className="font-bold text-gray-700">PAN: {businessInfo.pan_number}</p>}
+          {businessInfo.gem_id && <p className="font-bold text-gray-700">GeM ID: {businessInfo.gem_id}</p>}
+          {businessInfo.drug_license_number && <p className="font-bold text-gray-700">DL No: {businessInfo.drug_license_number}</p>}
+          </div>
+          <p className="whitespace-pre-line text-gray-600 mt-2 leading-relaxed" style={{ maxWidth: '300px', fontSize: `${type.companyAddressSize}px` }}>{companyAddress}</p>
           {(businessInfo.phone || businessInfo.email) && (
-            <p className="text-gray-600 text-[11px] mt-1 font-medium">
+            <p className="text-gray-600 mt-1 font-medium" style={{ fontSize: `${type.companyAddressSize}px` }}>
               {businessInfo.phone ? `Mobile: +91 ${businessInfo.phone}` : ''}
               {businessInfo.email ? ` | Email: ${businessInfo.email}` : ''}
             </p>
           )}
         </div>
         <div className="text-right">
-          <h2 className="text-3xl font-black tracking-tighter mb-1" style={{ color: primaryColor }}>
-            {content.invoiceTitle || 'TAX INVOICE'}
+          <h2 className="font-black tracking-tighter mb-1" style={{ color: primaryColor, fontSize: `${type.invoiceTitleSize}px` }}>
+            {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : documentTitle(content.invoiceTitle, businessInfo)}
           </h2>
-          <p className="text-gray-900 font-bold text-sm">Invoice #: {invoiceNumber}</p>
+{!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
+          <p className="text-gray-900 font-bold text-sm">
+            {isDeliveryChallan ? 'Challan #:' : 'Invoice #:'} {isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}
+          </p>
         </div>
       </div>
 
       <div className="flex mb-8 border-y-2 py-6" style={{ borderColor: '#f3f4f6' }}>
         <div className="w-1/2">
-          <h3 className="font-bold text-gray-400 text-[10px] uppercase tracking-widest mb-2">Bill To:</h3>
-          <p className="font-bold text-lg text-gray-900 leading-none mb-1">{customerName}</p>
-          <p className="whitespace-pre-line text-gray-600 text-sm leading-relaxed">{billingAddress}</p>
+          <h3 className="font-bold text-gray-700 uppercase tracking-widest mb-2" style={{ fontSize: `${type.sectionTitleSize}px` }}>{isDeliveryChallan ? 'Customer Address:' : 'Bill To:'}</h3>
+          <p className="font-bold text-gray-900 leading-none mb-1" style={{ fontSize: `${type.customerNameSize}px` }}>{customerName}</p>
+          <p className="whitespace-pre-line text-gray-600 leading-relaxed" style={{ fontSize: `${type.addressSize}px` }}>{billingAddress}</p>
           {invoice.customer_gstin && <p className="text-xs font-bold text-gray-800 mt-2">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
+          <PlaceOfSupplyLine invoice={invoice} showDelivery className="text-xs text-gray-800 mt-1" />
         </div>
-        <div className="w-1/2 space-y-2 text-sm pl-12 border-l border-gray-100">
-          <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">Invoice Date:</span> <span className="font-semibold text-gray-900">{invoiceDate}</span></div>
-          {invoice.due_date && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">Due Date:</span> <span className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</span></div>}
-          {invoice.po_number && <div className="flex justify-between"><span className="font-bold text-gray-500 uppercase text-[10px] tracking-widest">PO Number:</span> <span className="font-semibold text-gray-900">{invoice.po_number}</span></div>}
+        <div className="w-1/2 space-y-2 pl-12 border-l border-gray-100" style={{ fontSize: `${type.bodySize}px` }}>
+          <div className="flex justify-between">
+            <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">
+              {isDeliveryChallan ? 'Challan Date:' : 'Invoice Date:'}
+            </span>{' '}
+            <span className="font-semibold text-gray-900">{isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}</span>
+          </div>
+          {isDeliveryChallan ? (
+            <>
+              {(invoice.sales_order_number || invoice.po_number) && (
+                <div className="flex justify-between">
+                  <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Ref Order:</span>{' '}
+                  <span className="font-semibold text-gray-900">{invoice.sales_order_number || invoice.po_number}</span>
+                </div>
+              )}
+              {invoice.vehicle_number && (
+                <div className="flex justify-between">
+                  <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Vehicle No:</span>{' '}
+                  <span className="font-mono font-bold text-gray-900">{invoice.vehicle_number}</span>
+                </div>
+              )}
+              {invoice.transport_mode && (
+                <div className="flex justify-between">
+                  <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Mode:</span>{' '}
+                  <span className="font-semibold text-gray-900">{invoice.transport_mode}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {invoice.due_date && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Due Date:</span> <span className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</span></div>}
+              {(invoice.po_number || invoice.sales_order_number) && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">PO / Order #:</span> <span className="font-semibold text-gray-900">{invoice.po_number || invoice.sales_order_number}</span></div>}
+              {formatLinkedChallanList(invoice) && <div className="flex justify-between gap-3"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Challan #:</span> <span className="font-semibold text-gray-900 text-right">{formatLinkedChallanList(invoice)}</span></div>}
+            </>
+          )}
         </div>
       </div>
 
-      <table className="w-full text-left mb-8 border-collapse">
-        <thead>
-          <tr className="border-b-2 border-gray-900">
-            {visibleColumns.map(col => (
-              <th 
-                key={col.id} 
-                className={`py-3 px-2 text-[11px] font-black text-gray-900 uppercase tracking-widest ${
-                  ['quantity', 'price', 'amount', 'tax'].includes(col.id) ? 'text-right' : ''
-                }`}
-                style={{ width: preferredWidths[col.id] || '10%' }}
-              >
-                {col.id === 'serial' ? 'S. No' : col.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item, idx) => (
-            <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
-              {visibleColumns.map(col => {
-                let val = '';
-                let isNumeric = false;
-                if(col.id==='serial') val = idx+1;
-                else if(col.id==='description') val = (
-                  <div className="py-3">
-                    <div className="font-bold text-gray-900 text-sm">{item.product_name || item.product}</div>
-                    {item.description && <div className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">{item.description}</div>}
-                  </div>
-                );
-                else if(col.id==='hsn') val = item.hsn_sac_code || item.hsn_code || '-';
-                else if(col.id==='quantity') { val = item.quantity; isNumeric = true; }
-                else if(col.id==='price') { val = `${getCurrencySymbol()}${parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
-                else if(col.id==='tax') { val = `${item.tax||0}%`; isNumeric = true; }
-                else if(col.id==='amount') { val = `${getCurrencySymbol()}${(parseFloat(item.quantity||0) * parseFloat(item.price||0)).toLocaleString('en-IN', {minimumFractionDigits:2})}`; isNumeric = true; }
-                
-                return (
-                  <th 
-                    key={col.id} 
-                    className={`py-3 px-2 text-[12px] font-medium text-gray-700 ${isNumeric ? 'text-right' : ''}`}
-                  >
-                    {val}
-                  </th>
-                );
-              })}
+      {/* Items Table */}
+      <table className="w-full text-left mb-8 border-collapse" style={{ tableLayout: 'fixed' }}>
+          <thead style={{ display: 'table-header-group' }}>
+            <tr className="border-b-2 border-gray-900">
+              {visibleColumns.map(col => (
+                <th 
+                  key={col.id} 
+                  className={`py-3 px-2 font-black text-gray-900 uppercase tracking-widest ${
+                    ['quantity', 'price', 'amount', 'tax', 'discount'].includes(col.id) ? 'text-right' : ''
+                  }`}
+                  style={{ width: preferredWidths[col.id] || '10%', whiteSpace: 'nowrap', fontSize: `${type.tableHeaderSize}px` }}
+                >
+                  {col.id === 'serial' ? 'Sl.' : col.label}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {items.map((item, idx) => {
+              if (item.row_type === 'note') {
+                return (
+                  <tr key={idx} className="border-b border-gray-100 bg-gray-50/50">
+                    <td colSpan={visibleColumns.length} className="py-1.5 px-2 text-left text-gray-700 italic font-medium" style={{ fontSize: `${type.smallSize}px` }}>
+                      Note: {item.description || item.product_description || item.product || ''}
+                    </td>
+                  </tr>
+                );
+              }
+              return (
+              <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="border-b border-gray-100 hover:bg-gray-50/50">
+                {visibleColumns.map(col => {
+                  let val = '';
+                  let isNumeric = false;
+                  if(col.id==='serial') val = items.slice(0, idx).filter((row) => row.row_type !== 'note').length + 1;
+                  else if(col.id==='description') {
+                    const desc = item.description || item.product_description || item.product_detail?.description;
+                    val = (
+                      <div className="py-0">
+                        <div className="font-normal text-gray-900 text-sm">{item.product_name || item.product}</div>
+                        {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                          <div className="text-xs text-gray-500 font-medium italic mt-0.5">
+                            Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                          </div>
+                        )}
+                        {desc && (
+                          <div className="text-xs text-gray-500 mt-0.5 whitespace-pre-line leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
+                            {desc}
+                          </div>
+                        )}
+                        {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                          <div className="text-xs text-gray-500 mt-0.5 font-medium">
+                            {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
+                            {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
+                            {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  }
+                  else if(col.id==='hsn') val = item.hsn_sac_code || item.hsn_code || '-';
+                  else if(col.id==='quantity') { val = item.quantity; isNumeric = true; }
+                  else if(col.id==='batch') val = item.batch_number || item.batch?.batch_number || item.batch || '-';
+                  else if(col.id==='unit') val = item.unit || 'pcs';
+                  else if(col.id==='free_qty') { val = item.free_quantity || 0; isNumeric = true; }
+                  else if(col.id==='make') val = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
+                  else if(col.id==='pack_size') val = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
+                  else if(col.id==='price') {
+                    const p = parseFloat(item.price||0);
+                    const pStr = p.toString();
+                    const decCount = (pStr.split('.')[1] || '').length;
+                    const decimals = Math.min(Math.max(2, decCount), 4);
+                    val = `${getCurrencySymbol()}${p.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: decimals })}`;
+                    isNumeric = true;
+                  }
+                  else if(col.id==='discount') {
+                    const discNum = parseFloat(item.discount || 0);
+                    val = discNum > 0 ? `${discNum}%` : '-';
+                    isNumeric = true;
+                  }
+                  else if(col.id==='tax') { val = `${Math.round(item.tax||0)}%`; isNumeric = true; }
+                  else if(col.id==='amount') {
+                    const qty = parseFloat(item.quantity||0);
+                    const price = parseFloat(item.price||0);
+                    const disc = parseFloat(item.discount||0);
+                    const lineBase = qty * price;
+                    const amt = lineBase - (lineBase * disc) / 100;
+                    val = `${getCurrencySymbol()}${amt.toLocaleString('en-IN', {minimumFractionDigits:2})}`;
+                    isNumeric = true;
+                  }
+                  
+                  return (
+                    <td 
+                      key={col.id} 
+                      className="align-middle font-medium text-gray-700"
+                      style={{ 
+                        paddingTop: '0.6px',
+                        paddingBottom: '0.6px',
+                        paddingLeft: '8px',
+                        paddingRight: '8px',
+                        margin: 0,
+                        lineHeight: 1.2,
+                        fontSize: `${type.tableBodySize}px`,
+                        textAlign: col.id === 'description' ? 'left' : ['price', 'amount'].includes(col.id) ? 'right' : 'center',
+                        verticalAlign: 'middle',
+                      }}
+                    >
+                      {val}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+          </tbody>
+        </table>
 
-      <div className="flex justify-between mt-auto pt-6">
-        <div className="w-1/2 pr-8">
-          {sections.showBankDetails && (
-            <div className="mb-4">
-              <p className="font-bold text-gray-900 mb-1">Bank Details:</p>
-              <div className="text-xs text-gray-700 leading-relaxed">
-                {content.bankDetails?.bankName && <p>Bank: {content.bankDetails.bankName}</p>}
-                {content.bankDetails?.accountNumber && <p>Account #: {content.bankDetails.accountNumber}</p>}
-                {content.bankDetails?.ifscCode && <p>IFSC: {content.bankDetails.ifscCode}</p>}
-                {content.bankDetails?.accountHolder && <p>Branch: {content.bankDetails.accountHolder}</p>}
+      {/* Totals & Notes Section (Hidden for Delivery Challans). Keep-together: never split across pages. */}
+      {!isDeliveryChallan ? (
+        <div className="invoice-totals-block flex justify-between mt-auto pt-6">
+          <div className="w-1/2 pr-8">
+            {sections.showBankDetails && hasBankDetails && (
+              <div className="mb-4 flex items-start gap-4">
+                <div className="text-gray-700 leading-relaxed flex-1" style={{ fontSize: `${type.bankDetailsSize}px` }}>
+                  <p className="font-bold text-gray-900 mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Bank Details:</p>
+                  {bankName && <p>Bank: {bankName}</p>}
+                  {bankAccount && <p>Account #: {bankAccount}</p>}
+                  {bankIfsc && <p>IFSC: {bankIfsc}</p>}
+                  {bankBranch && <p>Branch: {bankBranch}</p>}
+                  {bankUpi && <p>UPI/VPA: {bankUpi}</p>}
+                </div>
+                {bankQr && (
+                  <div className="flex flex-col items-center">
+                    <img src={bankQr} alt="Payment QR" className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5" />
+                    <span className="text-xs text-gray-500 mt-0.5 font-medium">Scan & Pay</span>
+                  </div>
+                )}
               </div>
+            )}
+            
+            <div className="border border-gray-300 p-2 text-sm bg-gray-50 border-dashed rounded">
+               <span className="font-bold">Total amount (in words): </span>
+               <span className="italic font-medium">{amountInWords(finalTotal)}</span>
             </div>
-          )}
-          
-          <div className="border border-gray-300 p-2 text-xs bg-gray-50 border-dashed rounded">
-             <span className="font-bold">Total amount (in words): </span>
-             <span>{amountInWords(finalTotal)}</span>
+          </div>
+
+          <div className="w-[40%]">
+            <table className="w-full text-right" style={{ fontSize: `${type.totalsSize}px` }}>
+              <tbody>
+                <tr><td className="py-1 font-semibold text-gray-700">Taxable Amount</td><td className="py-1">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                {isIGST ? (
+                  <tr><td className="py-1 font-semibold text-gray-700">IGST</td><td className="py-1">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                ) : (
+                  <>
+                    <tr><td className="py-1 font-semibold text-gray-700">CGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                    <tr><td className="py-1 font-semibold text-gray-700">SGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                  </>
+                )}
+                {roundOff !== 0 && (
+                  <tr>
+                    <td className="py-1 font-semibold text-gray-700">Round Off</td>
+                    <td className="py-1">{roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}</td>
+                  </tr>
+                )}
+                <tr className="border-t-2 border-b-2 border-gray-900 text-base">
+                  <td className="py-2 font-bold text-gray-900">Total</td>
+                  <td className="py-2 font-bold text-gray-900">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
-
-        <div className="w-[40%]">
-          <table className="w-full text-sm text-right">
-            <tbody>
-              <tr><td className="py-1 font-semibold text-gray-700">Taxable Amount</td><td className="py-1">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-              {isIGST ? (
-                <tr><td className="py-1 font-semibold text-gray-700">IGST</td><td className="py-1">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-              ) : (
-                <>
-                  <tr><td className="py-1 font-semibold text-gray-700">CGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-                  <tr><td className="py-1 font-semibold text-gray-700">SGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-                </>
-              )}
-              {invoice.round_off ? <tr><td className="py-1 font-semibold text-gray-700">Round Off</td><td className="py-1">{getCurrencySymbol()}{parseFloat(invoice.round_off).toFixed(2)}</td></tr> : null}
-              <tr className="border-t-2 border-b-2 border-gray-900 text-base">
-                <td className="py-2 font-bold text-gray-900">Total</td>
-                <td className="py-2 font-bold text-gray-900">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div className="text-right mt-16 pt-2">
-            <p className="text-xs text-gray-500 border-t border-gray-400 inline-block w-48 text-center pt-1">
-               {content.signatureLabel || 'Authorized Signatory'}
+      ) : null}
+      
+      {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
+      <div className="mt-2 invoice-page-footer">
+        <div className="flex justify-between gap-6 mt-8 border-t border-gray-300 pt-4">
+          {sections.showTerms && (
+            <div className="flex-1 pr-4">
+              <p className="font-bold text-gray-900 mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Notes:</p>
+              <p className="text-gray-700 mb-3" style={{ fontSize: `${type.footerSize}px` }}>{content.footerNote || 'Thank you for the Business!'}</p>
+              <p className="font-bold text-gray-900 mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Terms and Conditions:</p>
+              <ol className="text-gray-600 pl-4 list-decimal space-y-0.5" style={{ fontSize: `${type.footerSize}px` }}>
+                {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
+              </ol>
+            </div>
+          )}
+          <div className="text-right ml-auto pt-2">
+            <p className="font-bold text-gray-600 mb-8" style={{ fontSize: `${type.footerSize}px` }}>For {companyName}</p>
+            <p className="text-gray-700 font-semibold border-t border-gray-400 inline-block w-48 text-center pt-1" style={{ fontSize: `${type.footerSize}px` }}>
+              {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
             </p>
           </div>
         </div>
-      </div>
-      
-      {sections.showTerms && (
-         <div className="mt-8 border-t border-gray-300 pt-4">
-           <p className="font-bold text-gray-900 text-xs mb-1">Notes:</p>
-           <p className="text-gray-700 text-xs mb-3">{content.footerNote || 'Thank you for the Business!'}</p>
-           <p className="font-bold text-gray-900 text-xs mb-1">Terms and Conditions:</p>
-           <ol className="text-xs text-gray-600 pl-4 list-decimal space-y-0.5">
-             {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
-           </ol>
-         </div>
-      )}
-      <div className="w-full text-center mt-6 text-[10px] text-gray-500 font-medium">
-        This is a computer generated digital invoice and does not require a signature.
-      </div>
-      
-      {showWatermarkFooter && (
-        <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-          Made with Cenvora: Built for Modern Businesses<br />
-          <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
+        <div className="w-full text-center mt-6 text-gray-700 font-medium" style={{ fontSize: `${type.footerSize}px` }}>
+          {isDeliveryChallan
+            ? 'This is a computer generated delivery challan and does not require a signature.'
+            : 'This is a computer generated digital invoice and does not require a signature.'}
         </div>
-      )}
+        
+        {showWatermarkFooter && (
+          <div className="mt-2 text-center text-xs text-gray-600 print-watermark w-full">
+            Made with Cenvora: Built for Modern Businesses<br />
+            <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+          </div>
+        )}
+      </div>
+      </InvoicePrintShell>
     </div>
   );
 });

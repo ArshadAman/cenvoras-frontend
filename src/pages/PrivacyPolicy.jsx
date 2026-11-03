@@ -9,60 +9,88 @@ export default function PrivacyPolicy() {
   }, []);
 
   return (
-    <div className="min-h-screen font-sans text-white bg-black selection:bg-purple-500/30">
+    <div className="min-h-screen font-body text-[var(--text-primary)] bg-[var(--bg-primary)]">
       <Seo
-        title="Privacy Policy"
-        description="Read how Cenvora handles customer, billing, inventory, and account data on the platform."
+        title="Privacy Policy | Cenvora"
+        description="Learn how Cenvora protects your business data, complies with DPDP Act 2023, and guarantees 100% data ownership."
         canonicalPath="/privacy"
       />
-      {/* Background Texture Grid */}
-      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
-      
+
       <PublicNavbar
         links={[
           { label: 'Home', href: '/' },
-          { label: 'HSN Code', href: '/gst-hsn-guide' },
-          { label: 'Contact', href: '/contact' },
+          { label: 'Pricing', href: '/#pricing' },
+          { label: 'HSN Lookup', href: '/gst-hsn-guide' },
           { label: 'Terms', href: '/terms' },
+          { label: 'Contact', href: '/contact' },
         ]}
       />
 
-      <main className="pt-40 pb-20 relative z-10 max-w-3xl mx-auto px-6">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-8 text-white">Privacy Policy</h1>
-        <p className="text-gray-400 mb-12">Last updated: {new Date().toLocaleDateString()}</p>
+      <main className="mx-auto max-w-3xl px-6 pb-20 pt-32 sm:pt-40">
+        <div className="border-b border-[var(--border-subtle)] pb-6 mb-8">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)] font-display">
+            Privacy Policy
+          </h1>
+          <p className="mt-2 text-xs text-[var(--text-muted)] font-mono">
+            Last Updated: January 2026 • Compliant with Digital Personal Data Protection (DPDP) Act, 2023
+          </p>
+        </div>
 
-        <div className="space-y-8 text-gray-300 leading-relaxed">
+        <div className="space-y-8 text-sm text-[var(--text-secondary)] leading-relaxed font-normal">
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">1. Introduction</h2>
-            <p>Welcome to Cenvora. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you as to how we look after your personal data when you visit our website and use our ERP services.</p>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">1. Your Business Data is 100% Yours</h2>
+            <p>
+              At Cenvora, we believe that your business transactions, customer lists, item prices, and profit margins belong exclusively to you. We do not sell, rent, monetize, or share your data with any third-party advertisers. Your business records are never used to train public AI models.
+            </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">2. Data We Collect</h2>
-            <p className="mb-4">We may collect, use, store and transfer different kinds of personal data about you which we have grouped together as follows:</p>
-            <ul className="list-disc pl-6 space-y-2 text-gray-400">
-              <li><strong>Identity Data:</strong> includes first name, last name, username or similar identifier.</li>
-              <li><strong>Contact Data:</strong> includes billing address, email address and telephone numbers.</li>
-              <li><strong>Financial Data:</strong> includes GSTIN and company financial records uploaded to our platform. All data is securely encrypted.</li>
-              <li><strong>Technical Data:</strong> includes IP address, login data, browser type and version.</li>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">2. What Information We Collect</h2>
+            <p className="mb-2">
+              To provide you with working billing software and help you generate valid GST invoices, we store:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 text-[var(--text-muted)] text-xs sm:text-sm">
+              <li><strong>Account Info:</strong> Your name, business email, contact phone number, and password hash.</li>
+              <li><strong>Business Details:</strong> Business name, address, GSTIN, and state.</li>
+              <li><strong>Transactional Data:</strong> Products, invoices, customer records, supplier bills, and payment records that you enter into the software.</li>
+              <li><strong>Technical Logs:</strong> Basic error logs and login timestamps to ensure security.</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">3. How We Use Your Data</h2>
-            <p>We will only use your personal data when the law allows us to. Most commonly, we will use your personal data to provide our ERP services to you, to manage your account, to process payments, and to ensure the security of our platform.</p>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">3. How Your Data is Used</h2>
+            <p>
+              Your data is used strictly to run your software instance: calculating GST tax accurately, updating stock counts, generating invoice PDFs, and creating GST filing reports (GSTR-1 and GSTR-3B).
+            </p>
           </section>
-          
+
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">4. Data Security</h2>
-            <p>We have put in place appropriate security measures to prevent your personal data from being accidentally lost, used or accessed in an unauthorized way, altered or disclosed. We limit access to your personal data to those employees, agents, contractors and other third parties who have a business need to know.</p>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">4. Data Security & Storage</h2>
+            <p>
+              All data transmitted between your browser and our servers is encrypted using TLS (HTTPS). Database disks and automated daily backups are encrypted with AES-256 standards. Hosted Standard and White-Label instances are hosted in secured Indian data centers. For Self-Hosted customers, data resides entirely on your own private cloud or server.
+            </p>
           </section>
-          
-          <section className="pt-8 border-t border-white/10 mt-12">
-             <Link to="/" className="text-cyan-400 hover:text-cyan-300 font-medium inline-flex items-center gap-2">
-                &larr; Back to Home
-             </Link>
+
+          <section>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">5. Data Portability</h2>
+            <p>
+              You can export your customer lists, product catalogs, and invoices to standard Excel or CSV files at any time. If you ever decide to discontinue using Cenvora, you can request a complete SQL database backup.
+            </p>
           </section>
+
+          <section>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">6. Contact Our Team</h2>
+            <p>
+              If you have any questions about how your data is handled, please contact our team at{' '}
+              <a href="mailto:support@cenvora.co.in" className="text-[var(--accent-primary)] hover:underline">support@cenvora.co.in</a> or message us on WhatsApp at{' '}
+              <span className="text-[var(--status-success)] font-mono">+91 7205289643</span>.
+            </p>
+          </section>
+        </div>
+
+        <div className="mt-12 pt-6 border-t border-[var(--border-subtle)] flex justify-between text-xs text-[var(--text-muted)]">
+          <Link to="/" className="hover:text-[var(--text-primary)] transition-colors">&larr; Back to Home</Link>
+          <Link to="/terms" className="hover:text-[var(--text-primary)] transition-colors">Read Terms of Service &rarr;</Link>
         </div>
       </main>
     </div>

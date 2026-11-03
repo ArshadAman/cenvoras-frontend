@@ -3,7 +3,8 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesOrder, updateSalesOrder } from "../../api/sales_order";
 import { getProducts } from "../../api/sales";
-import { getCustomers } from "../../api/customers";
+import { getCustomers, createCustomer } from "../../api/customers";
+import { formatErrorMessage } from "../../utils/toastUtils";
 import { getWarehouses, getStockPoints } from "../../api/inventory";
 import { INDIAN_STATES } from "../../utils/constants";
 import { toast } from "react-toastify";
@@ -12,21 +13,43 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 
 // Product Autocomplete Component (Reused logic)
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products }) {
+function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showManufacturer = true }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const descRef = useRef(null);
+  const descValue = values.items[idx]?.description ?? values.items[idx]?.product_description ?? "";
+  const hasDescription = Boolean(String(descValue).trim());
+  const [descExpanded, setDescExpanded] = useState(hasDescription);
+  const [focusDesc, setFocusDesc] = useState(false);
+
+  useEffect(() => {
+    if (hasDescription) setDescExpanded(true);
+  }, [hasDescription]);
+
+  useEffect(() => {
+    if (focusDesc && descExpanded && descRef.current) {
+      descRef.current.focus();
+      setFocusDesc(false);
+    }
+  }, [focusDesc, descExpanded]);
+
+  useEffect(() => {
+    setInputValue(values.items[idx]?.product || "");
+  }, [values.items[idx]?.product]);
 
   const selectProduct = (product) => {
     setFieldValue(`items.${idx}.product`, product.name);
     setFieldValue(`items.${idx}.product_id`, product.id);
+    setFieldValue(`items.${idx}.manufacturer`, product.manufacturer || "");
     setFieldValue(`items.${idx}.unit`, product.unit || 'pcs');
     setFieldValue(`items.${idx}.price`, product.price ?? 0);
     const quantity = values.items[idx]?.quantity || 1;
     const amount = quantity * (product.price ?? 0);
     setFieldValue(`items.${idx}.amount`, amount);
-    // setFieldValue(`items.${idx}.hsn_sac_code`, product.hsn_code || product.hsn_sac_code || ""); // Not strictly needed for Order
+    setFieldValue(`items.${idx}.description`, product.description || "");
+    setFieldValue(`items.${idx}.product_description`, product.description || "");
     setFieldValue(`items.${idx}.isExistingProduct`, true);
     setInputValue(product.name);
     setShowDropdown(false);
@@ -41,8 +64,6 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     const value = e.target.value;
     setInputValue(value);
     setFieldValue(`items.${idx}.product`, value);
-    setFieldValue(`items.${idx}.isExistingProduct`, false);
-    setFieldValue(`items.${idx}.product_id`, null);
     setSelectedIndex(-1);
 
     if (value.trim()) {
@@ -52,6 +73,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       setFilteredProducts(filtered);
       setShowDropdown(filtered.length > 0);
     } else {
+      setFieldValue(`items.${idx}.isExistingProduct`, false);
+      setFieldValue(`items.${idx}.product_id`, null);
       setShowDropdown(false);
     }
   };
@@ -61,34 +84,95 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       <Field name={`items.${idx}.product`}>
         {({ field, meta }) => (
           <div>
-            <input
-              {...field}
-              value={inputValue}
-              onChange={handleInputChange}
-              placeholder="Product name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all text-sm"
-              autoComplete="off"
-            />
+            <div className="relative">
+              <input
+                {...field}
+                value={inputValue}
+                onChange={handleInputChange}
+                placeholder="Product name"
+                className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all text-sm ${!descExpanded && !hasDescription ? "!pr-7" : ""}`}
+                autoComplete="off"
+                onKeyDown={(e) => {
+                  if (e.key === 'Tab') {
+                    if (showDropdown && filteredProducts.length === 1) {
+                      selectProduct(filteredProducts[0]);
+                    }
+                    setShowDropdown(false);
+                    return;
+                  }
+                  if (showDropdown && filteredProducts.length === 1 && e.key === 'Enter') {
+                    e.preventDefault();
+                    selectProduct(filteredProducts[0]);
+                  } else if (e.key === 'Escape') {
+                    setShowDropdown(false);
+                  }
+                }}
+              />
+              {!descExpanded && !hasDescription && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  title="Add note"
+                  aria-label="Add note"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setDescExpanded(true);
+                    setFocusDesc(true);
+                  }}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm leading-none px-1"
+                >
+                  +
+                </button>
+              )}
+            </div>
             {meta.touched && meta.error && (
-              <div className="text-red-400 text-xs mt-1">{meta.error}</div>
+              <div className="text-[var(--status-danger)] text-xs mt-1">{meta.error}</div>
+            )}
+            {showManufacturer && (values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer) && (
+              <div className="text-xs text-[var(--text-muted)] font-medium italic mt-0.5 tracking-wide">
+                ({values.items[idx]?.manufacturer || values.items[idx]?.product_detail?.manufacturer})
+              </div>
+            )}
+            {(descExpanded || hasDescription) && (
+              <textarea
+                ref={descRef}
+                rows={1}
+                value={descValue}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFieldValue(`items.${idx}.description`, val);
+                  setFieldValue(`items.${idx}.product_description`, val);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                }}
+                onFocus={(e) => {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${Math.max(22, e.target.scrollHeight)}px`;
+                }}
+                onBlur={(e) => {
+                  if (!e.target.value.trim()) setDescExpanded(false);
+                }}
+                placeholder="Enter a description / note..."
+                className="w-full bg-transparent border-0 border-b border-transparent hover:border-[var(--border-default)] focus:border-[var(--border-focus)] focus:bg-[var(--input-bg)] rounded px-1.5 py-0.5 text-[var(--text-secondary)] placeholder-[var(--text-muted)] outline-none transition-all text-xs leading-relaxed resize-none italic mt-1"
+              />
             )}
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+        <div className="absolute z-50 mt-1 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
           {filteredProducts.map((product, index) => (
             <div
               key={product.id}
-              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
+              className={`px-4 py-3 cursor-pointer text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors ${
                 index === selectedIndex 
-                  ? 'bg-purple-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] font-semibold' 
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]'
               }`}
               onClick={() => selectProduct(product)}
             >
-              <div className="font-medium">{product.name}</div>
-              <div className="text-gray-500 text-xs mt-0.5">
+              <div className="font-medium text-[var(--text-primary)]">{product.name}</div>
+              <div className="text-[var(--text-muted)] text-xs mt-0.5">
                 Unit: {product.unit} | Price: {getCurrencySymbol()}{product.price}
               </div>
             </div>
@@ -116,6 +200,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
   const selectCustomer = (customer) => {
     // New API: set customer_name directly, optionally set email for Customer record creation
     setFieldValue('customer_name', customer.name);
+    setFieldValue('customer', customer.id || null);
     setFieldValue('customer_email', customer.email || '');
     setFieldValue('customer_phone', customer.phone || '');
     setFieldValue('customer_address', customer.address || '');
@@ -129,6 +214,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     const value = e.target.value;
     setInputValue(value);
     setFieldValue('customer_name', value);  // For manual entry, store the name
+    setFieldValue('customer', null);
     setSelectedIndex(-1);
 
     if (value.trim()) {
@@ -159,8 +245,12 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
               }}
               onKeyDown={(e) => {
                 if (showDropdown) {
+                  const isExactMatch = (customers || []).some(
+                    (c) => c.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()
+                  );
+                  const showAddNew = Boolean(inputValue.trim() && !isExactMatch);
                   const displayLimit = Math.min(filteredCustomers.length, 50);
-                  const totalItems = displayLimit + (inputValue.trim() ? 1 : 0); // +1 for "Add New"
+                  const totalItems = displayLimit + (showAddNew ? 1 : 0);
                   
                   if (e.key === 'ArrowDown') {
                     e.preventDefault();
@@ -172,10 +262,10 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                     e.preventDefault();
                     if (selectedIndex < displayLimit) {
                       selectCustomer(filteredCustomers[selectedIndex]);
-                    } else {
+                    } else if (showAddNew) {
                       // "Add New Customer" option
                       setShowNewCustomerModal(true);
-                       setShowDropdown(false);
+                      setShowDropdown(false);
                     }
                   } else if (e.key === 'Escape') {
                     e.preventDefault();
@@ -185,51 +275,51 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 }
               }}
               placeholder="Customer name"
-              className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+              className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
             />
             {meta.touched && meta.error && (
-              <div className="text-red-400 text-sm mt-1">{meta.error}</div>
+              <div className="text-[var(--status-danger-text)] text-sm mt-1">{meta.error}</div>
             )}
           </div>
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
+        <div className="absolute z-50 mt-1 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl shadow-2xl w-full max-h-60 overflow-y-auto backdrop-blur-xl">
           {filteredCustomers.slice(0, 50).map((customer, index) => (
             <div
               key={customer.id}
-              className={`px-4 py-3 cursor-pointer text-sm border-b border-white/5 last:border-0 transition-colors ${
+              className={`px-4 py-3 cursor-pointer text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors ${
                 index === selectedIndex
-                  ? 'bg-purple-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]' 
+                  : 'text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
               }`}
               onClick={() => selectCustomer(customer)}
             >
-              <div className="font-medium">{customer.name}</div>
-              <div className="text-gray-500 text-xs mt-0.5">
+              <div className="font-medium text-[var(--text-primary)]">{customer.name}</div>
+              <div className="text-[var(--text-muted)] text-xs mt-0.5">
                 {customer.email && `${customer.email} | `}
                 {customer.address} {customer.gstin && `| GSTIN: ${customer.gstin}`}
               </div>
             </div>
           ))}
           {filteredCustomers.length > 50 && (
-             <div className="px-4 py-2 text-xs text-gray-500 text-center italic border-t border-white/5">
+             <div className="px-4 py-2 text-xs text-[var(--text-muted)] text-center italic border-t border-[var(--border-subtle)]">
                 Showing top 50 results...
              </div>
           )}
-          {inputValue.trim() && (
+          {inputValue.trim() && !(customers || []).some((c) => c.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()) && (
             <div
-              className={`px-4 py-3 cursor-pointer text-sm border-t border-white/10 ${
+              className={`px-4 py-3 cursor-pointer text-sm border-t border-[var(--border-default)] ${
                 selectedIndex === Math.min(filteredCustomers.length, 50)
-                  ? 'bg-purple-500/20 text-white' 
-                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]' 
+                  : 'text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
               }`}
               onClick={() => {
                 setShowNewCustomerModal(true);
                 setShowDropdown(false);
               }}
             >
-              <div className="font-medium text-purple-400 flex items-center gap-2">
+              <div className="font-medium text-[var(--accent-primary)] flex items-center gap-2">
                 <span>➕</span> Add New Customer: "{inputValue}"
               </div>
             </div>
@@ -240,15 +330,15 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
       {/* Add New Customer Modal */}
       {showNewCustomerModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowNewCustomerModal(false)}></div>
-          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl shadow-purple-900/30 animate-fade-up overflow-hidden">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowNewCustomerModal(false)}></div>
+          <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-white/10">
-              <h3 className="text-lg font-bold text-white">Add New Customer</h3>
+            <div className="flex items-center justify-between p-5 border-b border-[var(--border-subtle)]">
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">Add New Customer</h3>
               <button
                 type="button"
                 onClick={() => setShowNewCustomerModal(false)}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -259,29 +349,29 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
             {/* Form */}
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Name *</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Name *</label>
                 <input
                   type="text"
                   defaultValue={inputValue}
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
                   id="new-customer-name"
                   placeholder="Customer name"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Email</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Email</label>
                 <input
                   type="email"
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
                   id="new-customer-email"
                   placeholder="email@example.com"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">Phone</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Phone</label>
                 <input
                   type="tel"
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
                   id="new-customer-phone"
                   placeholder="+91 98765 43210"
                 />
@@ -293,24 +383,35 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
               <button
                 type="button"
                 onClick={() => setShowNewCustomerModal(false)}
-                className="px-4 py-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium"
+                className="btn-secondary text-sm"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  const name = document.getElementById('new-customer-name').value;
-                  const email = document.getElementById('new-customer-email').value;
-                  const phone = document.getElementById('new-customer-phone').value;
-                  
-                  setFieldValue('customer_name', name);
-                  setFieldValue('customer_email', email);
-                  setFieldValue('customer_phone', phone);
-                  setInputValue(name);
-                  setShowNewCustomerModal(false);
+                onClick={async () => {
+                  const name = document.getElementById('new-customer-name')?.value?.trim();
+                  if (!name) {
+                    toast.error('Customer name is required');
+                    return;
+                  }
+                  const email = document.getElementById('new-customer-email')?.value?.trim();
+                  const phone = document.getElementById('new-customer-phone')?.value?.trim();
+                  try {
+                    const created = await createCustomer({
+                      name,
+                      email: email || null,
+                      phone: phone || null,
+                    });
+                    const customer = created?.data || created;
+                    selectCustomer(customer);
+                    setShowNewCustomerModal(false);
+                    toast.success(`Customer "${customer.name || name}" added`);
+                  } catch (err) {
+                    toast.error(formatErrorMessage(err, "Failed to create customer"));
+                  }
                 }}
-                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white rounded-lg transition-all shadow-lg shadow-purple-900/30 text-sm font-medium"
+                className="btn-primary text-sm"
               >
                 Add Customer
               </button>
@@ -343,6 +444,8 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
   const queryClient = useQueryClient();
   const isEdit = !!editData;
   const submitLockRef = useRef(false);
+  const [showManufacturer, setShowManufacturer] = useState(true);
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
   
   const { data: productsResult } = useQuery({ 
       queryKey: ["products"], 
@@ -386,19 +489,19 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-purple-900/20 animate-fade-up border border-white/10 bg-[#111]">
-        <div className="flex justify-between items-center p-8 border-b border-white/10 bg-white/5">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto rounded-2xl p-0 shadow-2xl animate-fade-up border border-[var(--border-default)] bg-[var(--bg-surface)]">
+        <div className="flex justify-between items-center p-6 md:p-8 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
           <div>
-            <h2 className="text-xl font-bold text-white mb-1">
+            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1">
               {isEdit ? "Edit Sales Order" : "New Sales Order"}
             </h2>
-             <p className="text-xs text-gray-400">
+             <p className="text-xs text-[var(--text-muted)]">
                Create a new sales order for a customer.
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10">
-           <span className="text-2xl">×</span>
+          <button onClick={onClose} className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors">
+           <span className="text-2xl leading-none">&times;</span>
           </button>
         </div>
         
@@ -413,17 +516,29 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             notes: editData?.notes || "",
             
             items: editData?.items?.map(item => ({
+              id: item.id,
               product: item.product_name || item.product || "",
               product_id: item.product || null,
+              manufacturer: item.manufacturer || item.product_detail?.manufacturer || "",
+              description: item.description || item.product_description || "",
+              product_description: item.description || item.product_description || "",
               quantity: item.quantity || "",
+              dispatched_quantity: Number(item.dispatched_quantity || 0),
+              pending_quantity: item.pending_quantity !== undefined ? Number(item.pending_quantity) : Math.max(0, Number(item.quantity || 0) - Number(item.dispatched_quantity || 0)),
               price: item.price || "",
               amount: item.amount || (item.quantity * item.price) || 0,
               unit: item.unit || "pcs",
               isExistingProduct: !!(item.product),
+              source_item_id: item.source_item_id || null,
             })) || [{
               product: "",
               product_id: null,
+              manufacturer: "",
+              description: "",
+              product_description: "",
               quantity: "",
+              dispatched_quantity: 0,
+              pending_quantity: 0,
               price: "",
               amount: 0,
               unit: "pcs",
@@ -431,18 +546,35 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             }]
           }}
           validationSchema={SalesOrderSchema}
-          onSubmit={async (values, { setSubmitting }) => {
+          onSubmit={async (values, { setSubmitting, setFieldError }) => {
             if (submitLockRef.current || createMutation.isPending || updateMutation.isPending) {
+              return;
+            }
+            const customerNameTrimmed = (values.customer_name || '').trim().toLowerCase();
+            const isSavedCustomerInDb = Boolean(
+              values.customer ||
+              (customers || []).some((c) => c.id && (c.name || '').trim().toLowerCase() === customerNameTrimmed)
+            );
+            if (!isSavedCustomerInDb) {
+              setFieldError('customer_name', 'Save this customer first before creating a sales order.');
+              toast.error('Save this customer first before creating a sales order.');
+              setSubmitting(false);
               return;
             }
             submitLockRef.current = true;
             try {
-               const processedItems = values.items.map(item => ({
-                  product: item.product_id || item.product, // UUID or Name
-                  quantity: Math.max(1, Number(item.quantity) || 1),
-                  price: Number(item.price || 0),
-                  amount: Number(item.amount || 0),
-               }));
+                const processedItems = values.items.map(item => ({
+                   ...(item.id ? { id: item.id } : {}),
+                   ...(item.source_item_id ? { source_item_id: item.source_item_id } : {}),
+                   product: item.product_id || item.product, // UUID or Name
+                   description: (item.description || item.product_description || "").trim(),
+                   product_description: (item.description || item.product_description || "").trim(),
+                   quantity: Math.max(1, Number(item.quantity) || 1),
+                   ...(item.dispatched_quantity !== undefined ? { dispatched_quantity: Number(item.dispatched_quantity) } : {}),
+                   price: Number(item.price || 0),
+                   amount: Number(item.amount || 0),
+                   unit: item.unit || "pcs",
+                }));
                
                const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
 
@@ -472,21 +604,50 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
         >
           {({ values, setFieldValue, isSubmitting }) => (
             <Form className="p-0">
-                <div className="p-8 space-y-8">
+                <div className="p-6 md:p-8 space-y-8">
                      {/* Header */}
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Customer *</label>
+                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Customer *</label>
                            <CustomerAutocomplete values={values} setFieldValue={setFieldValue} customers={customers} />
                         </div>
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Order Number</label>
-                           <Field name="order_number" className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white" />
+                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Order Number</label>
+                           <Field name="order_number" className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all" />
                         </div>
                         <div>
-                           <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase">Date</label>
-                           <Field name="date" type="date" className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white" />
+                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Date</label>
+                           <Field name="date" type="date" className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all" />
                         </div>
+                   </div>
+
+                   {/* Items Header */}
+                   <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+                     <h3 className="text-base font-bold text-[var(--text-primary)]">Order Items</h3>
+                     <div className="relative">
+                       <button
+                         type="button"
+                         onClick={() => setShowColumnPicker((prev) => !prev)}
+                         className="px-3 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] hover:bg-[var(--bg-surface)] text-xs font-medium text-[var(--text-secondary)] transition-colors"
+                       >
+                         Columns
+                       </button>
+
+                       {showColumnPicker && (
+                         <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3 shadow-2xl">
+                           <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Show/Hide Columns</div>
+                           <label className="flex items-center gap-2 py-1 text-sm text-[var(--text-primary)] cursor-pointer">
+                             <input
+                               type="checkbox"
+                               checked={showManufacturer}
+                               onChange={() => setShowManufacturer((prev) => !prev)}
+                               className="h-3.5 w-3.5 rounded border-[var(--border-default)] bg-transparent text-[var(--accent-primary)] focus:ring-[var(--border-focus)]"
+                             />
+                             <span>Manufacturer</span>
+                           </label>
+                         </div>
+                       )}
+                     </div>
                    </div>
 
                    {/* Items */}
@@ -494,18 +655,43 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                     {({ push, remove }) => (
                         <div className="space-y-4">
                              {values.items.map((item, index) => (
-                                 <div key={index} className="bg-white/5 border border-white/10 rounded-xl p-4 md:p-6 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-end hover:bg-white/10 transition-all">
+                                 <div key={index} className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-4 md:p-6 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-end transition-all">
                                      {/* Row 1: Product (Full width on mobile, col-span-4 on desktop) */}
                                      <div className="lg:col-span-4">
-                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Product Name</label>
-                                         <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} />
+                                         <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Product Name</label>
+                                         <ProductAutocomplete idx={index} values={values} setFieldValue={setFieldValue} products={products} showManufacturer={showManufacturer} />
+                                         {isEdit && item.id && (
+                                             <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                                                 <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
+                                                     (item.pending_quantity ?? (Number(item.quantity || 0) - Number(item.dispatched_quantity || 0))) <= 0
+                                                         ? "badge-success"
+                                                         : (item.dispatched_quantity || 0) > 0
+                                                         ? "badge-warning"
+                                                         : "badge-info"
+                                                 }`}>
+                                                     {(item.pending_quantity ?? (Number(item.quantity || 0) - Number(item.dispatched_quantity || 0))) <= 0
+                                                         ? "Fulfilled"
+                                                         : (item.dispatched_quantity || 0) > 0
+                                                         ? "Partial"
+                                                         : "Pending"}
+                                                 </span>
+                                                 <span className="text-[var(--text-muted)] text-xs">
+                                                     Dispatched: <strong className="text-[var(--text-primary)] font-mono">{item.dispatched_quantity || 0}</strong> / {item.quantity || 0}
+                                                     {Number(item.dispatched_quantity || 0) > 0 && (
+                                                         <span className="text-[var(--status-warning-text)] ml-1 font-mono">
+                                                             ({Math.max(0, Number(item.quantity || 0) - Number(item.dispatched_quantity || 0))} pending)
+                                                         </span>
+                                                     )}
+                                                 </span>
+                                             </div>
+                                         )}
                                      </div>
 
                                      {/* Row 2: Qty & Price (Side-by-side on mobile, col-span-4 on desktop) */}
                                      <div className="grid grid-cols-2 gap-4 lg:col-span-4 lg:grid-cols-2 lg:gap-4">
                                          <div>
-                                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Quantity</label>
-                                             <Field name={`items.${index}.quantity`} type="number" min="1" placeholder="0" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-center" 
+                                             <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Quantity</label>
+                                             <Field name={`items.${index}.quantity`} type="number" min="1" placeholder="0" className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all text-sm text-center" 
                                                  onChange={e => {
                                                      const qty = e.target.value;
                                                      setFieldValue(`items.${index}.quantity`, qty);
@@ -514,8 +700,8 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                              />
                                          </div>
                                          <div>
-                                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Price</label>
-                                             <Field name={`items.${index}.price`} type="number" placeholder="0.00" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all text-sm text-right font-mono"
+                                             <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Price</label>
+                                             <Field name={`items.${index}.price`} type="number" placeholder="0.00" className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all text-sm text-right font-mono" 
                                                  onChange={e => {
                                                      const price = e.target.value;
                                                      setFieldValue(`items.${index}.price`, price);
@@ -527,8 +713,8 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
 
                                      {/* Row 3: Amount Display (Full width on mobile, col-span-2 on desktop) */}
                                      <div className="flex justify-between items-center lg:col-span-2 lg:block lg:text-left">
-                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 lg:mb-2">Subtotal</label>
-                                         <div className="text-xl lg:text-base font-black text-cyan-400 font-mono">
+                                         <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] lg:mb-2">Subtotal</label>
+                                         <div className="text-xl lg:text-base font-bold text-[var(--accent-primary)] font-mono">
                                              {getCurrencySymbol()}{Number(values.items[index].amount || 0).toLocaleString()}
                                          </div>
                                      </div>
@@ -536,29 +722,30 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                                      {/* Row 4: Actions (Full width on mobile, col-span-2 on desktop) */}
                                      <div className="lg:col-span-2">
                                          <button 
-                                            type="button" 
-                                            onClick={() => remove(index)} 
-                                            disabled={values.items.length === 1}
-                                            className="w-full py-3 lg:py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all font-black text-[10px] uppercase tracking-widest disabled:opacity-30"
+                                             type="button" 
+                                             onClick={() => remove(index)} 
+                                             disabled={values.items.length === 1 || Number(item.dispatched_quantity || 0) > 0}
+                                             title={Number(item.dispatched_quantity || 0) > 0 ? "Cannot delete item with dispatched quantity" : "Remove Item"}
+                                             className="w-full py-2.5 bg-[var(--status-danger-bg)] text-[var(--status-danger-text)] border border-[var(--status-danger-border)] rounded-xl hover:opacity-90 transition-all font-semibold text-xs uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                                          >
                                              Remove Item
                                          </button>
                                      </div>
                                  </div>
-                             ))}
-                            <button type="button" onClick={() => push({ product: "", quantity: "", price: "", amount: 0 })} className="text-purple-400 hover:text-purple-300 text-sm font-medium">
-                                + Add Item
-                            </button>
-                        </div>
-                    )}
-                   </FieldArray>
+                              ))}
+                             <button type="button" onClick={() => push({ product: "", product_id: null, manufacturer: "", description: "", product_description: "", quantity: "", dispatched_quantity: 0, pending_quantity: 0, price: "", amount: 0, unit: "pcs", isExistingProduct: false })} className="inline-flex items-center gap-1.5 text-[var(--accent-primary)] hover:opacity-80 text-sm font-semibold transition-colors">
+                                 + Add Item
+                             </button>
+                         </div>
+                     )}
+                    </FieldArray>
 
-                   {/* Footer Actions */}
-                   <div className="flex justify-end pt-6 border-t border-white/10">
-                        <button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending} className="btn-primary">
-                          {(isSubmitting || createMutation.isPending || updateMutation.isPending) ? "Saving..." : "Save Order"}
-                        </button>
-                   </div>
+                    {/* Footer Actions */}
+                    <div className="flex justify-end pt-6 border-t border-[var(--border-subtle)]">
+                         <button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending} className="btn-primary">
+                           {(isSubmitting || createMutation.isPending || updateMutation.isPending) ? "Saving..." : "Save Order"}
+                         </button>
+                    </div>
                 </div>
             </Form>
           )}

@@ -1,201 +1,728 @@
+import { documentTitle } from '../../utils/gstStatus';
 import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSalesInvoice } from "../../api/sales";
-import { getQuotation } from "../../api/quotation";
+import { getSalesInvoice, downloadSalesInvoicePDF, patchSalesInvoice } from "../../api/sales";
+import { getQuotation, downloadQuotationPDF, patchQuotation } from "../../api/quotation";
+import { getDeliveryChallan, getDeliveryChallanPdf, patchDeliveryChallan } from "../../api/delivery_challan";
+import { getSalesOrder, downloadSalesOrderPDF, patchSalesOrder } from "../../api/sales_order";
 import { useReactToPrint } from "react-to-print";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import { 
   XMarkIcon, 
   PrinterIcon, 
   ArrowDownTrayIcon, 
-  PaintBrushIcon,
-  EnvelopeIcon,
-  ChatBubbleLeftIcon,
-  ArrowPathIcon,
+  PaintBrushIcon, 
+  EnvelopeIcon, 
+  ArrowPathIcon, 
+  ChevronDownIcon, 
+  BoltIcon, 
+  SparklesIcon, 
+  DocumentTextIcon, 
+  BuildingLibraryIcon, 
+  SwatchIcon 
 } from "@heroicons/react/24/outline";
 import { toast } from 'react-toastify';
+
+function WhatsAppIcon({ className = "w-4 h-4" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.82 11.82 0 00-3.48-8.413z" />
+    </svg>
+  );
+}
 import { sendCustomEmail } from '../../api/integrations';
 import InvoicePreview from "../invoice/InvoicePreview";
 import InvoiceTemplateDesigner from "../invoice/InvoiceTemplateDesigner";
-import { getActiveTemplate } from "../../utils/invoiceSettings";
+import { getActiveTemplate, setActiveTemplate, getInvoiceTemplates, getActiveTemplateForSection, setActiveTemplateForSection } from "../../utils/invoiceSettings";
 import { getInvoiceSettings } from "../../api/invoice_settings";
+import { getUserProfile, patchUserProfile } from "../../api/users";
+import { patchCustomer } from "../../api/customers";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { generatePixelPerfectPDF } from "../../utils/pdfEngine";
+import { serializeInvoiceHtml } from "../../utils/htmlInvoiceSerializer";
+import { buildThemedInvoiceEmailHtml } from "../../utils/invoiceEmailGenerator";
 
 export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {}, documentType = "invoice" }) {
   const queryClient = useQueryClient();
   const printRef = useRef();
+  const previewContainerRef = useRef(null);
+  const pdfMenuRef = useRef(null);
   const [template, setTemplate] = useState(null);
   const [showDesigner, setShowDesigner] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [pdfMenuOpen, setPdfMenuOpen] = useState(false);
+  const [previewScale, setPreviewScale] = useState(1);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailPromptOpen, setEmailPromptOpen] = useState(false);
   const [manualEmail, setManualEmail] = useState('');
-
-  // Load active template
-  useEffect(() => {
-    if (isOpen) {
-      const activeTemplate = getActiveTemplate();
-      setTemplate(activeTemplate);
-    }
-  }, [isOpen, showDesigner]);
+  const [selectedBankAccountId, setSelectedBankAccountId] = useState(null);
 
   const isQuotation = documentType === "quotation";
+  const isDeliveryChallan = documentType === "delivery_challan";
+  const isSalesOrder = documentType === "sales_order" || documentType === "proforma";
+  const sectionKey = isQuotation ? 'quotation' : isDeliveryChallan ? 'delivery_challan' : isSalesOrder ? 'sales_order' : 'sales_invoice';
 
-  const { data, isLoading } = useQuery({
-    queryKey: [isQuotation ? "quotation" : "sales-invoice", invoice?.id],
-    queryFn: () => (isQuotation ? getQuotation(invoice?.id) : getSalesInvoice(invoice?.id)),
+  // Fetch user profile to ensure business & bank details are always populated
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const billingProfile = userProfile?.billing_profile || userProfile?.profile || {};
+  const allBankAccounts = (billingProfile.bank_accounts && billingProfile.bank_accounts.length > 0)
+    ? billingProfile.bank_accounts
+    : (businessInfo.bank_accounts && businessInfo.bank_accounts.length > 0)
+    ? businessInfo.bank_accounts
+    : (billingProfile.bank_name || businessInfo.bank_name)
+    ? [{
+        id: 'bank_acc_1',
+        account_name: 'Primary Account',
+        bank_name: billingProfile.bank_name || businessInfo.bank_name || '',
+        account_number: billingProfile.bank_account_number || businessInfo.bank_account_number || '',
+        ifsc_code: billingProfile.bank_ifsc_code || businessInfo.bank_ifsc_code || '',
+        account_holder: billingProfile.business_name || businessInfo.business_name || '',
+        branch: billingProfile.bank_branch || businessInfo.bank_branch || '',
+        upi_id: billingProfile.bank_upi_id || businessInfo.bank_upi_id || '',
+        qr_code: billingProfile.bank_qr_code || businessInfo.bank_qr_code || '',
+        is_default: true,
+      }]
+    : [];
+
+  // Fetch invoice/quotation/challan/sales order details
+  const { data: invoiceDetails = {}, isLoading } = useQuery({
+    queryKey: [
+      isDeliveryChallan
+        ? "deliveryChallan"
+        : isQuotation
+        ? "quotation"
+        : isSalesOrder
+        ? "salesOrder"
+        : "salesInvoice",
+      invoice?.id,
+    ],
+    queryFn: () =>
+      isDeliveryChallan
+        ? getDeliveryChallan(invoice?.id)
+        : isQuotation
+        ? getQuotation(invoice?.id)
+        : isSalesOrder
+        ? getSalesOrder(invoice?.id)
+        : getSalesInvoice(invoice?.id),
     enabled: isOpen && !!invoice?.id,
   });
 
+  // Resolve active bank account: bill-specific override -> section default -> default account -> first account
+  const billBankAccountId = invoiceDetails?.bank_account_id || invoice?.bank_account_id || invoiceDetails?.meta?.bank_account_id || invoice?.meta?.bank_account_id;
+  const sectionDefaultBankAccountId = billingProfile?.default_bank_account_sections?.[sectionKey];
+
+  useEffect(() => {
+    if (billBankAccountId !== undefined && billBankAccountId !== null && billBankAccountId !== '') {
+      setSelectedBankAccountId(billBankAccountId);
+    } else if (sectionDefaultBankAccountId) {
+      setSelectedBankAccountId(sectionDefaultBankAccountId);
+    } else if (allBankAccounts.length > 0) {
+      const defaultAcc = allBankAccounts.find(a => a.is_default) || allBankAccounts[0];
+      setSelectedBankAccountId(defaultAcc ? defaultAcc.id : 'none');
+    } else {
+      setSelectedBankAccountId('none');
+    }
+  }, [billBankAccountId, sectionDefaultBankAccountId, allBankAccounts.length]);
+
+  const activeBankAcc = selectedBankAccountId === 'none'
+    ? null
+    : allBankAccounts.find(a => a.id === selectedBankAccountId)
+      || allBankAccounts.find(a => a.is_default)
+      || allBankAccounts[0]
+      || null;
+
+  const handleBankSelect = async (newId) => {
+    setSelectedBankAccountId(newId);
+
+    // 1. Update default bank account for this section in user profile
+    try {
+      const currentSectionDefaults = billingProfile.default_bank_account_sections || {};
+      if (currentSectionDefaults[sectionKey] !== newId) {
+        await patchUserProfile({
+          default_bank_account_sections: {
+            ...currentSectionDefaults,
+            [sectionKey]: newId,
+          }
+        });
+        queryClient.invalidateQueries(['userProfile']);
+      }
+    } catch (err) {
+      console.warn('Failed to update section default bank account:', err);
+    }
+
+    // 2. Persist override to current document
+    const docId = invoice?.id;
+    if (docId) {
+      const payload = { bank_account_id: newId === 'none' ? '' : newId };
+      try {
+        if (isDeliveryChallan) {
+          await patchDeliveryChallan(docId, payload);
+          queryClient.invalidateQueries({ queryKey: ['deliveryChallan', docId] });
+        } else if (isQuotation) {
+          await patchQuotation(docId, payload);
+          queryClient.invalidateQueries({ queryKey: ['quotation', docId] });
+        } else if (isSalesOrder) {
+          await patchSalesOrder(docId, payload);
+          queryClient.invalidateQueries({ queryKey: ['salesOrder', docId] });
+        } else {
+          await patchSalesInvoice(docId, payload);
+          queryClient.invalidateQueries({ queryKey: ['salesInvoice', docId] });
+        }
+        toast.success('Bank account updated for this bill');
+      } catch (err) {
+        console.warn('Failed to save bank account to bill:', err);
+      }
+    }
+  };
+
+  const effectiveBusinessInfo = {
+    // UAT P1 #13 rework: GST status drives the document title (see utils/gstStatus.js)
+    gst_status: billingProfile.gst_status,
+    gst_status_set: billingProfile.gst_status_set,
+    document_declaration: billingProfile.document_declaration,
+    business_name: billingProfile.business_name,
+    business_address: billingProfile.business_address,
+    phone: billingProfile.phone,
+    email: billingProfile.email,
+    gstin: billingProfile.gstin,
+    pan_number: billingProfile.pan_number,
+    gem_id: billingProfile.gem_id,
+    dl_number: billingProfile.dl_number,
+    state: billingProfile.state,
+    city: billingProfile.city,
+    country: billingProfile.country,
+    trn: billingProfile.trn,
+    bank_name: activeBankAcc ? activeBankAcc.bank_name : '',
+    bank_account_number: activeBankAcc ? activeBankAcc.account_number : '',
+    bank_ifsc_code: activeBankAcc ? activeBankAcc.ifsc_code : '',
+    bank_branch: activeBankAcc ? (activeBankAcc.branch || '') : '',
+    bank_upi_id: activeBankAcc ? activeBankAcc.upi_id : '',
+    bank_qr_code: activeBankAcc ? activeBankAcc.qr_code : '',
+    bank_accounts: allBankAccounts,
+    hide_bank_details: selectedBankAccountId === 'none',
+    ...businessInfo,
+  };
+  if (selectedBankAccountId === 'none') {
+    effectiveBusinessInfo.bank_name = '';
+    effectiveBusinessInfo.bank_account_number = '';
+    effectiveBusinessInfo.bank_ifsc_code = '';
+    effectiveBusinessInfo.bank_branch = '';
+    effectiveBusinessInfo.bank_upi_id = '';
+    effectiveBusinessInfo.bank_qr_code = '';
+    effectiveBusinessInfo.hide_bank_details = true;
+  } else if (activeBankAcc) {
+    effectiveBusinessInfo.bank_name = activeBankAcc.bank_name || '';
+    effectiveBusinessInfo.bank_account_number = activeBankAcc.account_number || '';
+    effectiveBusinessInfo.bank_ifsc_code = activeBankAcc.ifsc_code || '';
+    effectiveBusinessInfo.bank_branch = activeBankAcc.branch || '';
+    effectiveBusinessInfo.bank_upi_id = activeBankAcc.upi_id || '';
+    effectiveBusinessInfo.bank_qr_code = activeBankAcc.qr_code || '';
+    effectiveBusinessInfo.hide_bank_details = false;
+  }
+
+  const customerId = invoiceDetails?.customer?.id || invoiceDetails?.customer_id || invoice?.customer_id || invoice?.customer?.id || null;
+  const customerTemplates = invoiceDetails?.customer?.preview_templates || invoiceDetails?.customer_details?.preview_templates || invoiceDetails?.preview_templates || invoice?.preview_templates || null;
+  const userDefaultTemplates = billingProfile?.default_preview_template_sections || null;
+  const docTemplateId = invoiceDetails?.template_id || invoice?.template_id || null;
+
+  // Load active template scoped per section and per customer (no cross-syncing)
+  useEffect(() => {
+    if (isOpen) {
+      const resolvedTemplate = getActiveTemplateForSection({
+        sectionKey,
+        documentTemplateId: docTemplateId,
+        customerTemplates,
+        userDefaultTemplates,
+      });
+      setTemplate(resolvedTemplate);
+    }
+  }, [isOpen, sectionKey, docTemplateId, JSON.stringify(customerTemplates), JSON.stringify(userDefaultTemplates)]);
+
+  const handleTemplateSwitch = async (targetId) => {
+    setActiveTemplateForSection(sectionKey, targetId);
+    const chosen = getActiveTemplateForSection({
+      sectionKey,
+      documentTemplateId: targetId,
+      customerTemplates,
+      userDefaultTemplates,
+    });
+    setTemplate(chosen);
+
+    // 1. Persist template to current bill
+    const docId = invoice?.id;
+    if (docId) {
+      const payload = { template_id: targetId };
+      try {
+        if (isDeliveryChallan) {
+          await patchDeliveryChallan(docId, payload);
+          queryClient.invalidateQueries({ queryKey: ['deliveryChallan', docId] });
+        } else if (isQuotation) {
+          await patchQuotation(docId, payload);
+          queryClient.invalidateQueries({ queryKey: ['quotation', docId] });
+        } else if (isSalesOrder) {
+          await patchSalesOrder(docId, payload);
+          queryClient.invalidateQueries({ queryKey: ['salesOrder', docId] });
+        } else {
+          await patchSalesInvoice(docId, payload);
+          queryClient.invalidateQueries({ queryKey: ['salesInvoice', docId] });
+        }
+      } catch (err) {
+        console.warn('Failed to save template_id to bill:', err);
+      }
+    }
+
+    // 2. Persist to customer's section format preferences if customer exists
+    if (customerId) {
+      try {
+        await patchCustomer(customerId, {
+          meta: {
+            preview_templates: {
+              ...(customerTemplates || {}),
+              [sectionKey]: targetId,
+            }
+          }
+        });
+        queryClient.invalidateQueries(['customer', customerId]);
+        queryClient.invalidateQueries(['customers']);
+      } catch (err) {
+        console.warn('Failed to update customer preview_templates:', err);
+      }
+    }
+
+    // 3. Persist as section default in UserProfile
+    try {
+      const currentSectionDefaults = billingProfile.default_preview_template_sections || {};
+      if (currentSectionDefaults[sectionKey] !== targetId) {
+        await patchUserProfile({
+          default_preview_template_sections: {
+            ...currentSectionDefaults,
+            [sectionKey]: targetId,
+          }
+        });
+        queryClient.invalidateQueries(['userProfile']);
+      }
+    } catch (err) {
+      console.warn('Failed to update section default preview template:', err);
+    }
+  };
+
+  // Close PDF options dropdown when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (pdfMenuRef.current && !pdfMenuRef.current.contains(e.target)) {
+        setPdfMenuOpen(false);
+      }
+    };
+    if (pdfMenuOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [pdfMenuOpen]);
+
+  // Dynamically calculate preview scale so A4 sheet (794px width) fits smaller viewports without distortion
+  useEffect(() => {
+    if (!isOpen) return;
+    const updatePreviewScale = () => {
+      const container = previewContainerRef.current;
+      const width = container ? container.clientWidth : window.innerWidth;
+      // Target A4 width is 794px (210mm at 96 DPI) + 32px padding
+      const targetWidth = 794;
+      if (width < targetWidth + 32) {
+        const s = Math.max(0.35, Math.min(1, (width - 32) / targetWidth));
+        setPreviewScale(Number(s.toFixed(3)));
+      } else {
+        setPreviewScale(1);
+      }
+    };
+
+    updatePreviewScale();
+    window.addEventListener('resize', updatePreviewScale);
+    return () => window.removeEventListener('resize', updatePreviewScale);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        if (showDesigner) {
+          setShowDesigner(false);
+        } else if (emailPromptOpen) {
+          setEmailPromptOpen(false);
+        } else {
+          onClose?.();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, showDesigner, emailPromptOpen, onClose]);
+
+  // Fetch tenant invoice settings
   const { data: invoiceSettings } = useQuery({
-    queryKey: ["invoiceSettings"],
+    queryKey: ['invoiceSettings'],
     queryFn: getInvoiceSettings,
     enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
   });
 
-  const invoiceDetails = data?.data || data?.result || data || invoice || {};
-  const previewTemplate = isQuotation
-    ? {
-        ...template,
-        content: {
-          ...(template?.content || {}),
-          invoiceTitle: "PERFORMA INVOICE",
-        },
-      }
-    : template;
+  // Forced document footer: always show Made with Cenvora branding regardless of plan/settings
+  effectiveBusinessInfo.show_cenvora_footer = true;
 
-  // Print functionality
+  const baseTitle = isQuotation ? "QUOTATION" : isDeliveryChallan ? "DELIVERY CHALLAN" : isSalesOrder ? "PROFORMA INVOICE" : documentTitle(template?.content?.invoiceTitle, effectiveBusinessInfo);
+  const previewTemplate = {
+    ...template,
+    content: {
+      ...(template?.content || {}),
+      invoiceTitle: baseTitle,
+      hideBankDetails: selectedBankAccountId === 'none',
+      bankDetails: activeBankAcc ? {
+        bankName: activeBankAcc.bank_name || '',
+        accountNumber: activeBankAcc.account_number || '',
+        ifscCode: activeBankAcc.ifsc_code || '',
+        accountHolder: activeBankAcc.account_holder || '',
+        branch: activeBankAcc.branch || '',
+        upiId: activeBankAcc.upi_id || '',
+      } : { bankName: '', accountNumber: '', ifscCode: '', accountHolder: '', branch: '' },
+    },
+  };
+
+  const enrichedInvoice = {
+    ...invoiceDetails,
+    document_type: documentType,
+    is_delivery_challan: isDeliveryChallan,
+    challan_number:
+      invoiceDetails.challan_number ||
+      invoice?.challan_number ||
+      (isDeliveryChallan ? invoiceDetails.invoice_number || invoice?.invoice_number : ''),
+    challan_date:
+      invoiceDetails.date ||
+      invoiceDetails.challan_date ||
+      invoice?.date ||
+      invoice?.challan_date ||
+      '',
+    vehicle_number: invoiceDetails.vehicle_number || invoice?.vehicle_number || '',
+    transport_mode: invoiceDetails.transport_mode || invoice?.transport_mode || '',
+    transporter_name: invoiceDetails.transporter_name || invoice?.transporter_name || '',
+    sales_order_number:
+      invoiceDetails.sales_order_number ||
+      invoice?.sales_order_number ||
+      invoiceDetails.sales_order_details?.order_number ||
+      '',
+    invoice_number:
+      invoiceDetails.quotation_number ||
+      invoiceDetails.order_number ||
+      invoiceDetails.invoice_number ||
+      invoiceDetails.challan_number ||
+      invoice?.order_number ||
+      invoice?.quotation_number ||
+      invoice?.challan_number ||
+      invoice?.invoice_number ||
+      '',
+    invoice_date:
+      invoiceDetails.invoice_date ||
+      invoiceDetails.date ||
+      invoice?.date ||
+      invoice?.invoice_date ||
+      '',
+    customer_name:
+      invoiceDetails.customer_name ||
+      invoiceDetails.customer_display_name ||
+      invoiceDetails.customer?.name ||
+      invoice?.customer_name ||
+      '',
+    po_number:
+      invoiceDetails.po_number ||
+      invoiceDetails.sales_order_number ||
+      invoice?.sales_order_number ||
+      (invoiceDetails.sales_order_details?.order_number
+        ? `SO #${invoiceDetails.sales_order_details.order_number}`
+        : '') ||
+      '',
+    items:
+      (Array.isArray(invoiceDetails.items) && invoiceDetails.items.length > 0)
+        ? invoiceDetails.items
+        : (Array.isArray(invoice?.items) && invoice?.items.length > 0)
+        ? invoice.items
+        : invoiceDetails.items || invoice?.items || [],
+  };
+
+  // Print functionality with anti-slicing CSS rules
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: `${isQuotation ? "Performa Invoice" : "Tax Invoice"} - ${invoiceDetails?.invoice_number || invoice?.id}`,
+    documentTitle: `${isDeliveryChallan ? "Delivery-Challan" : isQuotation ? "Quotation" : isSalesOrder ? "Proforma-Invoice" : "Invoice"}-${enrichedInvoice.invoice_number || invoice?.id}`,
     pageStyle: `
       @page {
-        size: A4;
-        margin: 0;
+        size: A4 portrait;
+        margin: 0mm;
+      }
+      @page :left {
+        margin: 0mm;
+      }
+      @page :right {
+        margin: 0mm;
       }
       @media print {
+        *, *::before, *::after {
+          box-sizing: border-box !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
         html, body {
-          width: 210mm;
-          height: 297mm;
-          margin: 0;
-          padding: 0;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: auto !important;
+          background: #ffffff !important;
         }
-        body {
-          -webkit-print-color-adjust: exact;
-          color-adjust: exact;
+        thead {
+          display: table-header-group !important;
         }
-        .print-hidden {
+        thead tr {
+          page-break-before: avoid !important;
+          break-before: avoid !important;
+        }
+        tr:not(.invoice-print-shell-row) {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+        .invoice-print-shell,
+        .invoice-print-shell > tbody,
+        .invoice-print-shell-row {
+          break-inside: auto !important;
+          page-break-inside: auto !important;
+          page-break-before: avoid !important;
+          break-before: avoid !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        .print-hidden, [data-no-print], button {
           display: none !important;
+        }
+        .invoice-sheet {
+          position: relative !important;
+          display: flex !important;
+          flex-direction: column !important;
+          box-shadow: none !important;
+          transform: none !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          min-height: 100% !important;
+          margin: 0 !important;
+          box-sizing: border-box !important;
+          background: #ffffff !important;
+          overflow: visible !important;
+        }
+        /* Classic: full-bleed letterhead; 7mm body inset on the print-shell cell. */
+        .invoice-sheet:has(.invoice-print-shell[data-print-theme="classic"]) {
+          padding: 0 0 10mm 0 !important;
+          padding-top: 0 !important;
+        }
+        .invoice-sheet-body,
+        .invoice-sheet .flex-1 {
+          flex: 0 0 auto !important;
+          flex-grow: 0 !important;
+        }
+        .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header {
+          display: table-row !important;
+        }
+        .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td {
+          /* Slight white gap under letterhead before body (items or bank/totals on page break) */
+          padding: 0 0 3mm 0 !important;
+          border: none !important;
+          overflow: visible !important;
+        }
+        .invoice-print-shell {
+          border-collapse: collapse !important;
+          border-spacing: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+        }
+        .invoice-continuation-letterhead-classic {
+          display: block !important;
+          margin: 0 !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        .invoice-print-shell[data-print-theme="classic"] .invoice-print-shell-row > td {
+          padding: 0 7mm !important;
+          border: none !important;
+          overflow: visible !important;
+        }
+        /* Bank + totals (+ amount in words): never split across pages */
+        .invoice-totals-block {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          break-before: auto !important;
+          page-break-before: auto !important;
+        }
+        /* Terms / signatory / Made with Cenvora — flow under totals */
+        .invoice-page-footer {
+          position: static !important;
+          bottom: auto !important;
+          left: auto !important;
+          right: auto !important;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+        [data-print-target] {
+          width: 100% !important;
+          max-width: 100% !important;
+          min-height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          box-shadow: none !important;
+          background: #ffffff !important;
+          transform: none !important;
         }
       }
     `,
   });
 
-  // PDF Download functionality
-  const handleDownloadPDF = async () => {
+  // High-Quality PDF Download: Vector PDF (Chrome vector, exact replica) or Client Engine (300+ DPI)
+  const handleDownloadPDF = async (engine = 'vector') => {
     if (!printRef.current || !invoiceDetails) return;
+    setDownloadingPDF(true);
+    setPdfMenuOpen(false);
+
+    const docTypeLabel = isDeliveryChallan
+      ? 'Delivery Challan'
+      : isQuotation
+      ? 'Quotation'
+      : isSalesOrder
+      ? 'Proforma Invoice'
+      : 'Invoice';
+    const filePrefix = isDeliveryChallan
+      ? "delivery-challan"
+      : isQuotation
+      ? "quotation"
+      : isSalesOrder
+      ? "proforma-invoice"
+      : "invoice";
+    const fileNum =
+      enrichedInvoice.invoice_number ||
+      invoiceDetails.order_number ||
+      invoiceDetails.quotation_number ||
+      invoiceDetails.invoice_number ||
+      invoiceDetails.challan_number ||
+      invoice?.id ||
+      'doc';
+    const filename = `${filePrefix}-${fileNum}.pdf`;
 
     try {
-      const element = printRef.current;
-      
-      // Scroll to top to ensure clean capture
-      window.scrollTo(0, 0);
+      const targetElement = printRef.current?.querySelector('[data-print-target]') || printRef.current;
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.querySelector('[data-print-target]');
-          if (clonedElement) {
-            clonedElement.style.height = 'auto';
-            clonedElement.style.overflow = 'visible';
-            clonedElement.style.width = '210mm'; // Ensure standard width
+      if (engine === 'vector' && invoiceDetails.id && targetElement) {
+        try {
+          const serializedHtml = serializeInvoiceHtml(targetElement);
+          const payload = {
+            html: serializedHtml,
+            template: previewTemplate || {},
+          };
+
+          let blob;
+          if (isDeliveryChallan) {
+            blob = await getDeliveryChallanPdf(invoiceDetails.id, payload);
+          } else if (isQuotation) {
+            blob = await downloadQuotationPDF(invoiceDetails.id, payload);
+          } else if (isSalesOrder) {
+            blob = await downloadSalesOrderPDF(invoiceDetails.id, payload);
+          } else {
+            blob = await downloadSalesInvoicePDF(invoiceDetails.id, payload);
           }
+
+          const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.setAttribute('download', filename);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(blobUrl);
+
+          toast.success(`${docTypeLabel} pixel-perfect PDF downloaded (~20KB, crystal clear)`);
+          return;
+        } catch (apiError) {
+          console.warn('Backend vector PDF download unavailable (501), generating direct fallback:', apiError);
+          toast.info('Server Chromium updating on api.cenvora.co.in. Generating direct download (or select "Save as Vector PDF").', { autoClose: 4000 });
         }
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      // First page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      // Subsequent pages
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
       }
 
-      pdf.save(`${isQuotation ? "performa-invoice" : "invoice"}-${invoiceDetails.invoice_number || invoice?.id}.pdf`);
+      if (targetElement) {
+        await generatePixelPerfectPDF(targetElement, {
+          filename,
+          scale: 2.5,
+          imageFormat: 'JPEG',
+          quality: 0.92,
+        });
+
+        toast.success(`${docTypeLabel} PDF downloaded successfully`);
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
-      toast.error('Error generating PDF. Please try again.');
+      toast.error('Failed to generate PDF. Please try again.');
+    } finally {
+      setDownloadingPDF(false);
     }
   };
 
-  // Send invoice email helper
+  // Send invoice email helper using the user's SELECTED invoice theme
   const sendInvoiceEmail = async (email) => {
     setSendingEmail(true);
     try {
-      const businessName = businessInfo.business_name || 'Cenvora';
-      const subject = `Invoice ${invoiceDetails.invoice_number} from ${businessName}`;
+      const businessName = effectiveBusinessInfo.business_name || businessInfo.business_name || 'Company';
+      const docTypeLabel = isDeliveryChallan
+        ? 'Delivery Challan'
+        : isQuotation
+        ? 'Quotation'
+        : isSalesOrder
+        ? 'Proforma Invoice'
+        : (documentTitle('', effectiveBusinessInfo) === 'TAX INVOICE' ? 'Tax Invoice'
+          : documentTitle('', effectiveBusinessInfo) === 'BILL OF SUPPLY' ? 'Bill of Supply' : 'Invoice');
+      const fileNum =
+        enrichedInvoice.invoice_number ||
+        invoiceDetails.order_number ||
+        invoiceDetails.quotation_number ||
+        invoiceDetails.invoice_number ||
+        invoiceDetails.challan_number ||
+        '';
+      const subject = `${docTypeLabel} #${fileNum} from ${businessName}`;
 
-      // Build HTML-formatted invoice for email
-      const items = invoiceDetails.items || [];
-      let itemRows = items.map(item =>
-        `<tr>
-          <td style="padding:8px;border-bottom:1px solid #eee;">${item.product_name || item.product?.name || '—'}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${getCurrencySymbol()}${Number(item.price || 0).toFixed(2)}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${getCurrencySymbol()}${Number(item.amount || 0).toFixed(2)}</td>
-        </tr>`
-      ).join('');
+      // Build beautifully styled email using the user's SELECTED invoice template/theme
+      const currentActiveTemplate = previewTemplate || template;
+      const themedEmailHtml = buildThemedInvoiceEmailHtml({
+        invoice: enrichedInvoice,
+        template: currentActiveTemplate,
+        businessInfo: effectiveBusinessInfo,
+        currencySymbol: getCurrencySymbol(),
+        docTypeLabel,
+      });
 
-      const body =
-        `<div style="font-family:Arial,sans-serif;max-width:600px;">` +
-        `<h2 style="color:#333;">Invoice from ${businessName}</h2>` +
-        `<table style="width:100%;margin:16px 0;">` +
-        `<tr><td style="color:#666;">Invoice No:</td><td><strong>${invoiceDetails.invoice_number}</strong></td></tr>` +
-        `<tr><td style="color:#666;">Date:</td><td>${invoiceDetails.invoice_date}</td></tr>` +
-        `<tr><td style="color:#666;">Customer:</td><td>${invoiceDetails.customer_name || 'N/A'}</td></tr>` +
-        `</table>` +
-        `<table style="width:100%;border-collapse:collapse;margin:16px 0;">` +
-        `<thead><tr style="background:#f5f5f5;">` +
-        `<th style="padding:8px;text-align:left;">Item</th>` +
-        `<th style="padding:8px;text-align:center;">Qty</th>` +
-        `<th style="padding:8px;text-align:right;">Price</th>` +
-        `<th style="padding:8px;text-align:right;">Amount</th>` +
-        `</tr></thead>` +
-        `<tbody>${itemRows}</tbody>` +
-        `<tfoot><tr style="background:#f5f5f5;font-weight:bold;">` +
-        `<td colspan="3" style="padding:8px;text-align:right;">Total:</td>` +
-        `<td style="padding:8px;text-align:right;">${getCurrencySymbol()}${Number(invoiceDetails.total_amount || 0).toFixed(2)}</td>` +
-        `</tr></tfoot>` +
-        `</table>` +
-        `<p style="color:#666;">Thank you for your business!<br>— ${businessName}</p>` +
-        `</div>`;
+      const plainTextSummary = `Dear ${enrichedInvoice.customer_name || 'Customer'},\n\nPlease find attached your ${docTypeLabel} #${fileNum} for ${getCurrencySymbol()}${Number(enrichedInvoice.total_amount || 0).toFixed(2)} from ${businessName}.\n\nThank you for your business!`;
 
-      await sendCustomEmail({ recipient: email, subject, body });
-      toast.success(`Invoice emailed to ${email}`);
+      await sendCustomEmail({
+        recipient: email,
+        subject,
+        body: plainTextSummary,
+        html_body: themedEmailHtml,
+        invoice_id: invoiceDetails.id,
+      });
+
+      toast.success(`${docTypeLabel} emailed in "${currentActiveTemplate?.name || 'Selected'}" theme to ${email}`);
       queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
       setEmailPromptOpen(false);
       setManualEmail('');
-    } catch {
+    } catch (err) {
+      console.error('Failed to send invoice email:', err);
       toast.error('Failed to send email. Check your email configuration in Business Tools.');
+    } finally {
+      setSendingEmail(false);
     }
-    setSendingEmail(false);
   };
 
   // Handle email button click
@@ -218,10 +745,10 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       {/* Email Prompt Modal */}
       {emailPromptOpen && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setEmailPromptOpen(false)}></div>
-          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl shadow-2xl p-6 animate-fade-up">
-            <h3 className="text-lg font-bold text-white mb-2">Enter Customer Email</h3>
-            <p className="text-sm text-gray-400 mb-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setEmailPromptOpen(false)}></div>
+          <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl p-6 animate-fade-up">
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Enter Customer Email</h3>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
               No email is on file for this customer. Enter an email to send this invoice.
             </p>
             <input
@@ -230,20 +757,20 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               onChange={(e) => setManualEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && manualEmail.includes('@') && sendInvoiceEmail(manualEmail)}
               placeholder="customer@example.com"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 outline-none focus:border-cyan-500/50 mb-4"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent-primary)] mb-4"
               autoFocus
             />
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => { setEmailPromptOpen(false); setManualEmail(''); }}
-                className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-colors"
+                className="btn-secondary px-4 py-2 text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={() => sendInvoiceEmail(manualEmail)}
                 disabled={!manualEmail.includes('@') || sendingEmail}
-                className="px-5 py-2 bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 rounded-lg text-sm font-semibold hover:bg-cyan-500/30 transition-colors disabled:opacity-40 flex items-center gap-2"
+                className="btn-primary px-5 py-2 text-sm flex items-center gap-2"
               >
                 {sendingEmail ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</> : <><EnvelopeIcon className="w-4 h-4" /> Send Invoice</>}
               </button>
@@ -256,116 +783,308 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4">
         {/* Backdrop */}
         <div 
-          className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+          className="absolute inset-0 bg-black/70 backdrop-blur-sm" 
           onClick={onClose}
         />
         
         {/* Modal Content */}
-        <div className="relative w-full max-w-5xl max-h-[95vh] flex flex-col bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
+        <div className="relative w-full max-w-5xl max-h-[95vh] flex flex-col bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
           
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-white/10 bg-black/50 gap-4">
-            <div className="flex justify-between items-center w-full sm:w-auto">
-              <div>
-                <h2 className="text-lg font-bold text-white">{isQuotation ? "Performa Invoice Preview" : "Invoice Preview"}</h2>
-                <p className="text-xs text-gray-400">
-                  {invoiceDetails.invoice_number || 'Loading...'}
-                  {template && <span className="ml-2 text-cyan-400">• {template.name}</span>}
-                </p>
+          {/* Modernized Header */}
+          <div className="relative z-30 flex flex-col md:flex-row items-start md:items-center justify-between px-5 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] gap-3">
+            {/* Left section: Document Title, Badge, Theme & Bank Selectors */}
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-sm sm:text-base font-semibold text-[var(--text-primary)] tracking-tight">
+                  {isDeliveryChallan ? "Delivery Challan Preview" : isQuotation ? "Quotation Preview" : isSalesOrder ? "Proforma Invoice Preview" : "Invoice Preview"}
+                </h2>
+                <span className="px-2 py-0.5 rounded-md text-xs font-mono font-medium bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
+                  {enrichedInvoice.invoice_number || 'Draft'}
+                </span>
               </div>
-              <button
-                onClick={onClose}
-                className="sm:hidden p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <XMarkIcon className="w-5 h-5" />
-              </button>
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar">
-              <button
-                onClick={() => setShowDesigner(true)}
-                className="whitespace-nowrap px-3 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-              >
-                <PaintBrushIcon className="w-4 h-4" />
-                Customize
-              </button>
-              
-              <button
-                onClick={handlePrint}
-                className="whitespace-nowrap px-3 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-              >
-                <PrinterIcon className="w-4 h-4" />
-                Print
-              </button>
-              
-              <button
-                onClick={handleDownloadPDF}
-                className="whitespace-nowrap px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-              >
-                <ArrowDownTrayIcon className="w-4 h-4" />
-                PDF
-              </button>
 
-              <button
-                disabled={sendingEmail}
-                onClick={handleEmailClick}
-                className="whitespace-nowrap px-3 py-2 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {sendingEmail
-                  ? <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Sending...</>
-                  : <><EnvelopeIcon className="w-4 h-4" /> Email</>}
-              </button>
+              {/* Subtle separator */}
+              <div className="hidden sm:block h-4 w-px bg-[var(--border-subtle)] mx-0.5" />
 
-              <button
-                onClick={(e) => { e.preventDefault(); toast.info('WhatsApp integration is coming soon!'); }}
-                className="relative px-4 py-2 bg-green-900/10 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg text-sm font-medium flex items-center gap-2 transition-all cursor-not-allowed group overflow-hidden whitespace-nowrap"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/5 to-green-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                <ChatBubbleLeftIcon className="w-4 h-4 opacity-70" />
-                <span className="opacity-90">WhatsApp</span>
-                
-                {/* Coming Soon Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 font-bold text-[10px] uppercase tracking-wider text-green-400/90 rounded-lg border border-green-500/30">
-                  Coming Soon
+              {/* Theme & Bank Switcher Controls */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Instant Template Switcher Dropdown */}
+                <div className="flex items-center gap-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] rounded-lg px-2.5 py-1.5 transition-colors shadow-sm">
+                  <SwatchIcon className="w-3.5 h-3.5 text-[var(--accent-primary)] shrink-0" />
+                  <select
+                    value={template?.id || 'classic'}
+                    onChange={(e) => handleTemplateSwitch(e.target.value)}
+                    className="bg-transparent text-[var(--text-primary)] text-xs font-medium outline-none cursor-pointer pr-1"
+                    title="Switch template"
+                  >
+                    {getInvoiceTemplates(sectionKey).map((t) => (
+                      <option key={t.id} value={t.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </button>
-              
-              <button
-                onClick={onClose}
-                className="hidden sm:block p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <XMarkIcon className="w-5 h-5" />
-              </button>
+
+                {/* Instant Bank Account Switcher Dropdown */}
+                {allBankAccounts.length > 0 && (
+                  <div className="flex items-center gap-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] rounded-lg px-2.5 py-1.5 transition-colors shadow-sm max-w-[210px]">
+                    <BuildingLibraryIcon className="w-3.5 h-3.5 text-[var(--accent-primary)] shrink-0" />
+                    <select
+                      value={selectedBankAccountId || 'none'}
+                      onChange={(e) => handleBankSelect(e.target.value)}
+                      className="bg-transparent text-[var(--text-primary)] text-xs font-medium outline-none cursor-pointer truncate pr-1"
+                      title="Select bank account to display on bill"
+                    >
+                      <option value="none" className="bg-[var(--bg-surface)] text-[var(--text-muted)]">
+                        No Bank Details
+                      </option>
+                      {allBankAccounts.map((acc, idx) => (
+                        <option key={acc.id || idx} value={acc.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+                          {acc.account_name || `Account ${idx + 1}`}{acc.bank_name ? ` (${acc.bank_name})` : ''}{billingProfile.default_bank_account_sections?.[sectionKey] === acc.id ? ' [Default]' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right section: Clean Icon-Based Action Toolbar */}
+            <div className="flex items-center gap-1 bg-[var(--bg-primary)] p-1 rounded-xl border border-[var(--border-subtle)] self-end md:self-center shrink-0">
+              {/* Customize Template Button */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  onClick={() => setShowDesigner(true)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-surface-hover)] active:scale-95 transition-all duration-150"
+                  title="Customize Template"
+                  aria-label="Customize Template"
+                >
+                  <PaintBrushIcon className="w-4 h-4" />
+                </button>
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                  Customize Template
+                </div>
+              </div>
+
+              {/* Print Button */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:scale-95 transition-all duration-150"
+                  title="Print Document"
+                  aria-label="Print Document"
+                >
+                  <PrinterIcon className="w-4 h-4" />
+                </button>
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                  Print Document
+                </div>
+              </div>
+
+              {/* PDF Download Split Button */}
+              <div ref={pdfMenuRef} className="relative group/pdf">
+                <div className={`flex items-center rounded-lg transition-colors ${pdfMenuOpen ? 'bg-[var(--bg-surface-hover)] text-[var(--accent-primary)]' : 'hover:bg-[var(--bg-surface-hover)]'}`}>
+                  <button
+                    type="button"
+                    disabled={downloadingPDF}
+                    onClick={() => handleDownloadPDF('vector')}
+                    className="w-8 h-8 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent-primary)] rounded-l-lg transition-colors disabled:opacity-50"
+                    title="Download Vector PDF"
+                    aria-label="Download Vector PDF"
+                  >
+                    {downloadingPDF ? (
+                      <ArrowPathIcon className="w-4 h-4 animate-spin text-[var(--accent-primary)]" />
+                    ) : (
+                      <ArrowDownTrayIcon className="w-4 h-4" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={downloadingPDF}
+                    onClick={() => setPdfMenuOpen(!pdfMenuOpen)}
+                    className="w-4 h-8 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent-primary)] rounded-r-lg transition-colors disabled:opacity-50 border-l border-[var(--border-subtle)]"
+                    title="PDF Download Options"
+                    aria-label="PDF Download Options"
+                  >
+                    <ChevronDownIcon className={`w-3 h-3 transition-transform ${pdfMenuOpen ? 'rotate-180 text-[var(--accent-primary)]' : ''}`} />
+                  </button>
+                </div>
+
+                {!pdfMenuOpen && (
+                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover/pdf:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                    Download PDF
+                  </div>
+                )}
+
+                {pdfMenuOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-72 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadPDF('vector')}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-[var(--bg-surface-hover)] transition-colors flex items-start gap-2.5 group/opt"
+                    >
+                      <div className="w-6 h-6 rounded-md bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 flex items-center justify-center shrink-0 mt-0.5">
+                        <BoltIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-[var(--text-primary)]">Download Vector PDF</span>
+                        <span className="text-xs text-[var(--text-muted)]">~20KB, crystal-clear direct vector file</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadPDF('client')}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-[var(--bg-surface-hover)] transition-colors flex items-start gap-2.5 mt-1 border-t border-[var(--border-subtle)] pt-2 group/opt"
+                    >
+                      <div className="w-6 h-6 rounded-md bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 flex items-center justify-center shrink-0 mt-0.5">
+                        <SparklesIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-[var(--text-primary)]">Direct Canvas Download</span>
+                        <span className="text-xs text-[var(--text-muted)]">~45KB, high-res client fallback</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setPdfMenuOpen(false); handlePrint(); }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-[var(--bg-surface-hover)] transition-colors flex items-start gap-2.5 mt-1 border-t border-[var(--border-subtle)] pt-2 group/opt"
+                    >
+                      <div className="w-6 h-6 rounded-md bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 flex items-center justify-center shrink-0 mt-0.5">
+                        <PrinterIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-[var(--text-primary)]">System Print Dialog</span>
+                        <span className="text-xs text-[var(--text-muted)]">Print or choose destination printer</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Email Button */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  disabled={sendingEmail}
+                  onClick={handleEmailClick}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--status-info)] hover:bg-[var(--status-info)]/15 active:scale-95 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Send via Email"
+                  aria-label="Send via Email"
+                >
+                  {sendingEmail ? (
+                    <ArrowPathIcon className="w-4 h-4 animate-spin text-[var(--status-info)]" />
+                  ) : (
+                    <EnvelopeIcon className="w-4 h-4" />
+                  )}
+                </button>
+                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                  Send via Email
+                </div>
+              </div>
+
+              {/* WhatsApp Button */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); toast.info('WhatsApp automation is available on demand. Contact support to activate.'); }}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--status-success)] hover:bg-[var(--status-success)]/15 active:scale-95 transition-all duration-150 relative"
+                  title="WhatsApp (On Demand)"
+                  aria-label="WhatsApp"
+                >
+                  <WhatsAppIcon className="w-4 h-4" />
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[var(--status-success)]" />
+                </button>
+                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                  WhatsApp (On Demand)
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="w-px h-4 bg-[var(--border-subtle)] mx-0.5" />
+
+              {/* Close Button */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:scale-95 transition-all duration-150"
+                  title="Close (Esc)"
+                  aria-label="Close"
+                >
+                  <XMarkIcon className="w-4 h-4" />
+                </button>
+                <div className="absolute top-full mt-2 right-0 px-2.5 py-1 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-medium rounded-md shadow-2xl border border-[var(--border-subtle)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50">
+                  Close (Esc)
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Invoice Content */}
-          <div className="flex-1 overflow-auto p-0 sm:p-6 bg-gray-900/50 flex justify-center items-start">
+          <div ref={previewContainerRef} className="flex-1 overflow-auto p-2 sm:p-8 bg-[var(--bg-primary)] flex justify-center items-start">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mb-4" />
-                <p className="text-gray-400">{isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent-primary)] mb-4" />
+                <p className="text-[var(--text-muted)]">{isDeliveryChallan ? "Loading delivery challan..." : isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
               </div>
             ) : previewTemplate ? (
-              <div className="w-full sm:w-auto overflow-hidden sm:overflow-visible flex justify-center pb-10">
-                <div className="shadow-2xl origin-top scale-[0.45] sm:scale-100" ref={printRef} data-print-target>
-                  <div className="w-[210mm] min-h-[297mm] bg-white">
+              <div className="w-full flex justify-center pb-10">
+                <div 
+                  style={{
+                    transform: `scale(${previewScale})`,
+                    transformOrigin: 'top center',
+                    width: '210mm',
+                    marginBottom: previewScale < 1 ? `calc(297mm * (${previewScale} - 1))` : 0,
+                  }}
+                  className="print:transform-none print:w-auto print:m-0"
+                >
+                  <div 
+                    ref={printRef}
+                    data-print-target
+                    data-bill-template="true"
+                    className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-0 m-0 print:w-full print:max-w-none print:shadow-none print:m-0"
+                  >
+                    <style type="text/css" media="print">{`
+                      @page {
+                        size: A4 portrait;
+                        margin: 0mm;
+                      }
+                      @page :left {
+                        margin: 0mm;
+                      }
+                      @page :right {
+                        margin: 0mm;
+                      }
+                      body {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 100% !important;
+                      }
+                      .invoice-sheet {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        margin: 0 !important;
+                      }
+                    `}</style>
                     <InvoicePreview
-                      invoice={invoiceDetails}
+                      invoice={enrichedInvoice}
                       template={previewTemplate}
-                      businessInfo={businessInfo}
+                      businessInfo={effectiveBusinessInfo}
                       invoiceSettings={invoiceSettings || {}}
                     />
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-20 text-gray-400">
+              <div className="text-center py-20 text-[var(--text-muted)]">
                 <p>No template loaded</p>
                 <button
                   onClick={() => setShowDesigner(true)}
-                  className="mt-4 text-cyan-400 hover:text-cyan-300"
+                  className="mt-4 text-[var(--accent-primary)] hover:underline font-medium"
                 >
                   Create a template
                 </button>
@@ -378,8 +1097,19 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       {/* Template Designer Modal */}
       <InvoiceTemplateDesigner
         isOpen={showDesigner}
-        onClose={() => setShowDesigner(false)}
-        businessInfo={businessInfo}
+        onClose={() => {
+          setShowDesigner(false);
+          const resolvedTemplate = getActiveTemplateForSection({
+            sectionKey,
+            documentTemplateId: docTemplateId,
+            customerTemplates,
+            userDefaultTemplates,
+          });
+          setTemplate(resolvedTemplate);
+        }}
+        businessInfo={effectiveBusinessInfo}
+        documentType={documentType}
+        invoice={enrichedInvoice}
       />
     </>,
     document.body

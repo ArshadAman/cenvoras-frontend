@@ -1,3 +1,17 @@
+/**
+ * Bank Reconciliation Feature (Disabled - MVP mockup)
+ *
+ * The MVP implementation hardcoded bank name:
+ * formData.append('bank_name', 'HDFC Bank');
+ *
+ * Feature is commented out as of now until dynamic bank account selection
+ * and multi-format parser integration is ready.
+ */
+
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+
+/*
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/api';
@@ -24,7 +38,7 @@ const reconcileLine = async ({ lineId, entryId }) => {
   return response.data;
 };
 
-export default function BankReconciliation() {
+export function BankReconciliationMVP() {
   const [statementId, setStatementId] = useState(null);
   const queryClient = useQueryClient();
 
@@ -71,7 +85,6 @@ export default function BankReconciliation() {
           </div>
           
           <div className="flex gap-4">
-             {/* Simple File Upload Button */}
              <label className="btn-primary flex items-center gap-2 cursor-pointer">
               <ArrowUpTrayIcon className="w-4 h-4" />
               <span>Upload Statement</span>
@@ -81,56 +94,53 @@ export default function BankReconciliation() {
         </div>
 
         {!statementId ? (
-          <div className="bento-card p-12 text-center text-gray-500 border-dashed border-2 border-white/10 bg-transparent">
-            <ArrowUpTrayIcon className="w-12 h-12 mx-auto mb-4 text-gray-600" />
-            <h3 className="text-lg font-medium text-white mb-2">No Statement Selected</h3>
+          <div className="p-12 text-center text-[var(--text-muted)] border-dashed border-2 border-[var(--border-subtle)] rounded-2xl bg-transparent">
+            <ArrowUpTrayIcon className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
+            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">No Statement Selected</h3>
             <p>Upload a CSV file to start reconciliation.</p>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white/5 p-4 rounded-lg border border-white/10">
+            <div className="flex justify-between items-center bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--border-subtle)]">
               <div>
-                <h3 className="text-white font-medium">{statusData?.statement?.name}</h3>
-                <p className="text-sm text-gray-400">Uploaded: {new Date(statusData?.statement?.date).toLocaleDateString()}</p>
+                <h3 className="text-[var(--text-primary)] font-medium">{statusData?.statement?.name}</h3>
+                <p className="text-sm text-[var(--text-muted)]">Uploaded: {new Date(statusData?.statement?.date).toLocaleDateString()}</p>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-white">
+                <div className="text-2xl font-bold text-[var(--text-primary)]">
                     {statusData?.lines?.filter(l => !l.is_reconciled).length}
                 </div>
-                <div className="text-xs text-gray-400 uppercase tracking-wider">Unreconciled Lines</div>
+                <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Unreconciled Lines</div>
               </div>
             </div>
 
             <div className="space-y-4">
               {statusData?.lines?.map((line) => (
                 <div key={line.id} className={`bento-card p-4 border transition-all ${
-                  line.is_reconciled ? 'border-green-500/20 bg-green-500/5' : 'border-white/10'
+                  line.is_reconciled ? 'border-[var(--status-success-border)] bg-[var(--status-success-bg)]' : 'border-[var(--border-subtle)]'
                 }`}>
                   <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                    {/* Bank Side */}
                     <div className="flex-1 w-full">
                       <div className="flex justify-between mb-1">
-                        <span className="text-gray-400 text-xs font-mono">{line.date}</span>
-                        <span className={`font-mono font-medium ${line.debit > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                        <span className="text-[var(--text-muted)] text-xs font-mono">{line.date}</span>
+                        <span className={`font-mono font-medium ${line.debit > 0 ? 'text-[var(--status-danger)]' : 'text-[var(--status-success)]'}`}>
                           {line.debit > 0 ? `- ${getCurrencySymbol()}${fmt(line.debit)}` : `+ ${getCurrencySymbol()}${fmt(line.credit)}`}
                         </span>
                       </div>
-                      <div className="text-white text-sm truncate" title={line.description}>
+                      <div className="text-[var(--text-primary)] text-sm truncate" title={line.description}>
                         {line.description}
                       </div>
                     </div>
 
-                    {/* Divider Icon */}
-                    <div className="hidden md:block text-gray-600">
+                    <div className="hidden md:block text-[var(--text-muted)]">
                       {line.is_reconciled ? (
-                        <CheckCircleIcon className="w-6 h-6 text-green-500" />
+                        <CheckCircleIcon className="w-6 h-6 text-[var(--status-success)]" />
                       ) : (
                         <ArrowPathIcon className="w-6 h-6" />
                       )}
                     </div>
 
-                    {/* Ledger Side / Match Action */}
-                    <div className="flex-1 w-full border-l border-white/10 md:pl-4">
+                    <div className="flex-1 w-full border-l border-[var(--border-subtle)] md:pl-4">
                       {line.is_reconciled ? (
                         <div className="flex items-center gap-2">
                            <div className="bg-green-500/20 p-1.5 rounded-full">
@@ -165,7 +175,7 @@ export default function BankReconciliation() {
                                 </div>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2 text-gray-500 text-sm italic">
+                            <div className="flex items-center gap-2 text-slate-400 text-sm italic">
                               <ExclamationCircleIcon className="w-4 h-4" /> No automatic matches found
                             </div>
                           )}
@@ -178,8 +188,14 @@ export default function BankReconciliation() {
             </div>
           </div>
         )}
-        <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
+        
       </div>
     </>
   );
+}
+*/
+
+export default function BankReconciliation() {
+  // Feature commented out as of now — redirected to Coming Soon
+  return <Navigate to="/coming-soon" replace />;
 }

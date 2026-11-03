@@ -9,89 +9,86 @@ export default function TermsOfService() {
   }, []);
 
   return (
-    <div className="min-h-screen font-sans text-white bg-black selection:bg-purple-500/30">
+    <div className="min-h-screen font-body text-[var(--text-primary)] bg-[var(--bg-primary)]">
       <Seo
-        title="Terms of Service"
-        description="Review the terms for using Cenvora's billing, inventory, GST, and account services."
+        title="Terms of Service & License Terms | Cenvora"
+        description="Review the perpetual software license terms, AMC maintenance scope, and user responsibilities for Cenvora software."
         canonicalPath="/terms"
       />
-      {/* Background Texture Grid */}
-      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
-      
+
       <PublicNavbar
         links={[
           { label: 'Home', href: '/' },
-          { label: 'HSN Code', href: '/gst-hsn-guide' },
-          { label: 'Contact', href: '/contact' },
+          { label: 'Pricing', href: '/#pricing' },
+          { label: 'HSN Lookup', href: '/gst-hsn-guide' },
           { label: 'Privacy', href: '/privacy' },
+          { label: 'Contact', href: '/contact' },
         ]}
       />
 
-      <main className="pt-40 pb-20 relative z-10 max-w-3xl mx-auto px-6">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-8 text-white">Terms of Service</h1>
-        <p className="text-gray-400 mb-12">Last updated: {new Date().toLocaleDateString()}</p>
+      <main className="mx-auto max-w-3xl px-6 pb-20 pt-32 sm:pt-40">
+        <div className="border-b border-[var(--border-subtle)] pb-6 mb-8">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)] font-display">
+            Terms of Service & License Agreement
+          </h1>
+          <p className="mt-2 text-xs text-[var(--text-muted)] font-mono">
+            Last Updated: January 2026 • Perpetual License Model
+          </p>
+        </div>
 
-        <div className="space-y-8 text-gray-300 leading-relaxed">
+        <div className="space-y-8 text-sm text-[var(--text-secondary)] leading-relaxed font-normal">
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">1. Agreement to Terms</h2>
-            <p>By accessing or using Cenvora, you agree to be bound by these Terms. If you disagree with any part of the terms, then you may not access the Service. These Terms apply to all visitors, users, and others who access or use the Service.</p>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">1. Perpetual Software License</h2>
+            <p>
+              When you purchase a Cenvora license (such as Hosted Standard at ₹1,00,000, White-Label Custom Domain at ₹1,50,000, or Enterprise at ₹2,00,000+), you receive a perpetual, non-exclusive license to use the software for your business operations. You are free to add as many staff logins, billing counters, and devices as needed without paying any monthly per-user fees.
+            </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">2. Subscriptions & Billing</h2>
-            <ul className="list-disc pl-6 space-y-2 text-gray-400">
-              <li>Some parts of the Service are billed on a subscription basis. You will be billed in advance on a recurring and periodic basis (monthly or annually).</li>
-              <li>A valid payment method is required to process the payment for your Subscription.</li>
-              <li>You may cancel your Subscription at any time, but no refunds will be provided for the remaining duration of the billing cycle.</li>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">2. Annual Maintenance Contract (AMC) & Hosting</h2>
+            <p className="mb-2">
+              To keep your software up to date with new statutory GST tax rules and ensure system security:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 text-[var(--text-muted)] text-xs sm:text-sm">
+              <li><strong>Base Software AMC (Flat ₹12,000/year):</strong> Covers software updates, new GST features, bug fixes, automated backups, and priority WhatsApp support.</li>
+              <li><strong>Hosting Fees:</strong> For Hosted Standard, cloud hosting is bundled at ~₹6,000/year (₹18,000/year total). For White-Label Custom Domain, dedicated container hosting is bundled at ~₹12,000/year (₹24,000/year total). For Self-Hosted Enterprise, hosting is paid directly by you to your cloud provider (₹0 to Cenvora).</li>
+              <li><strong>AMC Renewal is Optional:</strong> If you decide not to renew the maintenance fee, your software license and your database remain 100% yours forever. You simply stop receiving new software upgrades and priority support until renewed.</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">3. Accounts</h2>
-            <p>When you create an account with us, you must provide us with information that is accurate, complete, and current at all times. Failure to do so constitutes a breach of the Terms, which may result in immediate termination of your account on our Service. You are responsible for safeguarding the password that you use to access the Service.</p>
-          </section>
-          
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">4. Acceptable Use, BNS & IT Act Compliance</h2>
-            <p className="text-sm mb-2">You agree to use Cenvora strictly in compliance with all applicable Indian laws, including but not limited to the Information Technology Act, 2000, and the Bharatiya Nyaya Sanhita, 2023 (BNS). You explicitly agree NOT to use the Service to upload, post, transmit, or otherwise make available any Content that:</p>
-            <ul className="list-disc pl-6 space-y-1 text-sm text-gray-400">
-                <li>Constitutes forgery, cheating, or financial fraud under the Bharatiya Nyaya Sanhita (BNS) provisions.</li>
-                <li>Involves unauthorized access, identity theft, or data manipulation punishable under Sections 43, 66, 66C, and 66D of the Information Technology Act, 2000.</li>
-                <li>Is grossly harmful, defamatory, obscene, pornographic, pedophilic, invasive of another's privacy, or promotes money laundering or gambling.</li>
-            </ul>
-            <p className="text-sm mt-2 font-medium text-red-400">Any violation of these provisions constitutes a severe breach of these Terms. Cenvora reserves the right to immediately terminate your account, freeze your data, and report the offense to cyber crime authorities or law enforcement agencies without prior notice.</p>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">3. Your Data Sovereignty</h2>
+            <p>
+              All item catalogs, prices, invoices, customer records, and ledger balances entered into Cenvora remain your exclusive property. We will never lock your data or restrict your right to download your records in Excel, CSV, or SQL format.
+            </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">5. Data Protection (DPDP Act 2023)</h2>
-            <p className="text-sm">By utilizing Cenvora to store your customers' or third-party data, you acknowledge that you remain the "Data Fiduciary" regarding that data under the Digital Personal Data Protection Act, 2023 (DPDP). Cenvora acts merely as a "Data Processor." You represent and warrant that you have obtained lawful, clear, and specific consent from all individuals whose personal data you input into our systems. You shall hold Cenvora completely harmless against any complaints or penalties levied by the Data Protection Board of India resulting from your failure to obtain such consent.</p>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">4. Lawful Use & Tax Compliance</h2>
+            <p>
+              You agree to use Cenvora in accordance with applicable Indian laws, including the Information Technology Act, 2000, and GST legislation. The software assists you with accurate calculations and automated formatting, but final responsibility for filed tax returns lies with your authorized business management.
+            </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">6. Intermediary Status & Safe Harbour (Sec 79 IT Act)</h2>
-            <p className="text-sm">Cenvora is strictly a technology platform and acts purely as an "Intermediary" under Section 2(1)(w) and Section 79 of the Information Technology Act, 2000, and the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021. We hold ZERO liability for the accuracy, legality, or GST compliance of any invoices, ledgers, or business data generated by you. We exercise no editorial control over your data. If you manipulate ledgers to evade taxes, the sole legal and penal liability lies exclusively with you and your business entity.</p>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">5. Governing Law</h2>
+            <p>
+              These terms are governed by the laws of India. Any legal proceedings shall be subject to the jurisdiction of competent courts in India.
+            </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">7. Limitation of Liability & Data Loss</h2>
-            <p className="text-sm mb-4">While we implement automated off-site database backups every 24 hours to protect against catastrophic system failures, Cenvora is provided strictly on an "AS IS" and "AS AVAILABLE" basis. In no event shall Cenvora, nor its founders, directors, employees, or partners, be liable for any direct, indirect, incidental, special, consequential, or punitive damages under civil or criminal law. You explicitly acknowledge that up to 24 hours of data may be unrecoverable in the event of an intra-day catastrophic failure, hardware crash, or cyber attack, and you assume 100% of all risk associated with such potential data loss.</p>
+            <h2 className="text-base font-bold text-[var(--text-primary)] mb-2">6. Questions</h2>
+            <p>
+              For any questions regarding commercial terms or agreements, please reach out to us at{' '}
+              <a href="mailto:support@cenvora.co.in" className="text-[var(--accent-primary)] hover:underline">support@cenvora.co.in</a>.
+            </p>
           </section>
+        </div>
 
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">8. Absolute Indemnification</h2>
-            <p className="text-sm">You hereby agree to defend, indemnify and indefinitely hold harmless Cenvora, its affiliates, employees, and officers from and against any and all claims, FIRs (First Information Reports), civil suits, damages, obligations, losses, liabilities, costs or debt, and expenses (including but not limited to lawyer's fees), resulting directly or indirectly from a) your use and access of the Service; b) any fraudulent or unlawful act committed by you or your staff using our software; c) any breach of the BNS, IT Act, DPDP Act, or GST laws by you.</p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">9. Governing Law & Exclusive Jurisdiction</h2>
-            <p className="text-sm">These Terms shall be governed and construed exclusively in accordance with the laws of India. Any disputes, civil suits, or criminal proceedings arising out of or relating to these Terms, the Service, or data breaches shall be subject to the exclusive jurisdiction of the competent courts located in New Delhi, India. You hereby waive any right to object to such jurisdiction.</p>
-          </section>
-          
-          <section className="pt-8 border-t border-white/10 mt-12">
-             <Link to="/" className="text-cyan-400 hover:text-cyan-300 font-medium inline-flex items-center gap-2">
-                &larr; Back to Home
-             </Link>
-          </section>
+        <div className="mt-12 pt-6 border-t border-[var(--border-subtle)] flex justify-between text-xs text-[var(--text-muted)]">
+          <Link to="/" className="hover:text-[var(--text-primary)] transition-colors">&larr; Back to Home</Link>
+          <Link to="/privacy" className="hover:text-[var(--text-primary)] transition-colors">Read Privacy Policy &rarr;</Link>
         </div>
       </main>
     </div>

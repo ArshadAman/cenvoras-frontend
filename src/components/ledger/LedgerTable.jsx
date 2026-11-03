@@ -5,31 +5,67 @@ import Loader from '../Loader';
 import { format } from 'date-fns';
 import { createPortal } from 'react-dom';
 import { 
-  ChevronUpIcon, 
-  ChevronDownIcon, 
-  ArrowsUpDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   XMarkIcon,
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
+import useResizableColumns from '../../hooks/useResizableColumns';
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from '../common/tableHeaderClasses';
 import { getAccounts } from '../../api/ledger';
 import { subDays } from 'date-fns';
 import { useLoadingPolicy } from '../../hooks/useLoadingPolicy';
 import TableSkeleton from '../common/TableSkeleton';
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { ArrowTopRightOnSquareIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
+import { downloadPartnerStatementPdf } from '../../api/ledger';
+import { toast } from 'react-toastify';
+import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../../utils/date';
+import PartyDetailsHost from './PartyDetailsHost';
+import { getCustomer } from '../../api/customers';
+import { getVendor } from '../../api/vendors';
 
-const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, customerFilter = '' }) => {
+const cellClip = 'overflow-hidden text-ellipsis whitespace-nowrap min-w-0 max-w-full';
+
+const DEFAULT_COLUMN_WIDTHS = {
+  checkbox: 44,
+  date: 110,
+  account: 180,
+  reference: 130,
+  description: 180,
+  debit: 120,
+  credit: 120,
+  balance: 140,
+  source: 110,
+  actions: 70,
+};
+
+const LedgerTable = ({ 
+  onEdit, 
+  onDelete, 
+  selectedEntries = [], 
+  onBulkSelect, 
+  customerFilter = '', 
+  vendorFilter = '',
+  activeTab = 'customers',
+  selectedPartnerName = ''
+}) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    'cenvoras_ledger_table_col_widths',
+    DEFAULT_COLUMN_WIDTHS
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
   const [viewEntry, setViewEntry] = useState(null);
+  const [partyDetails, setPartyDetails] = useState(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [dateFilter, setDateFilter] = useState({
-    startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-    endDate: format(new Date(), 'yyyy-MM-dd')
+    startDate: '',
+    endDate: ''
   });
   
   const itemsPerPage = 20;
@@ -45,21 +81,24 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
   const receivableAccount = accounts.find(
     (account) => account.code === '1200' || /accounts?\s+receivable/i.test(account.name || '')
   );
+  const payableAccount = accounts.find(
+    (account) => account.code === '2001' || /accounts?\s+payable/i.test(account.name || '')
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 350);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  useEffect(() => {
-    if (!selectedAccount && receivableAccount?.id) {
-      setSelectedAccount(receivableAccount.id);
-    }
-  }, [selectedAccount, receivableAccount]);
+  const effectiveAccount = activeTab === 'customers'
+    ? (receivableAccount?.id || '')
+    : activeTab === 'vendors'
+    ? (payableAccount?.id || '')
+    : selectedAccount;
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, selectedAccount, dateFilter.startDate, dateFilter.endDate, customerFilter]);
+  }, [debouncedSearchTerm, effectiveAccount, dateFilter.startDate, dateFilter.endDate, customerFilter, vendorFilter, activeTab]);
 
   const {
     data: ledgerData,
@@ -71,8 +110,9 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
       description: debouncedSearchTerm,
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
-      account: selectedAccount,
-      customer: customerFilter,
+      account: effectiveAccount,
+      customer: activeTab === 'customers' ? customerFilter : '',
+      vendor: activeTab === 'vendors' ? vendorFilter : '',
       page: currentPage,
       page_size: itemsPerPage,
       ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
@@ -81,8 +121,9 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
       description: debouncedSearchTerm,
       date_from: dateFilter?.startDate,
       date_to: dateFilter?.endDate,
-      account: selectedAccount,
-      customer: customerFilter,
+      account: effectiveAccount,
+      customer: activeTab === 'customers' ? customerFilter : '',
+      vendor: activeTab === 'vendors' ? vendorFilter : '',
       page: currentPage,
       page_size: itemsPerPage,
       ordering: sortOrder === 'desc' ? `-${sortBy}` : sortBy
@@ -93,6 +134,57 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
   const totalCount = ledgerData?.count || 0;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
   const loadingPolicy = useLoadingPolicy(isLoading);
+
+  const applyDatePreset = (preset) => {
+    const todayStr = getTodayKolkata();
+    const [yStr, mStr] = todayStr.split('-');
+    const year = parseInt(yStr, 10);
+    const month = parseInt(mStr, 10); // 1-12
+    let start, end;
+    if (preset === 'today') {
+      start = todayStr;
+      end = todayStr;
+    } else if (preset === 'this_month') {
+      const bounds = getKolkataMonthBounds();
+      start = bounds.from;
+      // Inclusive of today so IST "today" entries are never clipped by UTC day rollover
+      end = todayStr;
+    } else if (preset === 'this_quarter') {
+      const qStartMonth = Math.floor((month - 1) / 3) * 3 + 1; // 1,4,7,10
+      start = `${year}-${String(qStartMonth).padStart(2, '0')}-01`;
+      end = todayStr;
+    } else if (preset === 'this_fy') {
+      start = getKolkataFYStart();
+      end = todayStr;
+    } else if (preset === 'all_time') {
+      start = '';
+      end = '';
+    }
+    setDateFilter({ startDate: start, endDate: end });
+  };
+
+  const handleDownloadPdf = async () => {
+    const partnerId = activeTab === 'vendors' ? vendorFilter : customerFilter;
+    if (!partnerId) {
+      toast.info("Please select a specific customer or vendor to download their statement PDF.");
+      return;
+    }
+    try {
+      setIsDownloadingPdf(true);
+      await downloadPartnerStatementPdf({
+        partner_type: activeTab === 'vendors' ? 'vendor' : 'customer',
+        partner_id: partnerId,
+        partner_name: selectedPartnerName,
+        date_from: dateFilter?.startDate,
+        date_to: dateFilter?.endDate,
+      });
+      toast.success("Statement PDF downloaded successfully!");
+    } catch (err) {
+      toast.error(err.message || "Failed to download statement PDF");
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -129,12 +221,10 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
   const isSomeCurrentPageSelected = ledgerEntries.some(entry => selectedEntries.includes(entry.id));
 
   const getSortIcon = (field) => {
-    if (sortBy !== field) {
-      return <ArrowsUpDownIcon className="w-4 h-4 text-gray-500 ml-1 inline" />;
-    }
-    return sortOrder === 'asc' ? 
-      <ChevronUpIcon className="w-4 h-4 text-cyan-400 ml-1 inline" /> : 
-      <ChevronDownIcon className="w-4 h-4 text-cyan-400 ml-1 inline" />;
+    if (sortBy !== field) return null;
+    return (
+      <span className="text-[var(--accent-primary)] font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+    );
   };
 
   const formatCurrency = (amount) => {
@@ -152,15 +242,73 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
       // Check if the date is valid
       if (isNaN(date.getTime())) return '-';
       return format(date, 'dd/MM/yyyy');
-    } catch (error) {
+    } catch {
       console.warn('Invalid date format:', dateString);
       return '-';
     }
   };
 
+  const getCleanReference = (entry) => {
+    if (!entry) return '-';
+    let ref = (entry.reference || '').trim();
+    ref = ref.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '').trim();
+    if (/^payment received$/i.test(ref)) ref = '';
+
+    if (entry.sales_invoice_number) return entry.sales_invoice_number;
+    if (entry.purchase_bill_number) return entry.purchase_bill_number;
+    if (entry.credit_note_number) return entry.credit_note_number;
+    if (entry.debit_note_number) return entry.debit_note_number;
+    return ref || entry.receipt_voucher_number || '-';
+  };
+
+  const openPartyDetails = async (entry) => {
+    if (!entry) return;
+    const party = { customer: null, vendor: null };
+    if (entry.customer) {
+      party.customer = { id: entry.customer, name: entry.customer_name };
+      try {
+        const full = await getCustomer(entry.customer);
+        const data = full?.data || full;
+        party.customer = { id: data.id, name: data.name };
+        if (data.linked_vendor?.id) {
+          party.vendor = { id: data.linked_vendor.id, name: data.linked_vendor.name };
+        }
+      } catch {
+        /* keep stub */
+      }
+    }
+    if (entry.vendor) {
+      party.vendor = { id: entry.vendor, name: entry.vendor_name };
+      try {
+        const full = await getVendor(entry.vendor);
+        const data = full?.data || full;
+        party.vendor = { id: data.id, name: data.name };
+        if (data.linked_customer?.id) {
+          party.customer = { id: data.linked_customer.id, name: data.linked_customer.name };
+        }
+      } catch {
+        /* keep stub */
+      }
+    }
+    if (party.customer || party.vendor) setPartyDetails(party);
+  };
+
+  const runningType = (entry) => {
+    if (entry?.running_balance_type === 'Cr' || entry?.running_balance_type === 'Dr') {
+      return entry.running_balance_type;
+    }
+    const credit = parseFloat(entry?.credit) || 0;
+    const debit = parseFloat(entry?.debit) || 0;
+    if (entry?.payment && customerFilter && credit > 0 && (parseFloat(entry.running_balance) || 0) <= 0.001) {
+      return 'Cr';
+    }
+    if (credit > 0 && !debit) return entry?.running_balance_type || '';
+    return entry?.running_balance_type || '';
+  };
+
   if (loadingPolicy.visible) {
     return (
-      <div className="bento-card p-4">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4">
         {loadingPolicy.shouldShowProgress ? (
           <div className="flex justify-center items-center h-48">
             <Loader />
@@ -174,22 +322,22 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
 
   if (error) {
     return (
-      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
+      <div className="bg-[var(--status-danger)]/15 border border-[var(--status-danger)]/30 rounded-2xl p-6 text-center">
         <div className="flex flex-col items-center justify-center">
-          <div className="bg-red-500/20 p-3 rounded-full mb-3">
-            <svg className="h-6 w-6 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+          <div className="bg-[var(--status-danger)]/20 p-3 rounded-full mb-3">
+            <svg className="h-6 w-6 text-[var(--status-danger)]" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
           </div>
-          <h3 className="text-lg font-bold text-white mb-1">
+          <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">
             Error loading entries
           </h3>
-          <p className="text-sm text-red-300 mb-4">
+          <p className="text-sm text-[var(--text-secondary)] mb-4">
             {error?.message || 'Failed to fetch ledger data'}
           </p>
           <button
             onClick={() => refetch()}
-            className="btn-secondary text-sm"
+            className="btn-secondary text-sm px-4 py-2 rounded-xl"
           >
             Try Again
           </button>
@@ -200,65 +348,150 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
 
   return (
     <>
-    <div className="backdrop-filter backdrop-blur-20 bg-white/5 border border-white/10 shadow-lg rounded-lg">
-      <div className="px-4 py-5 sm:p-6">
+    <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-lg rounded-2xl overflow-hidden">
+      <div className="p-4 sm:p-6">
         {/* Filters Toolbar */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <input
-            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/70 focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300 min-w-[200px]"
-            placeholder="Search descriptions..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <select
-            value={selectedAccount}
-            onChange={(e) => setSelectedAccount(e.target.value)}
-            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-          >
-            <option value="" className="bg-[#1a2341] text-white">All Accounts</option>
-            {accounts.map((account) => (
-              <option key={account.id} value={account.id} className="bg-[#1a2341] text-white">
-                {account.code} - {account.name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="date"
-            value={dateFilter.startDate}
-            onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
-            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-          />
-          <input
-            type="date"
-            value={dateFilter.endDate}
-            onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
-            className="border border-white/30 rounded px-3 py-1.5 text-sm bg-white/10 backdrop-filter backdrop-blur-10 text-white focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-          />
-          <button
-            onClick={() => {
-               setSearchTerm('');
-               setSelectedAccount(receivableAccount?.id || '');
-               setDateFilter({
-                 startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-                 endDate: format(new Date(), 'yyyy-MM-dd')
-               });
-            }}
-            className="px-3 py-1.5 bg-gray-500/30 text-white border border-gray-300/50 rounded hover:bg-gray-500/50 transition text-sm backdrop-filter backdrop-blur-10 drop-shadow-lg"
-          >
-            Clear Filters
-          </button>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              className="border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] min-w-[220px]"
+              placeholder="Search descriptions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {activeTab === 'general' && (
+              <select
+                value={selectedAccount}
+                onChange={(e) => setSelectedAccount(e.target.value)}
+                className="border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-sm bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
+              >
+                <option value="">All Accounts</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.code} - {account.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            <div className="flex items-center gap-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-1">
+              <input
+                type="date"
+                value={dateFilter.startDate}
+                onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
+                className="bg-transparent text-[var(--text-primary)] text-xs px-2 py-1 outline-none cursor-pointer"
+              />
+              <span className="text-[var(--text-muted)] text-xs">to</span>
+              <input
+                type="date"
+                value={dateFilter.endDate}
+                onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
+                className="bg-transparent text-[var(--text-primary)] text-xs px-2 py-1 outline-none cursor-pointer"
+              />
+            </div>
+            <button
+              onClick={() => {
+                 setSearchTerm('');
+                 if (activeTab === 'customers') setSelectedAccount(receivableAccount?.id || '');
+                 else if (activeTab === 'vendors') setSelectedAccount(payableAccount?.id || '');
+                 else setSelectedAccount('');
+                 setDateFilter({
+                   startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+                   endDate: format(new Date(), 'yyyy-MM-dd')
+                 });
+              }}
+              className="btn-secondary px-3 py-2 text-xs rounded-xl font-semibold"
+            >
+              Reset
+            </button>
+          </div>
+
+          {/* Quick Date Presets & PDF Download */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-1">
+              <button
+                onClick={() => applyDatePreset('this_month')}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition"
+              >
+                This Month
+              </button>
+              <button
+                onClick={() => applyDatePreset('this_quarter')}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition"
+              >
+                Quarter
+              </button>
+              <button
+                onClick={() => applyDatePreset('this_fy')}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition"
+              >
+                This FY
+              </button>
+              <button
+                onClick={() => applyDatePreset('all_time')}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition"
+              >
+                All
+              </button>
+            </div>
+
+            {(customerFilter || vendorFilter) && (
+              <button
+                onClick={handleDownloadPdf}
+                disabled={isDownloadingPdf}
+                className="btn-primary flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold shadow-md disabled:opacity-50"
+                title="Download Vector PDF Statement"
+              >
+                <ArrowDownTrayIcon className="w-3.5 h-3.5" />
+                <span>{isDownloadingPdf ? 'Generating...' : 'Statement PDF'}</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Sub-Ledger KPI Balance Strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Opening Balance</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-[var(--text-primary)] mt-1 flex items-center gap-1.5">
+              <span>{formatCurrency(ledgerData?.opening_balance || 0)}</span>
+              <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${ledgerData?.opening_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
+                {ledgerData?.opening_balance_type || 'Dr'}
+              </span>
+            </div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Period Debits (Dr)</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-[var(--status-danger)] mt-1">
+              {formatCurrency(ledgerData?.period_debit_total || 0)}
+            </div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Period Credits (Cr)</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-[var(--status-success)] mt-1">
+              {formatCurrency(ledgerData?.period_credit_total || 0)}
+            </div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Closing Balance</div>
+            <div className="text-base sm:text-lg font-bold font-mono text-[var(--text-primary)] mt-1 flex items-center gap-1.5">
+              <span>{formatCurrency(ledgerData?.closing_balance || 0)}</span>
+              <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${ledgerData?.closing_balance_type === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
+                {ledgerData?.closing_balance_type || 'Dr'}
+              </span>
+            </div>
+          </div>
         </div>
 
         {ledgerEntries.length === 0 ? (
           <div className="text-center py-20">
-            <div className="bg-white/5 p-4 rounded-full inline-block mb-4">
-               <svg className="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="bg-[var(--bg-primary)] p-4 rounded-full inline-block mb-4 border border-[var(--border-subtle)]">
+               <svg className="mx-auto h-10 w-10 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                </svg>
             </div>
-            <h3 className="mt-2 text-lg font-bold text-white">No ledger entries</h3>
-            <p className="mt-2 text-sm text-gray-400 max-w-sm mx-auto">
-              No entries found matching your criteria. Try adjusting your filters or record a new payment.
+            <h3 className="mt-2 text-lg font-bold text-[var(--text-primary)]">No ledger entries</h3>
+            <p className="mt-2 text-sm text-[var(--text-secondary)] max-w-sm mx-auto">
+              No entries found matching your criteria. Try adjusting your filters or record a new transaction.
             </p>
           </div>
         ) : (
@@ -266,101 +499,168 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
             {/* Table for desktop, Cards for mobile */}
             <div className="hidden lg:block">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-white/5 border-b border-white/10">
+                <table className="w-full table-fixed divide-y divide-[var(--border-subtle)] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl overflow-hidden shadow-xl">
+                <colgroup>
+                  {onBulkSelect && <col style={{ width: `${colWidths.checkbox}px` }} />}
+                  <col style={{ width: `${colWidths.date}px` }} />
+                  <col style={{ width: `${colWidths.account}px` }} />
+                  <col style={{ width: `${colWidths.reference}px` }} />
+                  <col style={{ width: `${colWidths.description}px` }} />
+                  <col style={{ width: `${colWidths.debit}px` }} />
+                  <col style={{ width: `${colWidths.credit}px` }} />
+                  <col style={{ width: `${colWidths.balance}px` }} />
+                  <col style={{ width: `${colWidths.source}px` }} />
+                  <col style={{ width: `${colWidths.actions}px` }} />
+                </colgroup>
+                <thead className={LIST_THEAD}>
                   <tr>
                     {onBulkSelect && (
-                      <th scope="col" className="relative px-6 py-4">
+                      <th scope="col" className={LIST_TH}>
                         <input
                           type="checkbox"
-                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-[#7fd3f7] focus:ring-[#7fd3f7] bg-white/10"
+                          className="h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] accent-[var(--accent-primary)] cursor-pointer"
                           checked={isAllCurrentPageSelected}
                           ref={(el) => {
                             if (el) el.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
                           }}
                           onChange={handleSelectAll}
                         />
+                        {renderResizeHandle('checkbox')}
                       </th>
                     )}
                     <th
                       scope="col"
-                      className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                      className={LIST_TH_SORTABLE}
                       onClick={() => handleSort('date')}
                     >
-                      Date {getSortIcon('date')}
+                      <div className={LIST_TH_LABEL}>
+                        <span>Date</span>
+                        {getSortIcon('date')}
+                      </div>
+                      {renderResizeHandle('date')}
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                      className={LIST_TH_SORTABLE}
                       onClick={() => handleSort('account_name')}
                     >
-                      Account {getSortIcon('account_name')}
+                      <div className={LIST_TH_LABEL}>
+                        <span>Account / Entity</span>
+                        {getSortIcon('account_name')}
+                      </div>
+                      {renderResizeHandle('account')}
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className={LIST_TH}>
                       Reference
+                      {renderResizeHandle('reference')}
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className={LIST_TH}>
                       Description
+                      {renderResizeHandle('description')}
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                      className={LIST_TH_SORTABLE}
                       onClick={() => handleSort('debit')}
                     >
-                      Debit {getSortIcon('debit')}
+                      <div className={LIST_TH_LABEL}>
+                        <span>Debit (Dr)</span>
+                        {getSortIcon('debit')}
+                      </div>
+                      {renderResizeHandle('debit')}
                     </th>
                     <th
                       scope="col"
-                      className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                      className={LIST_TH_SORTABLE}
                       onClick={() => handleSort('credit')}
                     >
-                      Credit {getSortIcon('credit')}
+                      <div className={LIST_TH_LABEL}>
+                        <span>Credit (Cr)</span>
+                        {getSortIcon('credit')}
+                      </div>
+                      {renderResizeHandle('credit')}
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className={LIST_TH}>
+                      Running Balance
+                      {renderResizeHandle('balance')}
+                    </th>
+                    <th scope="col" className={LIST_TH}>
                       Source
+                      {renderResizeHandle('source')}
                     </th>
-                    <th scope="col" className="relative px-6 py-4">
+                    <th scope="col" className={LIST_TH}>
                       <span className="sr-only">Actions</span>
+                      {renderResizeHandle('actions')}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="backdrop-filter backdrop-blur-10 bg-transparent divide-y divide-white/10">
+                <tbody className="bg-[var(--bg-surface)] divide-y divide-[var(--border-subtle)]">
                   {ledgerEntries.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-white/10 transition-colors">
+                    <tr key={entry.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                       {onBulkSelect && (
-                        <td className="relative px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="relative px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
                           <input
                             type="checkbox"
-                            className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/30 text-[#7fd3f7] focus:ring-[#7fd3f7] bg-white/10 backdrop-filter backdrop-blur-10"
+                            className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] accent-[var(--accent-primary)] bg-[var(--bg-primary)]"
                             checked={selectedEntries.includes(entry.id)}
                             onChange={(e) => handleSelectEntry(entry.id, e.target.checked)}
                           />
                         </td>
                       )}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm  text-white drop-shadow-lg">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)] font-mono">
                         {formatDate(entry.date)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm  text-white drop-shadow-lg">
-                          {entry.account_code} - {entry.account_name}
-                        </div>
-                        <div className="text-xs text-cyan-300  capitalize">
-                          {entry.account_type}
+                      <td className="px-4 py-4 overflow-hidden">
+                        <div className="min-w-0">
+                          {(entry.customer || entry.vendor) ? (
+                            <button
+                              type="button"
+                              onClick={() => openPartyDetails(entry)}
+                              className={`text-sm font-semibold text-[var(--accent-primary)] hover:underline text-left ${cellClip} block w-full`}
+                              title={entry.customer_name || entry.vendor_name}
+                            >
+                              {entry.customer_name || entry.vendor_name}
+                            </button>
+                          ) : (
+                            <div className={`text-sm font-semibold text-[var(--text-primary)] ${cellClip}`} title={`${entry.account_code || ''} ${entry.account_name || ''}`}>
+                              {`${entry.account_code || ''} ${entry.account_name || ''}`.trim() || '—'}
+                            </div>
+                          )}
+                          <div className={`text-xs text-[var(--text-muted)] capitalize ${cellClip}`}>
+                            {entry.account_name} ({entry.account_type})
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm  text-white drop-shadow-lg">
-                        {entry.reference || '-'}
+                      <td className="px-4 py-4 overflow-hidden text-sm text-[var(--text-primary)]">
+                        {entry.payment ? (
+                          <Link to="/payments" className={`text-[var(--status-success)] hover:underline font-medium inline-flex items-center gap-1 max-w-full ${cellClip}`} title={getCleanReference(entry)}>
+                            <span className={cellClip}>{getCleanReference(entry)}</span>
+                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 shrink-0" />
+                          </Link>
+                        ) : entry.sales_invoice ? (
+                          <Link to="/sales" className={`text-[var(--accent-primary)] hover:underline font-medium inline-flex items-center gap-1 max-w-full ${cellClip}`} title={getCleanReference(entry)}>
+                            <span className={cellClip}>{getCleanReference(entry)}</span>
+                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 shrink-0" />
+                          </Link>
+                        ) : entry.purchase_bill ? (
+                          <Link to="/purchases" className={`text-[var(--accent-primary)] hover:underline font-medium inline-flex items-center gap-1 max-w-full ${cellClip}`} title={getCleanReference(entry)}>
+                            <span className={cellClip}>{getCleanReference(entry)}</span>
+                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 shrink-0" />
+                          </Link>
+                        ) : (
+                          <span className={`font-mono text-[var(--text-secondary)] ${cellClip} block`} title={getCleanReference(entry)}>{getCleanReference(entry)}</span>
+                        )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-white">
+                      <td className="px-4 py-4 overflow-hidden text-sm text-[var(--text-primary)]">
                         <button
                           onClick={() => setViewEntry(entry)}
-                          className="text-left group"
-                          title="Click for full details"
+                          className="text-left group w-full min-w-0"
+                          title={entry.description || 'Click for full details'}
                         >
-                          <div className="max-w-xs truncate group-hover:text-cyan-300 transition-colors underline-offset-2 group-hover:underline drop-shadow-lg" title={entry.description}>
+                          <div className={`${cellClip} text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors underline-offset-2 group-hover:underline`}>
                             {entry.description || 'General Ledger Entry'}
                           </div>
-                          <div className="text-xs text-cyan-300">
+                          <div className="text-xs text-[var(--text-muted)]">
                             <span>Created: {formatDate(entry.created_at)}</span>
                             {entry.entry_number && (
                               <span className="ml-2">Entry #{entry.entry_number}</span>
@@ -368,64 +668,56 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
                           </div>
                         </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className={` drop-shadow-lg text-lg ${entry.debit > 0 ? 'text-red-300' : 'text-white'}`}>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
+                        <div className={`font-mono font-bold font-tabular text-sm ${entry.debit > 0 ? 'text-[var(--status-danger)]' : 'text-[var(--text-muted)]'}`}>
                           {entry.debit > 0 ? formatCurrency(entry.debit) : '-'}
                         </div>
-                        {entry.debit > 0 && (
-                          <div className="text-xs text-cyan-300 ">
-                            Debit
-                          </div>
-                        )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className={` drop-shadow-lg text-lg ${entry.credit > 0 ? 'text-green-300' : 'text-white'}`}>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
+                        <div className={`font-mono font-bold font-tabular text-sm ${entry.credit > 0 ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
                           {entry.credit > 0 ? formatCurrency(entry.credit) : '-'}
                         </div>
-                        {entry.credit > 0 && (
-                          <div className="text-xs text-cyan-300 ">
-                            Credit
-                          </div>
-                        )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
+                        <div className="font-mono font-bold font-tabular text-[var(--text-primary)] text-sm flex items-center justify-end gap-1.5">
+                          <span>{formatCurrency(entry.running_balance || 0)}</span>
+                          {runningType(entry) && (
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${runningType(entry) === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'}`}>
+                            {runningType(entry)}
+                          </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">
                         {entry.sales_invoice_number && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-blue-400/40 text-blue-100 backdrop-filter backdrop-blur-10 border-2 border-blue-300 mr-2 drop-shadow-lg">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                             📄 Sales #{entry.sales_invoice_number}
                           </span>
                         )}
                         {entry.purchase_bill_number && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-orange-400/40 text-orange-100 backdrop-filter backdrop-blur-10 border-2 border-orange-300 mr-2 drop-shadow-lg">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                             🧾 Purchase #{entry.purchase_bill_number}
                           </span>
                         )}
-                        {!entry.sales_invoice_number && !entry.purchase_bill_number && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-green-400/40 text-green-100 backdrop-filter backdrop-blur-10 border-2 border-green-300 drop-shadow-lg">
+                        {entry.payment && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30">
+                            💳 Payment
+                          </span>
+                        )}
+                        {!entry.sales_invoice_number && !entry.purchase_bill_number && !entry.payment && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
                             📝 Manual Entry
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => onEdit && onEdit(entry)}
-                            className="text-white dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 p-1 rounded"
-                            title="Edit entry"
-                          >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => onDelete && onDelete(entry)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded"
-                            title="Delete entry"
-                          >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setViewEntry(entry)}
+                          className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1.5 rounded-lg hover:bg-[var(--bg-primary)] transition"
+                          title="View Details"
+                        >
+                          <DocumentTextIcon className="w-5 h-5" />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -438,15 +730,15 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
             <div className="lg:hidden space-y-4">
               {isLoading ? (
                 Array(3).fill(0).map((_, i) => (
-                  <div key={i} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 animate-pulse">
-                    <div className="h-4 bg-white/20 rounded mb-2"></div>
-                    <div className="h-3 bg-white/10 rounded mb-2"></div>
-                    <div className="h-3 bg-white/10 rounded w-3/4"></div>
+                  <div key={i} className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-4 animate-pulse">
+                    <div className="h-4 bg-[var(--bg-surface)] rounded mb-2"></div>
+                    <div className="h-3 bg-[var(--bg-surface)] rounded mb-2"></div>
+                    <div className="h-3 bg-[var(--bg-surface)] rounded w-3/4"></div>
                   </div>
                 ))
               ) : (
-                ledgerEntries.map((entry, index) => (
-                  <div key={entry.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-4 hover:bg-white/10 transition-all duration-300">
+                ledgerEntries.map((entry) => (
+                  <div key={entry.id} className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] p-4 hover:border-[var(--accent-primary)] transition-all">
                     {/* Card Header */}
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-3">
@@ -459,61 +751,67 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
                               : selectedEntries.filter(id => id !== entry.id);
                             onBulkSelect(newSelected);
                           }}
-                          className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                          className="rounded border-[var(--border-subtle)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] accent-[var(--accent-primary)] bg-[var(--bg-surface)]"
                         />
                         <div>
-                          <div className="text-lg font-semibold text-white">
-                            {entry.customer_name || entry.customer?.name || 'N/A'}
-                          </div>
-                          <div className="text-sm text-white/70">
-                            {formatDate(entry.date)}
+                          <button
+                            type="button"
+                            onClick={() => openPartyDetails(entry)}
+                            className="text-base font-bold text-[var(--accent-primary)] hover:underline text-left"
+                          >
+                            {entry.customer_name || entry.vendor_name || entry.account_name || 'N/A'}
+                          </button>
+                          <div className="text-xs text-[var(--text-muted)] font-mono">
+                            {formatDate(entry.date)} &bull; {getCleanReference(entry)}
                           </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Card Content */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-white/70">Account:</span>
-                        <span className="text-sm font-medium text-white">{entry.account_name || entry.account?.name || 'N/A'}</span>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between items-center text-[var(--text-secondary)]">
+                        <span>Account:</span>
+                        <span className="font-medium text-[var(--text-primary)]">{entry.account_name}</span>
                       </div>
 
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-white/70">Description:</span>
-                        <span className="text-sm text-white text-right">{entry.description || 'N/A'}</span>
+                      <div className="flex justify-between items-start text-[var(--text-secondary)]">
+                        <span>Description:</span>
+                        <span className="font-medium text-[var(--text-primary)] text-right max-w-[200px] truncate">{entry.description || '-'}</span>
                       </div>
 
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-white/70">Amount:</span>
-                        <span className={`text-lg font-semibold ${
-                          entry.entry_type === 'credit' ? 'text-green-400' : 'text-red-400'
-                        }`}>
-                          {entry.entry_type === 'credit' ? '+' : '-'}{getCurrencySymbol()}{Number(entry.amount || 0).toLocaleString()}
+                      <div className="flex justify-between items-center pt-1 border-t border-[var(--border-subtle)]">
+                        <span className="text-[var(--text-muted)]">Transaction:</span>
+                        <span className="font-mono font-bold text-sm">
+                          {entry.debit > 0 ? (
+                            <span className="text-[var(--status-danger)]">Dr {formatCurrency(entry.debit)}</span>
+                          ) : (
+                            <span className="text-[var(--status-success)]">Cr {formatCurrency(entry.credit)}</span>
+                          )}
                         </span>
                       </div>
 
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-white/70">Balance:</span>
-                        <span className="text-sm font-medium text-[#7fd3f7]">
-                          {getCurrencySymbol()}{Number(entry.running_balance || 0).toLocaleString()}
+                      <div className="flex justify-between items-center pt-1 border-t border-[var(--border-subtle)]">
+                        <span className="text-[var(--text-muted)]">Running Balance:</span>
+                        <span className="font-mono font-bold text-[var(--text-primary)] text-sm flex items-center gap-1">
+                          <span>{formatCurrency(entry.running_balance || 0)}</span>
+                          {runningType(entry) && (
+                          <span className={`text-xs px-1 py-0.5 rounded font-bold ${runningType(entry) === 'Dr' ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]' : 'bg-[var(--status-warning)]/15 text-[var(--status-warning)]'}`}>
+                            {runningType(entry)}
+                          </span>
+                          )}
                         </span>
                       </div>
                     </div>
 
                     {/* Card Actions */}
-                    <div className="flex space-x-2 mt-4 pt-3 border-t border-white/10">
+                    <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] flex items-center justify-end">
                       <button
-                        onClick={() => onEdit(entry)}
-                        className="flex-1 px-3 py-2 bg-indigo-500/30 text-white border border-indigo-300/50 rounded-lg hover:bg-indigo-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
+                        onClick={() => setViewEntry(entry)}
+                        className="btn-secondary text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5"
                       >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => onDelete(entry)}
-                        className="flex-1 px-3 py-2 bg-red-500/30 text-white border border-red-300/50 rounded-lg hover:bg-red-500/50 transition backdrop-filter backdrop-blur-10 text-sm font-medium"
-                      >
-                        Delete
+                        <DocumentTextIcon className="w-4 h-4" />
+                        <span>View Details</span>
                       </button>
                     </div>
                   </div>
@@ -522,7 +820,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
 
               {/* No data message for mobile */}
               {!isLoading && ledgerEntries.length === 0 && (
-                <div className="p-8 text-center text-white/80">
+                <div className="p-8 text-center text-[var(--text-secondary)]">
                   <p>No ledger entries found.</p>
                   <p className="text-sm mt-2">
                     Click "Record Payment" to create your first ledger entry.
@@ -533,34 +831,34 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="bg-white/5 px-4 py-3 flex items-center justify-between border-t border-white/10 sm:px-6">
+              <div className="bg-[var(--bg-primary)] px-4 py-3 flex items-center justify-between border-t border-[var(--border-subtle)] sm:px-6">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-white/10 text-sm font-medium rounded-md text-gray-300 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-secondary text-sm font-medium px-4 py-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-white/10 text-sm font-medium rounded-md text-gray-300 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-secondary text-sm font-medium px-4 py-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed ml-3"
                   >
                     Next
                   </button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-[var(--text-secondary)]">
                       Showing{' '}
-                      <span className="font-bold text-white">{(currentPage - 1) * itemsPerPage + 1}</span>
+                      <span className="font-bold text-[var(--text-primary)]">{(currentPage - 1) * itemsPerPage + 1}</span>
                       {' '}to{' '}
-                      <span className="font-bold text-white">
+                      <span className="font-bold text-[var(--text-primary)]">
                         {Math.min(currentPage * itemsPerPage, totalCount)}
                       </span>
                       {' '}of{' '}
-                      <span className="font-bold text-white">{totalCount}</span>
+                      <span className="font-bold text-[var(--text-primary)]">{totalCount}</span>
                       {' '}results
                     </p>
                   </div>
@@ -569,7 +867,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
                       <button
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
-                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-white/10 bg-white/5 text-sm font-medium text-gray-400 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span className="sr-only">Previous</span>
                         <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
@@ -591,10 +889,10 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
                           <button
                             key={pageNum}
                             onClick={() => setCurrentPage(pageNum)}
-                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg mx-0.5 ${
                               currentPage === pageNum
-                                ? 'z-10 bg-indigo-500/20 border-indigo-500 text-indigo-300'
-                                : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                                ? 'z-10 bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-semibold border-[var(--accent-primary)]'
+                                : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
                             }`}
                           >
                             {pageNum}
@@ -605,7 +903,7 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
                       <button
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
-                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-white/10 bg-white/5 text-sm font-medium text-gray-400 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span className="sr-only">Next</span>
                         <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
@@ -623,20 +921,20 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
     {/* Entry Detail Modal */}
     {viewEntry && createPortal(
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setViewEntry(null)} />
-        <div className="relative w-full max-w-lg bg-[#111] border border-white/10 rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setViewEntry(null)} />
+        <div className="relative w-full max-w-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
           {/* Modal Header */}
-          <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
+          <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 rounded-xl">
-                <DocumentTextIcon className="w-5 h-5 text-purple-400" />
+              <div className="p-2 bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 rounded-xl">
+                <DocumentTextIcon className="w-5 h-5 text-[var(--accent-primary)]" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Entry Details</h2>
-                {viewEntry.entry_number && <p className="text-xs text-gray-400">Entry #{viewEntry.entry_number}</p>}
+                <h2 className="text-lg font-bold text-[var(--text-primary)]">Entry Details</h2>
+                {viewEntry.entry_number && <p className="text-xs text-[var(--text-muted)]">Entry #{viewEntry.entry_number}</p>}
               </div>
             </div>
-            <button onClick={() => setViewEntry(null)} className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors">
+            <button onClick={() => setViewEntry(null)} className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-surface)] hover:bg-[var(--bg-primary)] rounded-xl transition-colors">
               <XMarkIcon className="w-5 h-5" />
             </button>
           </div>
@@ -644,55 +942,78 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
           {/* Modal Body */}
           <div className="p-6 space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/5 rounded-xl p-3">
-                <div className="text-xs text-gray-500 mb-1">Date</div>
-                <div className="text-white font-medium">{formatDate(viewEntry.date)}</div>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Date</div>
+                <div className="text-[var(--text-primary)] font-medium">{formatDate(viewEntry.date)}</div>
               </div>
-              <div className="bg-white/5 rounded-xl p-3">
-                <div className="text-xs text-gray-500 mb-1">Reference</div>
-                <div className="text-white font-medium">{viewEntry.reference || '—'}</div>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Reference</div>
+                <div className="text-[var(--text-primary)] font-medium">{getCleanReference(viewEntry)}</div>
               </div>
-              <div className="bg-white/5 rounded-xl p-3 col-span-2">
-                <div className="text-xs text-gray-500 mb-1">Account</div>
-                <div className="text-white font-medium">{viewEntry.account_code} - {viewEntry.account_name}</div>
-                <div className="text-xs text-cyan-300 capitalize mt-0.5">{viewEntry.account_type}</div>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3 col-span-2">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Account</div>
+                <div className="text-[var(--text-primary)] font-medium">{viewEntry.account_code} - {viewEntry.account_name}</div>
+                <div className="text-xs text-[var(--text-muted)] capitalize mt-0.5">{viewEntry.account_type}</div>
               </div>
-              <div className="bg-white/5 rounded-xl p-3 col-span-2">
-                <div className="text-xs text-gray-500 mb-1">Description</div>
-                <div className="text-white text-sm leading-relaxed">{viewEntry.description || 'General Ledger Entry'}</div>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3 col-span-2">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Description</div>
+                <div className="text-[var(--text-primary)] text-sm leading-relaxed">{viewEntry.description || 'General Ledger Entry'}</div>
               </div>
-              <div className="bg-white/5 rounded-xl p-3">
-                <div className="text-xs text-gray-500 mb-1">Debit</div>
-                <div className={`font-bold text-xl ${viewEntry.debit > 0 ? 'text-red-400' : 'text-gray-500'}`}>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Debit</div>
+                <div className={`font-bold text-xl ${viewEntry.debit > 0 ? 'text-[var(--status-danger)]' : 'text-[var(--text-muted)]'}`}>
                   {viewEntry.debit > 0 ? formatCurrency(viewEntry.debit) : '—'}
                 </div>
               </div>
-              <div className="bg-white/5 rounded-xl p-3">
-                <div className="text-xs text-gray-500 mb-1">Credit</div>
-                <div className={`font-bold text-xl ${viewEntry.credit > 0 ? 'text-green-400' : 'text-gray-500'}`}>
+              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-3">
+                <div className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">Credit</div>
+                <div className={`font-bold text-xl ${viewEntry.credit > 0 ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
                   {viewEntry.credit > 0 ? formatCurrency(viewEntry.credit) : '—'}
                 </div>
               </div>
             </div>
 
             {/* Source Links */}
-            <div className="pt-2 border-t border-white/10">
-              <div className="text-xs text-gray-500 mb-2">Source Document</div>
+            <div className="pt-2 border-t border-[var(--border-subtle)]">
+              <div className="text-xs text-[var(--text-muted)] mb-2 uppercase tracking-wider">Source Document</div>
               <div className="flex flex-wrap gap-2">
                 {viewEntry.sales_invoice_number && (
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                     📄 Sales Invoice #{viewEntry.sales_invoice_number}
                   </span>
                 )}
                 {viewEntry.purchase_bill_number && (
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
                     🧾 Purchase Bill #{viewEntry.purchase_bill_number}
                   </span>
                 )}
-                {!viewEntry.sales_invoice_number && !viewEntry.purchase_bill_number && (
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs bg-gray-500/10 text-gray-400 border border-gray-500/20">
-                    📝 Manual Entry
-                  </span>
+                {!viewEntry.sales_invoice_number && !viewEntry.purchase_bill_number && !viewEntry.payment && (
+                  <div className="w-full flex items-center gap-2 mt-4 pt-3 border-t border-[var(--border-subtle)]">
+                    {onEdit && (
+                      <button
+                        onClick={() => {
+                          const e = viewEntry;
+                          setViewEntry(null);
+                          onEdit(e);
+                        }}
+                        className="btn-secondary text-xs px-3 py-1.5 rounded-lg"
+                      >
+                        Edit Entry
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        onClick={() => {
+                          const e = viewEntry;
+                          setViewEntry(null);
+                          onDelete(e);
+                        }}
+                        className="px-3 py-1.5 text-xs bg-[var(--status-danger)]/15 hover:bg-[var(--status-danger)]/25 text-[var(--status-danger)] border border-[var(--status-danger)]/30 rounded-lg transition"
+                      >
+                        Delete Entry
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -700,6 +1021,9 @@ const LedgerTable = ({ onEdit, onDelete, selectedEntries = [], onBulkSelect, cus
         </div>
       </div>,
       document.body
+    )}
+    {partyDetails && (
+      <PartyDetailsHost party={partyDetails} onClose={() => setPartyDetails(null)} />
     )}
   </>);
 };

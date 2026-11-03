@@ -2,16 +2,19 @@ import React, { useState, useEffect } from "react";
 import { hrApi } from "../../api/hr";
 import { TagIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
+import LeaveTypeModal from "./LeaveTypeModal";
 
 export default function LeaveTypes() {
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedLeaveType, setSelectedLeaveType] = useState(null);
 
   const fetchLeaveTypes = async () => {
     try {
       setLoading(true);
       const res = await hrApi.getLeaveTypes();
-      setLeaveTypes(res.data?.results || res.data);
+      setLeaveTypes(res.data?.results || res.data || []);
     } catch (error) {
       toast.error("Failed to load leave types");
     } finally {
@@ -23,55 +26,93 @@ export default function LeaveTypes() {
     fetchLeaveTypes();
   }, []);
 
+  const handleDelete = async (lt) => {
+    if (!window.confirm(`Are you sure you want to delete leave type "${lt.name}"?`)) return;
+    try {
+      await hrApi.deleteLeaveType(lt.id);
+      toast.success("Leave type deleted");
+      fetchLeaveTypes();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to delete leave type");
+    }
+  };
+
   return (
     <>
       <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
-        <section className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-6 md:p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">
+        <section className="bento-card p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-indigo-300/80 mb-2">Leave Management</p>
-              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white flex items-center gap-3">
-                <TagIcon className="w-9 h-9 text-indigo-300" />
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--accent-primary)] font-semibold mb-2">Leave Management</p>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
+                <TagIcon className="w-9 h-9 text-[var(--accent-primary)]" />
                 Leave Types
               </h1>
-              <p className="text-white/65 text-sm mt-2">Configure leave categories and annual entitlements.</p>
+              <p className="text-[var(--text-secondary)] text-sm mt-2">Configure leave categories and annual entitlements.</p>
             </div>
 
-            <button className="inline-flex items-center gap-2 rounded-xl bg-indigo-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-indigo-300">
+            <button
+              onClick={() => {
+                setSelectedLeaveType(null);
+                setIsModalOpen(true);
+              }}
+              className="btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl"
+            >
               <PlusIcon className="h-4 w-4" />
               Add Leave Type
             </button>
           </div>
         </section>
 
-        <section className="relative rounded-3xl border border-white/10 bg-black/25 p-0 overflow-hidden backdrop-blur-xl">
-          <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Leave Types</h2>
+        <section className="bento-card p-0 overflow-hidden">
+          <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/50">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">Leave Types</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-300">
-              <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
+              <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] border-b border-[var(--border-subtle)]">
                 <tr>
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4">Annual Entitlement</th>
                   <th className="px-6 py-4">Is Paid</th>
+                  <th className="px-6 py-4">Carry Forward Max</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="4" className="px-6 py-4 text-center">Loading...</td></tr>
+                  <tr><td colSpan="5" className="px-6 py-4 text-center">Loading...</td></tr>
                 ) : leaveTypes.length === 0 ? (
-                  <tr><td colSpan="4" className="px-6 py-4 text-center">No leave types found</td></tr>
+                  <tr><td colSpan="5" className="px-6 py-4 text-center">No leave types found</td></tr>
                 ) : (
                   leaveTypes.map(lt => (
-                    <tr key={lt.id} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="px-6 py-4">{lt.name}</td>
-                      <td className="px-6 py-4">{lt.annual_entitlement} Days</td>
-                      <td className="px-6 py-4">{lt.is_paid ? 'Yes' : 'No'}</td>
+                    <tr key={lt.id} className="hover:bg-[var(--bg-primary)] transition-colors">
+                      <td className="px-6 py-4 font-medium text-[var(--text-primary)]">{lt.name}</td>
+                      <td className="px-6 py-4 text-[var(--text-secondary)]">{lt.annual_entitlement} Days</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${lt.is_paid ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]' : 'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)]'}`}>
+                          {lt.is_paid ? 'Paid' : 'Unpaid'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-[var(--text-muted)] text-xs">{lt.carry_forward_max_days ?? 0} Days</td>
                       <td className="px-6 py-4 text-right space-x-3">
-                        <button className="text-indigo-400 hover:text-indigo-300"><PencilIcon className="w-4 h-4" /></button>
-                        <button className="text-red-400 hover:text-red-300"><TrashIcon className="w-4 h-4" /></button>
+                        <button
+                          onClick={() => {
+                            setSelectedLeaveType(lt);
+                            setIsModalOpen(true);
+                          }}
+                          className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition"
+                          title="Edit"
+                        >
+                          <PencilIcon className="w-4 h-4 inline" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(lt)}
+                          className="p-1 text-[var(--status-danger)] hover:opacity-80 transition"
+                          title="Delete"
+                        >
+                          <TrashIcon className="w-4 h-4 inline" />
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -81,6 +122,13 @@ export default function LeaveTypes() {
           </div>
         </section>
       </div>
+
+      <LeaveTypeModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchLeaveTypes}
+        initialData={selectedLeaveType}
+      />
     </>
   );
 }

@@ -1,28 +1,53 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { createProduct, updateProduct } from "../../api/inventory";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createProduct, updateProduct, getManufacturers } from "../../api/inventory";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { XMarkIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { getCurrencySymbol } from '../../utils/currency';
+import { getAllUnits, saveCustomUnit } from '../../utils/units';
+import useEscKey from '../../hooks/useEscStack';
+import { formatErrorMessage } from '../../utils/toastUtils';
+import { gstRatesWithLegacy } from '../../utils/gstRates';
 
-const UNIT_OPTIONS = ["pcs", "kg", "g", "mg", "l", "ml", "cm", "m", "mm", "box", "pack", "dozen", "other"];
+const STORAGE_PRESETS = [
+  "Room Temperature (RT)",
+  "2°C - 8°C",
+  "-20°C",
+  "-80°C",
+];
 
 const productSchema = Yup.object().shape({
+  item_code: Yup.string()
+    .max(100, "Item code must be 100 characters or less")
+    .nullable(),
   name: Yup.string()
     .required("Product name is required")
     .max(255, "Name must be 255 characters or less"),
+  manufacturer: Yup.string()
+    .max(255, "Manufacturer must be 255 characters or less")
+    .nullable(),
+  internal_reference: Yup.string()
+    .max(100, "Internal reference must be 100 characters or less")
+    .nullable(),
   description: Yup.string().nullable(),
   tax: Yup.number()
     .min(0, "Tax cannot be negative")
     .max(100, "Tax cannot exceed 100%")
     .nullable(),
   hsn_sac_code: Yup.string()
+    .transform((v) => (v == null ? "" : String(v).trim()))
+    .required("HSN/SAC code is required.")
+    .test("not-na", "HSN/SAC code is required.", (value) => Boolean(value) && value.toUpperCase() !== "N/A")
+    .test("min-digits", "HSN/SAC code must be at least 4 digits (6 digits if turnover > ₹5 Cr).", (value) => {
+      const digits = String(value || "").replace(/\D/g, "");
+      return digits.length >= 4;
+    })
     .max(20, "HSN/SAC code must be 20 characters or less"),
   unit: Yup.string()
     .required("Unit is required")
-    .oneOf(UNIT_OPTIONS, "Please select a valid unit"),
+    .max(50, "Unit must be 50 characters or less"),
   secondary_unit: Yup.string()
     .max(20, "Secondary unit must be 20 characters or less")
     .nullable(),
@@ -34,36 +59,286 @@ const productSchema = Yup.object().shape({
     .nullable()
     .test("is-decimal-or-empty", "Cost price must be a valid decimal number", (value) => {
       if (value === null || value === undefined || value === "") return true;
-      return /^\d+(\.\d{1,2})?$/.test(value);
+      return /^(\d+(\.\d{1,4})?|\.\d{1,4})$/.test(String(value).trim());
     }),
   sale_price: Yup.string()
     .required("Sale price is required")
-    .matches(/^\d+(\.\d{1,2})?$/, "Sale price must be a valid decimal number"),
+    .test("is-decimal", "Sale price must be a valid decimal number", (value) => {
+      if (value === null || value === undefined || value === "") return false;
+      return /^(\d+(\.\d{1,4})?|\.\d{1,4})$/.test(String(value).trim());
+    }),
   stock: Yup.number()
-    .required("Stock is required")
+    .typeError("Stock must be a whole number")
     .integer("Stock must be a whole number")
-    .min(0, "Stock must be positive"),
+    .required("Stock is required"),
   low_stock_alert: Yup.number()
     .integer("Low stock alert must be a whole number")
     .min(0, "Low stock alert must be positive"),
-  warranty_months: Yup.number()
-    .integer("Warranty must be a whole number")
-    .min(0, "Warranty must be positive"),
   meta: Yup.object().shape({
-    expiry_date: Yup.date().nullable().typeError("Invalid date"),
-    secondary_stock: Yup.number().nullable(),
-    mandi_tax: Yup.number().nullable(),
-    is_h1: Yup.boolean(),
-    is_narcotic: Yup.boolean(),
-    is_new_launch: Yup.boolean(),
-    temperature: Yup.string().max(50, "Temperature must be 50 characters or less").nullable(),
+    expiry_date: Yup.string().nullable(),
     storage_condition: Yup.string().max(150, "Storage condition must be 150 characters or less").nullable(),
   }),
 });
 
+// Helper component for DD/MM/YYYY Expiry Date input
+function FormattedDateInput({ value, onChange, className }) {
+  // Convert ISO (YYYY-MM-DD) to DD/MM/YYYY for display
+  const isoToDisplay = (isoStr) => {
+    if (!isoStr) return "";
+    const parts = String(isoStr).split('-');
+    if (parts.length === 3 && parts[0].length === 4) {
+      const [y, m, d] = parts;
+      return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+    }
+    return isoStr;
+  };
+
+  // Convert DD/MM/YYYY to ISO (YYYY-MM-DD)
+  const displayToIso = (dispStr) => {
+    if (!dispStr) return "";
+    const clean = dispStr.trim();
+    const parts = clean.split(/[/.-]/);
+    if (parts.length === 3) {
+      let [d, m, y] = parts;
+      if (y.length === 2) y = `20${y}`;
+      if (y.length === 4 && d.length <= 2 && m.length <= 2) {
+        return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      }
+    }
+    return dispStr;
+  };
+
+  const [displayText, setDisplayText] = useState(() => isoToDisplay(value));
+  const hiddenDateRef = React.useRef(null);
+
+  useEffect(() => {
+    setDisplayText(isoToDisplay(value));
+  }, [value]);
+
+  const handleTextChange = (e) => {
+    const raw = e.target.value;
+    setDisplayText(raw);
+    const iso = displayToIso(raw);
+    onChange(iso);
+  };
+
+  const handleNativePickerChange = (e) => {
+    const isoVal = e.target.value;
+    onChange(isoVal);
+    setDisplayText(isoToDisplay(isoVal));
+  };
+
+  return (
+    <div className="relative flex items-center">
+      <input
+        type="text"
+        value={displayText}
+        onChange={handleTextChange}
+        placeholder="dd/mm/yyyy"
+        className={`${className} pr-10 font-mono`}
+      />
+      <button
+        type="button"
+        onClick={() => hiddenDateRef.current?.showPicker ? hiddenDateRef.current.showPicker() : hiddenDateRef.current?.focus()}
+        className="absolute right-3 p-1 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors"
+        title="Open calendar"
+      >
+        <CalendarIcon className="w-5 h-5" />
+      </button>
+      <input
+        ref={hiddenDateRef}
+        type="date"
+        value={value || ""}
+        onChange={handleNativePickerChange}
+        className="sr-only"
+        tabIndex={-1}
+      />
+    </div>
+  );
+}
+
+// Storage Condition Dropdown + Custom Field Component
+function StorageConditionSelector({ value, onChange, inputClass, labelClass }) {
+  const isPreset = STORAGE_PRESETS.includes(value);
+  const initialMode = value ? (isPreset ? value : "custom") : "";
+  const [selectedOption, setSelectedOption] = useState(initialMode);
+  const [customText, setCustomText] = useState(isPreset ? "" : (value || ""));
+
+  useEffect(() => {
+    if (STORAGE_PRESETS.includes(value)) {
+      setSelectedOption(value);
+      setCustomText("");
+    } else if (value) {
+      setSelectedOption("custom");
+      setCustomText(value);
+    } else {
+      setSelectedOption("");
+      setCustomText("");
+    }
+  }, [value]);
+
+  const handleSelectChange = (e) => {
+    const opt = e.target.value;
+    setSelectedOption(opt);
+    if (opt === "custom") {
+      onChange(customText);
+    } else {
+      onChange(opt);
+    }
+  };
+
+  const handleCustomChange = (e) => {
+    const text = e.target.value;
+    setCustomText(text);
+    onChange(text);
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className={labelClass}>Storage Condition</label>
+      <select
+        value={selectedOption}
+        onChange={handleSelectChange}
+        className={inputClass}
+      >
+        <option value="" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Select storage condition...</option>
+        {STORAGE_PRESETS.map((preset) => (
+          <option key={preset} value={preset} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+            {preset}
+          </option>
+        ))}
+        <option value="custom" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-semibold">Custom...</option>
+      </select>
+
+      {selectedOption === "custom" && (
+        <input
+          type="text"
+          value={customText}
+          onChange={handleCustomChange}
+          placeholder="e.g. Store below 25°C, protect from light"
+          className={`${inputClass} animate-fade-in text-sm`}
+          autoFocus
+        />
+      )}
+    </div>
+  );
+}
+
+function ManufacturerCombobox({ value, onChange, options, inputClass, labelClass }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [filterText, setFilterText] = useState(value || "");
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    setFilterText(value || "");
+  }, [value]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filtered = (options || []).filter((opt) =>
+    opt.toLowerCase().includes((filterText || "").toLowerCase())
+  );
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <label className={labelClass}>Manufacturer</label>
+      <div className="relative">
+        <input
+          type="text"
+          value={filterText}
+          onChange={(e) => {
+            setFilterText(e.target.value);
+            onChange(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          className={`${inputClass} pr-7`}
+          placeholder="Select or enter manufacturer"
+          autoComplete="off"
+        />
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          tabIndex={-1}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+      {isOpen && filtered.length > 0 && (
+        <ul className="absolute z-50 mt-1 max-h-36 w-full overflow-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] p-1 shadow-2xl backdrop-blur-xl text-xs">
+          {filtered.map((item) => (
+            <li
+              key={item}
+              onClick={() => {
+                setFilterText(item);
+                onChange(item);
+                setIsOpen(false);
+              }}
+              className="cursor-pointer rounded px-2.5 py-1.5 text-[var(--text-primary)] hover:bg-[var(--accent-primary)]/15 hover:text-[var(--accent-primary)] transition"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function ProductForm({ product, onClose }) {
+  useEscKey(onClose, true, 10);
   const queryClient = useQueryClient();
   const isEdit = !!product;
+
+  const { data: manufacturerList = [] } = useQuery({
+    queryKey: ['inventory-manufacturers'],
+    queryFn: getManufacturers,
+    staleTime: 60 * 1000,
+  });
+
+  const [availableUnits, setAvailableUnits] = useState(() => {
+    const defaultUnits = getAllUnits();
+    if (product?.unit && !defaultUnits.includes(product.unit)) {
+      return [...defaultUnits, product.unit];
+    }
+    return defaultUnits;
+  });
+  const [isCustomUnit, setIsCustomUnit] = useState(false);
+
+  const applyServerFieldErrors = (error, setFieldError) => {
+    const data = error?.response?.data;
+    if (!data || typeof data !== "object") return false;
+
+    // Support both DRF field maps and { error, details } envelopes
+    const fieldMap =
+      data.details && typeof data.details === "object" && !Array.isArray(data.details)
+        ? data.details
+        : data;
+
+    const skipKeys = new Set(["detail", "error", "message", "non_field_errors", "details"]);
+    let applied = false;
+
+    Object.entries(fieldMap).forEach(([field, messages]) => {
+      if (skipKeys.has(field)) return;
+      const msg = Array.isArray(messages) ? messages[0] : messages;
+      if (typeof msg === "string" && msg.trim()) {
+        setFieldError(field, msg);
+        applied = true;
+      }
+    });
+    return applied;
+  };
 
   const createMutation = useMutation({
     mutationFn: createProduct,
@@ -71,10 +346,6 @@ export default function ProductForm({ product, onClose }) {
       queryClient.invalidateQueries(["products"]);
       toast.success("Product created successfully!");
       onClose();
-    },
-    onError: (error) => {
-      console.error("Error creating product:", error);
-      toast.error(error.response?.data?.message || "Failed to create product");
     },
   });
 
@@ -85,104 +356,111 @@ export default function ProductForm({ product, onClose }) {
       toast.success("Product updated successfully!");
       onClose();
     },
-    onError: (error) => {
-      console.error("Error updating product:", error);
-      toast.error(error.response?.data?.message || "Failed to update product");
-    },
   });
 
   const initialValues = {
+    item_code: product?.item_code || "",
     name: product?.name || "",
+    manufacturer: product?.manufacturer || "",
+    internal_reference: product?.internal_reference || "",
     description: product?.description || "",
-    tax: product?.tax || "",
+    tax: product?.tax != null && product?.tax !== "" ? Number(product.tax) : 0,
     hsn_sac_code: product?.hsn_sac_code || product?.hsn_code || "",
     unit: product?.unit || "pcs",
     secondary_unit: product?.secondary_unit || "",
     conversion_factor: product?.conversion_factor || 1,
-    cost_price: product?.cost_price || product?.price || product?.purchase_price || product?.unit_price || "",
+    cost_price: product?.cost_price ?? product?.price ?? product?.purchase_price ?? product?.unit_price ?? "",
     sale_price: product?.sale_price ?? "",
-    stock: product?.stock || product?.current_stock || "",
+    stock: product?.stock != null ? product.stock : 0,
     low_stock_alert: product?.low_stock_alert || product?.min_stock_level || "",
-    warranty_months: product?.warranty_months || 0,
     meta: {
       barcode: product?.barcode || product?.meta?.barcode || "",
       expiry_date: product?.meta?.expiry_date || "",
-      secondary_stock: product?.meta?.secondary_stock || "",
-      mandi_tax: product?.meta?.mandi_tax || "",
-      is_h1: product?.meta?.is_h1 || false,
-      is_narcotic: product?.meta?.is_narcotic || false,
-      is_new_launch: product?.meta?.is_new_launch || false,
-      temperature: product?.meta?.temperature || "",
       storage_condition: product?.meta?.storage_condition || "",
     },
   };
 
-  const handleSubmit = (values, { setSubmitting }) => {
-    const metaData = {
-      is_h1: values.meta.is_h1,
-      is_narcotic: values.meta.is_narcotic,
-      is_new_launch: values.meta.is_new_launch,
-    };
+  const handleSubmit = async (values, { setSubmitting, setFieldError }) => {
+    const metaData = {};
 
     if (values.meta.barcode?.trim()) metaData.barcode = values.meta.barcode;
     if (values.meta.expiry_date) metaData.expiry_date = values.meta.expiry_date;
-    if (values.meta.secondary_stock !== "" && values.meta.secondary_stock !== null) {
-      metaData.secondary_stock = parseFloat(values.meta.secondary_stock);
-    }
-    if (values.meta.mandi_tax !== "" && values.meta.mandi_tax !== null) {
-      metaData.mandi_tax = parseFloat(values.meta.mandi_tax);
-    }
-    if (values.meta.temperature?.trim()) metaData.temperature = values.meta.temperature;
     if (values.meta.storage_condition?.trim()) metaData.storage_condition = values.meta.storage_condition;
 
     const productData = {
+      item_code: values.item_code?.trim() || null,
       name: values.name,
+      manufacturer: values.manufacturer?.trim() || null,
+      internal_reference: values.internal_reference?.trim() || null,
       description: values.description || null,
       tax: values.tax ? parseFloat(values.tax) : 0,
-      hsn_sac_code: values.hsn_sac_code || null,
+      hsn_sac_code: values.hsn_sac_code?.trim() || null,
       unit: values.unit,
       secondary_unit: values.secondary_unit || null,
       conversion_factor: values.conversion_factor ? parseInt(values.conversion_factor) : 1,
       cost_price: values.cost_price,
       sale_price: values.sale_price,
-      stock: parseInt(values.stock),
+      stock: values.stock === "" || values.stock == null ? 0 : Number(values.stock),
       low_stock_alert: parseInt(values.low_stock_alert) || 0,
-      warranty_months: parseInt(values.warranty_months) || 0,
       meta: metaData,
     };
 
-    if (isEdit) {
-      updateMutation.mutate({ id: product.id, data: productData });
-    } else {
-      createMutation.mutate(productData);
+    try {
+      if (isEdit) {
+        await updateMutation.mutateAsync({ id: product.id, data: productData });
+      } else {
+        await createMutation.mutateAsync(productData);
+      }
+    } catch (error) {
+      console.error(isEdit ? "Error updating product:" : "Error creating product:", error);
+      const hasFieldError = applyServerFieldErrors(error, setFieldError);
+      const fallback = isEdit ? "Failed to update product" : "Failed to create product";
+      const toastMsg = formatErrorMessage(error, fallback);
+      // Always surface HSN clearly when that field failed
+      if (hasFieldError && error?.response?.data?.hsn_sac_code) {
+        const hsnMsg = Array.isArray(error.response.data.hsn_sac_code)
+          ? error.response.data.hsn_sac_code[0]
+          : error.response.data.hsn_sac_code;
+        toast.error(typeof hsnMsg === "string" ? hsnMsg : toastMsg);
+      } else if (hasFieldError && error?.response?.data?.details?.hsn_sac_code) {
+        const hsnMsg = Array.isArray(error.response.data.details.hsn_sac_code)
+          ? error.response.data.details.hsn_sac_code[0]
+          : error.response.data.details.hsn_sac_code;
+        toast.error(typeof hsnMsg === "string" ? hsnMsg : toastMsg);
+      } else {
+        toast.error(toastMsg);
+      }
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all";
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+  const activeGstRates = React.useMemo(
+    () => gstRatesWithLegacy(product?.tax),
+    [product?.tax]
+  );
+
+  const inputClass = "form-input";
+  const labelClass = "form-label uppercase tracking-wider";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-20 sm:pt-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      ></div>
-
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
       {/* Modal Content */}
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bento-card !p-0 shadow-2xl shadow-purple-900/20 animate-fade-up">
+      <div 
+        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl shadow-2xl animate-fade-up border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] overflow-hidden my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
-        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-white/10 bg-white/5">
-          <h2 className="text-xl font-bold text-white">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] sticky top-0 z-20">
+          <h2 className="text-lg font-bold text-[var(--text-primary)] font-display">
             {isEdit ? "Edit Product" : "New Product"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
           >
-            <XMarkIcon className="w-6 h-6" />
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
@@ -192,10 +470,21 @@ export default function ProductForm({ product, onClose }) {
           onSubmit={handleSubmit}
           enableReinitialize
         >
-          {({ isSubmitting, values }) => (
-            <Form className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
-              {/* Section 1: Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {({ isSubmitting, values, setFieldValue }) => (
+            <Form className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+              {/* Row 1: Code, Name, HSN */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className={labelClass}>Item Code / SKU</label>
+                  <Field
+                    name="item_code"
+                    type="text"
+                    className={inputClass}
+                    placeholder="e.g. PRD-001 (optional)"
+                  />
+                  <ErrorMessage name="item_code" component="div" className="text-red-400 text-xs mt-0.5" />
+                </div>
+
                 <div>
                   <label className={labelClass}>Product Name *</label>
                   <Field
@@ -204,101 +493,119 @@ export default function ProductForm({ product, onClose }) {
                     className={inputClass}
                     placeholder="e.g. Wireless Headphones"
                   />
-                  <ErrorMessage name="name" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="name" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
                 <div>
-                  <label className={labelClass}>HSN/SAC Code</label>
+                  <label className={labelClass}>HSN/SAC Code *</label>
                   <Field
                     name="hsn_sac_code"
                     type="text"
                     className={inputClass}
                     placeholder="e.g. 8518"
                   />
-                  <ErrorMessage name="hsn_sac_code" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="hsn_sac_code" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Row 2: Manufacturer, GST Rate, Primary Unit, Stock */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
-                  <label className={labelClass}>Description / Notes</label>
-                  <Field
-                    as="textarea"
-                    name="description"
-                    className={`${inputClass} resize-none h-[52px]`}
-                    placeholder="Optional description"
+                  <ManufacturerCombobox
+                    value={values.manufacturer}
+                    onChange={(val) => setFieldValue("manufacturer", val)}
+                    options={manufacturerList}
+                    inputClass={inputClass}
+                    labelClass={labelClass}
                   />
-                  <ErrorMessage name="description" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="manufacturer" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
                 <div>
                   <label className={labelClass}>GST Tax Rate (%)</label>
                   <Field
+                    as="select"
                     name="tax"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="100"
                     className={inputClass}
-                    placeholder="e.g. 18.00"
-                  />
-                  <ErrorMessage name="tax" component="div" className="text-red-400 text-xs mt-1" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className={labelClass}>Expiry Date (Optional)</label>
-                  <Field
-                    name="meta.expiry_date"
-                    type="date"
-                    className={inputClass}
-                  />
-                  <ErrorMessage name="meta.expiry_date" component="div" className="text-red-400 text-xs mt-1" />
-                </div>
-              </div>
-
-              {/* Section 2: Units */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className={labelClass}>Primary Unit *</label>
-                  <Field as="select" name="unit" className={inputClass}>
-                    {UNIT_OPTIONS.map((unit) => (
-                      <option key={unit} value={unit}>
-                        {unit}
+                  >
+                    {activeGstRates.map((rate) => (
+                      <option key={rate.value} value={rate.value}>
+                        {rate.label}
                       </option>
                     ))}
                   </Field>
-                  <ErrorMessage name="unit" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="tax" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
                 <div>
-                  <label className={labelClass}>Secondary Unit</label>
-                  <Field
-                    name="secondary_unit"
-                    type="text"
-                    className={inputClass}
-                    placeholder="e.g. Box"
-                  />
-                  <ErrorMessage name="secondary_unit" component="div" className="text-red-400 text-xs mt-1" />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={labelClass}>Primary Unit *</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomUnit(!isCustomUnit)}
+                      className="text-xs text-[var(--accent-primary)] hover:underline transition font-semibold"
+                    >
+                      {isCustomUnit ? "Predefined" : "+ Custom"}
+                    </button>
+                  </div>
+                  <Field name="unit">
+                    {({ field, form }) => isCustomUnit ? (
+                      <input
+                        {...field}
+                        type="text"
+                        className={inputClass}
+                        placeholder="e.g. tablet, vial…"
+                        onChange={(e) => {
+                          field.onChange(e);
+                          if (e.target.value.trim()) {
+                            saveCustomUnit(e.target.value.trim());
+                            setAvailableUnits(getAllUnits());
+                          }
+                        }}
+                      />
+                    ) : (
+                      <select
+                        {...field}
+                        className={inputClass}
+                        onChange={(e) => {
+                          if (e.target.value === '__add_custom__') {
+                            setIsCustomUnit(true);
+                            form.setFieldValue("unit", "");
+                          } else {
+                            field.onChange(e);
+                          }
+                        }}
+                      >
+                        <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Select Unit</option>
+                        {availableUnits.map((u) => (
+                          <option key={u} value={u} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">
+                            {u.toUpperCase()}
+                          </option>
+                        ))}
+                        <option value="__add_custom__" className="bg-[var(--bg-primary)] text-[var(--accent-primary)] font-semibold">
+                          + Custom Unit...
+                        </option>
+                      </select>
+                    )}
+                  </Field>
+                  <ErrorMessage name="unit" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
                 <div>
-                  <label className={labelClass}>Conversion Factor</label>
+                  <label className={labelClass}>Stock *</label>
                   <Field
-                    name="conversion_factor"
+                    name="stock"
                     type="number"
-                    min="1"
+                    min="0"
                     className={inputClass}
+                    placeholder="0"
                   />
-                  <p className="text-xs text-gray-500 mt-2">
-                    1 {values.secondary_unit || 'Box'} = {values.conversion_factor || 1} {values.unit || 'pcs'}
-                  </p>
+                  <ErrorMessage name="stock" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
               </div>
 
-              {/* Section 3: Pricing & Stock */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Row 3: Cost Price, Sale Price, Secondary Unit, Conversion Factor */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
                   <label className={labelClass}>Cost Price ({getCurrencySymbol()})</label>
                   <Field
@@ -307,7 +614,7 @@ export default function ProductForm({ product, onClose }) {
                     className={inputClass}
                     placeholder="Optional"
                   />
-                  <ErrorMessage name="cost_price" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="cost_price" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
                 <div>
@@ -318,31 +625,36 @@ export default function ProductForm({ product, onClose }) {
                     className={inputClass}
                     placeholder="0.00"
                   />
-                  <ErrorMessage name="sale_price" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="sale_price" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
                 <div>
-                  <label className={labelClass}>Opening Stock *</label>
+                  <label className={labelClass}>Secondary Unit</label>
                   <Field
-                    name="stock"
-                    type="number"
-                    min="0"
+                    name="secondary_unit"
+                    type="text"
                     className={inputClass}
-                    placeholder="0"
+                    placeholder="e.g. Box"
                   />
-                  <ErrorMessage name="stock" component="div" className="text-red-400 text-xs mt-1" />
+                  <ErrorMessage name="secondary_unit" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
 
                 <div>
-                  <label className={labelClass}>Stock Value</label>
-                  <div className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-gray-400 cursor-not-allowed">
-                    {getCurrencySymbol()}{(parseFloat(values.stock || 0) * parseFloat(values.cost_price || 0)).toFixed(2)}
-                  </div>
+                  <label className={labelClass}>Conversion Factor</label>
+                  <Field
+                    name="conversion_factor"
+                    type="number"
+                    min="1"
+                    className={inputClass}
+                  />
+                  <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">
+                    1 {values.secondary_unit || 'Box'} = {values.conversion_factor || 1} {values.unit || 'pcs'}
+                  </p>
                 </div>
               </div>
 
-               {/* Section 4: Alerts & Warranty */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Row 4: Low Stock Alert, Expiry Date, Storage Condition, Internal Reference */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
                   <label className={labelClass}>Low Stock Alert</label>
                   <Field
@@ -352,103 +664,80 @@ export default function ProductForm({ product, onClose }) {
                     className={inputClass}
                     placeholder="e.g. 10"
                   />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Get notified when stock falls below this level.
-                  </p>
+                  <ErrorMessage name="low_stock_alert" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
+
                 <div>
-                  <label className={labelClass}>Warranty (Months)</label>
-                  <Field
-                    name="warranty_months"
-                    type="number"
-                    min="0"
+                  <label className={labelClass}>Expiry Date/Warranty</label>
+                  <FormattedDateInput
+                    value={values.meta.expiry_date}
+                    onChange={(val) => setFieldValue("meta.expiry_date", val)}
                     className={inputClass}
-                    placeholder="e.g. 12"
                   />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Warranty duration from sale date. 0 = no warranty.
-                  </p>
+                  <ErrorMessage name="meta.expiry_date" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>
-               </div>
 
-               {/* Section 5: Advanced Details (Sidecar) */}
-               <div className="pt-6 border-t border-white/10">
-                 <h3 className="text-sm font-bold text-white mb-4">Advanced Details</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <label className={labelClass}>Secondary Stock</label>
-                      <Field
-                        name="meta.secondary_stock"
-                        type="number"
-                        className={inputClass}
-                        placeholder="e.g. 50"
-                      />
-                    </div>
-                    <div>
-                      <label className={labelClass}>Mandi Tax ({getCurrencySymbol()})</label>
-                      <Field
-                        name="meta.mandi_tax"
-                        type="number"
-                        className={inputClass}
-                        placeholder="0.00"
-                      />
-                    </div>
-                 </div>
+                <div>
+                  <StorageConditionSelector
+                    value={values.meta.storage_condition}
+                    onChange={(val) => setFieldValue("meta.storage_condition", val)}
+                    inputClass={inputClass}
+                    labelClass={labelClass}
+                  />
+                  <ErrorMessage name="meta.storage_condition" component="div" className="text-red-400 text-xs mt-0.5" />
+                </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <label className={labelClass}>Temperature (°C)</label>
-                      <Field
-                        name="meta.temperature"
-                        type="text"
-                        className={inputClass}
-                        placeholder="e.g. 2-8 °C"
-                      />
-                    </div>
-                    <div>
-                      <label className={labelClass}>Storage Condition</label>
-                      <Field
-                        name="meta.storage_condition"
-                        type="text"
-                        className={inputClass}
-                        placeholder="e.g. Store in a cool, dry place"
-                      />
-                    </div>
-                 </div>
+                <div>
+                  <label className={labelClass}>Internal Reference</label>
+                  <Field
+                    name="internal_reference"
+                    type="text"
+                    className={inputClass}
+                    placeholder="e.g. REF-2026-X"
+                  />
+                  <ErrorMessage name="internal_reference" component="div" className="text-red-400 text-xs mt-0.5" />
+                </div>
+              </div>
 
-                 <div className="flex flex-wrap gap-6">
-                    <label className="flex items-center space-x-3 cursor-pointer group">
-                      <Field type="checkbox" name="meta.is_h1" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
-                      <span className="text-gray-300 group-hover:text-white transition-colors">H1 Drug</span>
-                    </label>
-
-                    <label className="flex items-center space-x-3 cursor-pointer group">
-                      <Field type="checkbox" name="meta.is_narcotic" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
-                      <span className="text-gray-300 group-hover:text-white transition-colors">Narcotic</span>
-                    </label>
-
-                    <label className="flex items-center space-x-3 cursor-pointer group">
-                      <Field type="checkbox" name="meta.is_new_launch" className="w-5 h-5 rounded bg-[#111] border border-white/10 text-purple-600 focus:ring-purple-500/50 transition-colors" />
-                      <span className="text-gray-300 group-hover:text-white transition-colors">New Launch</span>
-                    </label>
-                 </div>
-               </div>
+              {/* Row 5: Description / Notes */}
+              <div>
+                <label className={labelClass}>Description / Notes</label>
+                <Field
+                  name="description"
+                  type="text"
+                  className={inputClass}
+                  placeholder="Optional product description or notes"
+                />
+                <ErrorMessage name="description" component="div" className="text-red-400 text-xs mt-0.5" />
+              </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-4 pt-6 border-t border-white/10">
+              <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)] sticky bottom-0 bg-[var(--bg-surface)] z-10 px-5 py-3.5 sm:px-6 sm:py-4 -mx-5 -mb-5 sm:-mx-6 sm:-mb-6">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-2.5 text-gray-300 hover:text-white font-medium hover:bg-white/5 rounded-xl transition-colors"
+                  className="px-4 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium hover:bg-[var(--bg-primary)] rounded-xl transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || createMutation.isLoading || updateMutation.isLoading}
-                  className="btn-primary shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
+                  className="btn-primary text-sm font-semibold cursor-pointer disabled:opacity-50 px-5 py-2 rounded-xl flex items-center gap-2"
                 >
-                  {isSubmitting ? "Saving..." : isEdit ? "Update Product" : "Create Product"}
+                  {(isSubmitting || createMutation.isPending || updateMutation.isPending) && (
+                    <svg className="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  )}
+                  <span>
+                    {isSubmitting || createMutation.isPending || updateMutation.isPending
+                      ? "Saving..."
+                      : isEdit
+                      ? "Update Product"
+                      : "Create Product"}
+                  </span>
                 </button>
               </div>
             </Form>

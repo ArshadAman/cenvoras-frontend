@@ -1,26 +1,47 @@
+import { getGSTStateCode } from './indiaData';
+
 /**
  * GST Tax Type Utility
  *
- * Rule:
- *  - If seller state == place_of_supply (or customer state) → CGST + SGST (intra-state)
- *  - If they differ, or seller state is missing → IGST (inter-state / safe default)
+ * CA AUDIT (Issue 2):
+ *  - Derive seller state from 2-digit prefix of seller GSTIN first.
+ *  - Compare with place of supply (or customer state).
+ *  - If they match -> CGST + SGST (intra-state).
+ *  - If they differ -> IGST (inter-state).
  *
  * Returns: 'igst' | 'cgst_sgst'
  */
-export function getTaxType(invoice = {}, businessInfo = {}) {
-  const sellerState = businessInfo.state || null;
-  const pos = invoice.place_of_supply || invoice.customer_details?.state || invoice.customer?.state || null;
+export function getSellerStateCode(businessInfo = {}) {
+  const gstin = businessInfo.gstin || '';
+  if (typeof gstin === 'string' && gstin.trim().length >= 2) {
+    const prefix = gstin.trim().substring(0, 2);
+    if (/^\d{2}$/.test(prefix)) {
+      return prefix;
+    }
+  }
+  return getGSTStateCode(businessInfo.state) || '21';
+}
 
-  // If seller state is not configured, default to CGST/SGST (intra-state assumption)
-  if (!sellerState) return 'cgst_sgst';
+export function getTaxType(invoice = {}, businessInfo = {}) {
+  const sellerStateCode = getSellerStateCode(businessInfo);
+  const pos = invoice.place_of_supply || invoice.customer_details?.state || invoice.customer?.state || null;
 
   // If place of supply is not set, default to CGST/SGST
   if (!pos) return 'cgst_sgst';
 
-  // Inter-state → IGST
-  if (sellerState.toUpperCase() !== pos.toUpperCase()) return 'igst';
+  let posCode = null;
+  const posStr = String(pos).trim();
+  if (posStr.length === 15 && /^\d{2}/.test(posStr)) {
+    posCode = posStr.substring(0, 2);
+  } else {
+    posCode = getGSTStateCode(posStr);
+  }
 
-  // Intra-state → CGST + SGST
+  if (!posCode) return 'cgst_sgst';
+
+  // Inter-state -> IGST, Intra-state -> CGST + SGST
+  if (sellerStateCode !== posCode) return 'igst';
+
   return 'cgst_sgst';
 }
 

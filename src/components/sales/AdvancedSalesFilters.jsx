@@ -1,4 +1,6 @@
 import React from "react";
+import DateInputField from "../common/DateInputField";
+import { XMarkIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 
 export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
   const handleChange = (field, value) => {
@@ -28,114 +30,145 @@ export default function AdvancedSalesFilters({ filters, onChange, onClose }) {
     });
   };
 
+  const handleFinancialYearChange = (fy) => {
+    if (!fy) {
+      onChange({
+        ...filters,
+        financialYear: "",
+      });
+      return;
+    }
+    const [startYear] = fy.split("-");
+    const y = parseInt(startYear, 10);
+    const start = `${y}-04-01`;
+    const end = `${y + 1}-03-31`;
+    onChange({
+      ...filters,
+      financialYear: fy,
+      dateRange: { start, end },
+    });
+  };
+
   const clearFilters = () => {
     onChange({
       dateRange: { start: "", end: "" },
       amountRange: { min: "", max: "" },
       customer: "",
+      financialYear: "",
       status: "all",
       hasOverdue: false,
     });
   };
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all";
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
-
   return (
-    <div className="mb-6 p-6 bento-card border border-white/10 relative">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-bold text-white">Advanced Filters</h3>
-        <div className="flex gap-4">
-          <button
-            onClick={clearFilters}
-            className="text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            Clear All
-          </button>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Date Range */}
-        <div className="space-y-2">
-          <label className={labelClass}>Date Range</label>
-          <div className="flex gap-2">
-            <input
-              type="date"
-              placeholder="From date"
-              value={filters.dateRange.start}
-              onChange={(e) => handleDateRangeChange("start", e.target.value)}
-              className={inputClass}
-            />
-            <input
-              type="date"
-              placeholder="To date"
-              value={filters.dateRange.end}
-              onChange={(e) => handleDateRangeChange("end", e.target.value)}
-              className={inputClass}
-            />
+    <div className="mb-4 p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-sm transition-all duration-300 animate-fade-in">
+      <div className="flex flex-wrap items-center justify-between gap-4 text-xs sm:text-sm">
+        
+        {/* Left side: Expanded filter controls */}
+        <div className="flex flex-wrap items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
+          
+          {/* Financial Year */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">FY:</span>
+            <select
+              value={filters.financialYear || ""}
+              onChange={(e) => handleFinancialYearChange(e.target.value)}
+              className="bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs sm:text-sm border border-[var(--border-subtle)] rounded-xl px-3 py-2 outline-none focus:border-[var(--accent-primary)] cursor-pointer"
+            >
+              <option value="" className="bg-[var(--bg-surface)] text-[var(--text-muted)]">All Financial Years</option>
+              <option value="2026-2027" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">FY 2026-27</option>
+              <option value="2025-2026" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">FY 2025-26</option>
+              <option value="2024-2025" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">FY 2024-25</option>
+              <option value="2023-2024" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">FY 2023-24</option>
+            </select>
           </div>
-        </div>
 
-        {/* Amount Range */}
-        <div className="space-y-2">
-          <label className={labelClass}>Amount Range</label>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              placeholder="Min"
-              value={filters.amountRange.min}
-              onChange={(e) => handleAmountRangeChange("min", e.target.value)}
-              className={inputClass}
-            />
-            <input
-              type="number"
-              placeholder="Max"
-              value={filters.amountRange.max}
-              onChange={(e) => handleAmountRangeChange("max", e.target.value)}
-              className={inputClass}
-            />
-          </div>
-        </div>
+          <div className="h-5 w-px bg-[var(--border-subtle)] hidden sm:block"></div>
 
-        {/* Customer */}
-        <div className="space-y-2">
-          <label className={labelClass}>Customer</label>
-          <input
-            type="text"
-            placeholder="Customer name"
-            value={filters.customer}
-            onChange={(e) => handleChange("customer", e.target.value)}
-            className={inputClass}
-          />
-        </div>
-
-        {/* Special Filters */}
-        <div className="space-y-2">
-          <label className={labelClass}>Special Filters</label>
-          <div className="flex items-center h-10">
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                id="hasOverdue"
-                checked={filters.hasOverdue}
-                onChange={(e) => handleChange("hasOverdue", e.target.checked)}
-                className="w-4 h-4 rounded border-white/10 bg-white/5 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-gray-900 cursor-pointer"
+          {/* Date Range with dd/mm/yyyy */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Date:</span>
+            <div className="w-32 sm:w-36">
+              <DateInputField
+                value={filters.dateRange.start}
+                onChange={(e) => handleDateRangeChange("start", e.target.value)}
+                placeholder="From"
               />
-              <span className="ml-3 text-sm text-gray-300">
-                Show overdue bills only
-              </span>
-            </label>
+            </div>
+            <span className="text-[var(--text-muted)]">-</span>
+            <div className="w-32 sm:w-36">
+              <DateInputField
+                value={filters.dateRange.end}
+                onChange={(e) => handleDateRangeChange("end", e.target.value)}
+                placeholder="To"
+              />
+            </div>
+          </div>
+
+          <div className="h-5 w-px bg-[var(--border-subtle)] hidden sm:block"></div>
+
+          {/* Amount Range */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Amount:</span>
+            <div className="relative w-28 sm:w-32">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">₹</span>
+              <input
+                type="number"
+                placeholder="Min"
+                value={filters.amountRange.min}
+                onChange={(e) => handleAmountRangeChange("min", e.target.value)}
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl pl-6 pr-2.5 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none text-xs sm:text-sm"
+              />
+            </div>
+            <span className="text-[var(--text-muted)]">-</span>
+            <div className="relative w-28 sm:w-32">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">₹</span>
+              <input
+                type="number"
+                placeholder="Max"
+                value={filters.amountRange.max}
+                onChange={(e) => handleAmountRangeChange("max", e.target.value)}
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl pl-6 pr-2.5 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none text-xs sm:text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="h-5 w-px bg-[var(--border-subtle)] hidden sm:block"></div>
+
+          {/* Customer Search Filter */}
+          <div className="flex items-center gap-2 flex-1 min-w-[180px]">
+            <span className="text-xs sm:text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider shrink-0">Customer:</span>
+            <input
+              type="text"
+              placeholder="Search by customer name..."
+              value={filters.customer}
+              onChange={(e) => handleChange("customer", e.target.value)}
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none text-xs sm:text-sm"
+            />
           </div>
         </div>
+
+        {/* Right side: Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] rounded-xl border border-[var(--border-subtle)] transition-colors"
+            title="Reset all filters"
+          >
+            <ArrowPathIcon className="w-3.5 h-3.5" />
+            <span>Clear</span>
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] rounded-xl transition-colors"
+            title="Close filter bar"
+          >
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        </div>
+
       </div>
     </div>
   );

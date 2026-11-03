@@ -8,28 +8,63 @@ import {
   EllipsisVerticalIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
+import useResizableColumns from "../../hooks/useResizableColumns";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from "../common/tableHeaderClasses";
+
+const DEFAULT_COLUMN_WIDTHS = {
+  order_details: 180,
+  vendor: 200,
+  amount: 140,
+  status: 140,
+  actions: 145,
+};
 
 export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders = [], isLoading }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortConfig, setSortConfig] = useState({ key: "po_number", direction: "desc" });
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    "cenvoras_purchase_order_table_col_widths",
+    DEFAULT_COLUMN_WIDTHS
+  );
+
+  const handleSort = (key) => {
+    setSortConfig(prev => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  };
 
   const filteredOrders = useMemo(() => {
-    return orders.filter(order => {
-      const matchesSearch = 
-        order.po_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.vendor_display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-      
-      return matchesSearch && matchesStatus;
-    });
-  }, [orders, searchTerm, statusFilter]);
+    return orders
+      .filter(order => {
+        const matchesSearch = 
+          order.po_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.vendor_display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+        
+        return matchesSearch && matchesStatus;
+      })
+      .sort((a, b) => {
+        const { key, direction } = sortConfig;
+        const factor = direction === "asc" ? 1 : -1;
+        if (key === "po_number") return factor * String(a.po_number || "").localeCompare(String(b.po_number || ""), undefined, { numeric: true });
+        if (key === "created_at") return factor * (new Date(a.created_at || 0) - new Date(b.created_at || 0));
+        if (key === "vendor") return factor * String(a.vendor_display_name || a.vendor_name || "").localeCompare(String(b.vendor_display_name || b.vendor_name || ""));
+        if (key === "amount") return factor * (Number(a.total_amount || 0) - Number(b.total_amount || 0));
+        if (key === "status") return factor * String(a.status || "").localeCompare(String(b.status || ""));
+        return 0;
+      });
+  }, [orders, searchTerm, statusFilter, sortConfig]);
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-8 text-gray-400">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mr-3"></div>
+      <div className="flex justify-center p-8 text-[var(--text-muted)]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)] mr-3"></div>
         Loading purchase orders...
       </div>
     );
@@ -40,85 +75,139 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
       {/* Filters */}
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div className="relative flex-1 max-w-md">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
           <input
             type="text"
             placeholder="Search by PO Number or Vendor..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+            className="w-full pl-9 pr-4 py-2 bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)]"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500/50 appearance-none"
+          className="bg-[var(--bg-primary)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] appearance-none"
         >
-          <option value="all" className="bg-[#111]">All Statuses</option>
-          <option value="draft" className="bg-[#111]">Draft</option>
-          <option value="sent" className="bg-[#111]">Sent</option>
-          <option value="received" className="bg-[#111]">Received (Converted)</option>
-          <option value="cancelled" className="bg-[#111]">Cancelled</option>
+          <option value="all">All Statuses</option>
+          <option value="draft">Draft</option>
+          <option value="sent">Sent</option>
+          <option value="received">Received (Converted)</option>
+          <option value="cancelled">Cancelled</option>
         </select>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/[0.02]">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-white/5 border-b border-white/10 text-xs uppercase tracking-wider text-gray-400">
-            <tr>
-              <th className="px-6 py-4 font-medium">Order Details</th>
-              <th className="px-6 py-4 font-medium">Vendor</th>
-              <th className="px-6 py-4 font-medium text-right">Amount</th>
-              <th className="px-6 py-4 font-medium text-center">Status</th>
-              <th className="px-6 py-4 font-medium text-right">Actions</th>
+      <div className="overflow-x-auto rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)]">
+        <table className="w-full table-fixed divide-y divide-[var(--border-subtle)] text-sm whitespace-nowrap">
+          <colgroup>
+            <col style={{ width: `${colWidths.order_details}px` }} />
+            <col style={{ width: `${colWidths.vendor}px` }} />
+            <col style={{ width: `${colWidths.amount}px` }} />
+            <col style={{ width: `${colWidths.status}px` }} />
+            <col style={{ width: `${colWidths.actions}px` }} />
+          </colgroup>
+          <thead className={LIST_THEAD}>
+            <tr className="border-b border-[var(--border-subtle)]">
+              <th
+                onClick={() => handleSort("po_number")}
+                className={LIST_TH_SORTABLE}
+              >
+                <div className={LIST_TH_LABEL}>
+                  <span>Order Details</span>
+                  {sortConfig.key === "po_number" && (
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+                {renderResizeHandle("order_details")}
+              </th>
+              <th
+                onClick={() => handleSort("vendor")}
+                className={LIST_TH_SORTABLE}
+              >
+                <div className={LIST_TH_LABEL}>
+                  <span>Vendor</span>
+                  {sortConfig.key === "vendor" && (
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+                {renderResizeHandle("vendor")}
+              </th>
+              <th
+                onClick={() => handleSort("amount")}
+                className={LIST_TH_SORTABLE}
+              >
+                <div className={LIST_TH_LABEL}>
+                  <span>Amount</span>
+                  {sortConfig.key === "amount" && (
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+                {renderResizeHandle("amount")}
+              </th>
+              <th
+                onClick={() => handleSort("status")}
+                className={LIST_TH_SORTABLE}
+              >
+                <div className={LIST_TH_LABEL}>
+                  <span>Status</span>
+                  {sortConfig.key === "status" && (
+                    <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                  )}
+                </div>
+                {renderResizeHandle("status")}
+              </th>
+              <th className={LIST_TH}>
+                Actions
+                {renderResizeHandle("actions")}
+              </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                <td colSpan="5" className="px-6 py-8 text-center text-[var(--text-muted)]">
                   No purchase orders found matching your criteria.
                 </td>
               </tr>
             ) : (
               filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-white/[0.04] transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-cyan-400">{order.po_number || "Draft"}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {order.created_at ? format(new Date(order.created_at), "MMM d, yyyy") : "N/A"}
+                <tr key={order.id} className="hover:bg-[var(--bg-primary)] transition-colors group">
+                  <td className={LIST_TD}>
+                    <div className="font-semibold text-[var(--text-primary)]">{order.po_number || "Draft"}</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-1">
+                      {order.created_at ? format(new Date(order.created_at), "dd/MM/yyyy") : "N/A"}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-white">{order.vendor_display_name || order.vendor_name || "Unknown"}</div>
+                  <td className={LIST_TD}>
+                    <div className="font-medium text-[var(--text-primary)]">{order.vendor_display_name || order.vendor_name || "Unknown"}</div>
                     {order.expected_date && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        Expected: {format(new Date(order.expected_date), "MMM d, yyyy")}
+                      <div className="text-xs text-[var(--text-muted)] mt-1">
+                        Expected: {format(new Date(order.expected_date), "dd/MM/yyyy")}
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="font-bold text-white tabular-nums">
+                  <td className={LIST_TD_AMOUNT}>
+                    <div className="font-bold text-[var(--text-primary)] tabular-nums">
                       {getCurrencySymbol()}{parseFloat(order.total_amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wider ${
-                      order.status === 'received' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
-                      order.status === 'cancelled' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                      order.status === 'sent' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                      'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                  <td className={LIST_TD}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                      order.status === 'received' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' :
+                      order.status === 'cancelled' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' :
+                      order.status === 'sent' ? 'bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30' :
+                      'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'
                     }`}>
                       {order.status || 'draft'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <td className={LIST_TD}>
+                    <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       {order.status !== 'received' && (
                         <button
                           onClick={() => onConvert(order)}
-                          className="p-1.5 rounded-lg text-cyan-400 hover:bg-cyan-500/10 transition-colors"
+                          className="p-1.5 rounded-lg bg-[var(--accent-primary)] text-[var(--text-on-accent)] transition-transform active:scale-95"
                           title="Convert to Bill"
                         >
                           <ArrowRightCircleIcon className="w-5 h-5" />
@@ -126,7 +215,7 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                       )}
                       <button
                         onClick={() => onEdit(order)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                        className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
                         title="Edit Order"
                       >
                         <PencilIcon className="w-5 h-5" />
@@ -136,8 +225,8 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                         disabled={order.status !== 'draft' && order.status !== 'cancelled'}
                         className={`p-1.5 rounded-lg transition-colors ${
                           order.status !== 'draft' && order.status !== 'cancelled'
-                            ? 'text-gray-600 cursor-not-allowed opacity-50'
-                            : 'text-red-400 hover:bg-red-500/10'
+                            ? 'text-[var(--text-muted)] cursor-not-allowed opacity-50'
+                            : 'text-[var(--status-danger)] border border-[var(--status-danger)]/20 hover:bg-[var(--status-danger)]/10'
                         }`}
                         title={order.status !== 'draft' && order.status !== 'cancelled' ? "Only draft or cancelled orders can be deleted" : "Delete Order"}
                       >
@@ -146,7 +235,7 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
                     </div>
                     {/* Fallback for touch devices where hover doesn't work well */}
                     <div className="md:hidden flex justify-end">
-                      <button className="p-1.5 text-gray-400">
+                      <button className="p-1.5 text-[var(--text-muted)]">
                         <EllipsisVerticalIcon className="w-5 h-5" />
                       </button>
                     </div>

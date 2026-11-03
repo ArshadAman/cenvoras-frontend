@@ -1,16 +1,33 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { recordClientPayment } from "../../api/ledger";
 import { getCustomers } from "../../api/customers";
+import api from "../../api/api";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { 
+  MagnifyingGlassIcon, 
+  BanknotesIcon, 
+  DevicePhoneMobileIcon, 
+  BuildingLibraryIcon, 
+  DocumentTextIcon,
+  CheckCircleIcon
+} from '@heroicons/react/24/outline';
+import { getCurrencySymbol } from '../../utils/currency';
+import { getUserProfile } from '../../api/users';
+import { profileBankAccounts, defaultBankAccountId, BANK_MODES } from '../../utils/profileBanks';
+
+const PAYMENT_MODES = {
+  cash: { label: 'Cash', icon: BanknotesIcon },
+  upi: { label: 'UPI', icon: DevicePhoneMobileIcon },
+  bank_transfer: { label: 'Bank Transfer', icon: BuildingLibraryIcon },
+  cheque: { label: 'Cheque', icon: DocumentTextIcon },
+};
 
 // Customer Autocomplete for payment form
-function PaymentCustomerAutocomplete({ values, setFieldValue }) {
+function PaymentCustomerAutocomplete({ setFieldValue }) {
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -54,12 +71,12 @@ function PaymentCustomerAutocomplete({ values, setFieldValue }) {
     }
   };
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
+  const inputClass = "w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 pl-10 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all text-sm";
 
   return (
     <div className="relative">
       <div className="relative">
-        <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-500 pointer-events-none" />
+        <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-[var(--text-muted)] pointer-events-none" />
         <input
           type="text"
           value={inputValue}
@@ -76,15 +93,15 @@ function PaymentCustomerAutocomplete({ values, setFieldValue }) {
         />
       </div>
       {showDropdown && (
-        <div className="absolute z-10 bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl w-full max-h-40 overflow-y-auto mt-1">
+        <div className="absolute z-10 bg-[var(--bg-surface)] backdrop-blur-xl border border-[var(--border-subtle)] rounded-xl shadow-2xl w-full max-h-40 overflow-y-auto mt-1">
           {filteredCustomers.map(customer => (
             <div
               key={customer.id}
-              className="px-4 py-2.5 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5 last:border-0"
+              className="px-4 py-2.5 hover:bg-[var(--bg-primary)] cursor-pointer transition-colors border-b border-[var(--border-subtle)] last:border-0"
               onClick={() => selectCustomer(customer)}
             >
-              <div className="font-medium text-white">{customer.name}</div>
-              <div className="text-gray-400 text-xs mt-0.5">
+              <div className="font-medium text-[var(--text-primary)]">{customer.name}</div>
+              <div className="text-[var(--text-muted)] text-xs mt-0.5">
                 {customer.email && `${customer.email}`}
                 {customer.phone && ` • ${customer.phone}`}
               </div>
@@ -106,8 +123,35 @@ const paymentSchema = Yup.object().shape({
   date: Yup.string().required("Date is required"),
 });
 
+function CustomerInvoicesWatcher({ customerId, initialInvoice, onInvoicesLoaded }) {
+  useEffect(() => {
+    if (!customerId || initialInvoice) {
+      onInvoicesLoaded([]);
+      return;
+    }
+    let isMounted = true;
+    api.get(`/billing/sales-invoices/?customer=${customerId}`)
+      .then(res => {
+        if (!isMounted) return;
+        const list = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+        const unpaid = list.filter(inv => {
+          if (inv?.status === 'draft') return false;
+          const outstanding = Math.max((Number(inv?.total_amount) || 0) - (Number(inv?.amount_paid) || 0), 0);
+          return outstanding > 0.01;
+        });
+        onInvoicesLoaded(unpaid);
+      })
+      .catch(() => {
+        if (isMounted) onInvoicesLoaded([]);
+      });
+    return () => { isMounted = false; };
+  }, [customerId, initialInvoice, onInvoicesLoaded]);
+  return null;
+}
+
 export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null, initialCustomer = null }) {
   const queryClient = useQueryClient();
+  const [openInvoices, setOpenInvoices] = useState([]);
 
   const roundTo3 = (value) => Math.round((Number(value) || 0) * 1000) / 1000;
   const formatAmount = (value) => roundTo3(value).toLocaleString('en-IN', {
@@ -115,30 +159,51 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
     maximumFractionDigits: 3,
   });
 
-  const resolvedCustomer = initialCustomer || initialInvoice?.customer_details || initialInvoice?.customer || null;
+  const customerId = typeof initialCustomer === 'string'
+    ? initialCustomer
+    : (initialCustomer?.id || initialInvoice?.customer_details?.id || initialInvoice?.customer_id || (typeof initialInvoice?.customer === 'string' ? initialInvoice.customer : initialInvoice?.customer?.id) || '');
+  const customerName = typeof initialCustomer === 'object'
+    ? (initialCustomer?.name || initialInvoice?.customer_name || '')
+    : (initialInvoice?.customer_name || '');
+
   const invoiceOutstanding = initialInvoice
     ? roundTo3(Math.max(roundTo3(initialInvoice.total_amount || 0) - roundTo3(initialInvoice.amount_paid || 0), 0))
     : '';
 
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+    staleTime: 10 * 60 * 1000,
+  });
+  const bankAccounts = profileBankAccounts(userProfile);
+
   const initialValues = useMemo(() => ({
-    customer: resolvedCustomer?.id || '',
-    customer_name: resolvedCustomer?.name || initialInvoice?.customer_name || '',
+    customer: customerId,
+    customer_name: customerName,
     amount: initialInvoice ? invoiceOutstanding : '',
+    mode: 'cash',
+    reference: '',
     description: initialInvoice
       ? `Payment for invoice ${initialInvoice.invoice_number}`
       : 'Payment received',
     date: format(new Date(), 'yyyy-MM-dd'),
     invoice: initialInvoice?.id || '',
-  }), [resolvedCustomer, initialInvoice, invoiceOutstanding]);
+    bank_account_id: '',
+  }), [customerId, customerName, initialInvoice, invoiceOutstanding]);
+
+  const handleInvoicesLoaded = useCallback((invoices) => {
+    setOpenInvoices(invoices);
+  }, []);
 
   const recordPaymentMutation = useMutation({
     mutationFn: recordClientPayment,
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       queryClient.invalidateQueries({ queryKey: ["salesAnalytics"] });
       queryClient.invalidateQueries({ queryKey: ["overdueSalesInvoicesSummary"] });
       queryClient.invalidateQueries({ queryKey: ["clientLedger"] });
       queryClient.invalidateQueries({ queryKey: ["ledgerStats"] });
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
       toast.success("Payment recorded successfully!");
       if (onSuccess) onSuccess();
     },
@@ -147,21 +212,32 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
     },
   });
 
-  const handleSubmit = (values) => {
+  const handleSubmit = async (values, { setSubmitting }) => {
     // Clean up the data for submission
     const paymentData = {
       customer: values.customer,
       amount: parseFloat(values.amount),
+      mode: values.mode || 'cash',
+      reference: values.reference || '',
       description: values.description || "Payment received",
       date: values.date,
       invoice: values.invoice || undefined,
     };
+    if (BANK_MODES.has(values.mode)) {
+      paymentData.bank_account_id = values.bank_account_id || defaultBankAccountId(bankAccounts);
+    }
 
-    recordPaymentMutation.mutate(paymentData);
+    try {
+      await recordPaymentMutation.mutateAsync(paymentData);
+    } catch {
+      // handled in onError
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const inputClass = "w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all";
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide";
+  const inputClass = "w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all text-sm";
+  const labelClass = "block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide";
 
   return (
     <Formik
@@ -170,113 +246,250 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
       validationSchema={paymentSchema}
       onSubmit={handleSubmit}
     >
-      {({ values, setFieldValue, isSubmitting }) => (
-        <Form className="space-y-5">
-          {initialInvoice ? (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3">
+      {({ values, setFieldValue, isSubmitting }) => {
+        const activeInvoice = initialInvoice || openInvoices.find(i => String(i.id) === String(values.invoice));
+        const activeOutstanding = activeInvoice
+          ? roundTo3(Math.max((Number(activeInvoice.total_amount) || 0) - (Number(activeInvoice.amount_paid) || 0), 0))
+          : null;
+
+        return (
+          <Form className="space-y-4">
+            <CustomerInvoicesWatcher
+              customerId={values.customer}
+              initialInvoice={initialInvoice}
+              onInvoicesLoaded={handleInvoicesLoaded}
+            />
+
+            {initialInvoice ? (
+              <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-bold mb-1">Selected Invoice</div>
+                    <div className="text-[var(--text-primary)] font-semibold">#{initialInvoice.invoice_number}</div>
+                    <div className="text-xs text-[var(--text-secondary)] mt-1">{customerName || 'Customer'}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-bold mb-1">Outstanding</div>
+                    <div className="text-[var(--status-success)] font-bold">{getCurrencySymbol()}{formatAmount(invoiceOutstanding)}</div>
+                  </div>
+                </div>
+                <div className="text-xs text-[var(--text-secondary)]">
+                  This payment will be linked directly to the selected invoice.
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className={labelClass}>Customer *</label>
+                <PaymentCustomerAutocomplete values={values} setFieldValue={setFieldValue} />
+              </div>
+            )}
+
+            {!initialInvoice && values.customer && openInvoices.length > 0 && (
+              <div>
+                <label className={labelClass}>Apply To Invoice</label>
+                <select
+                  id="invoice"
+                  name="invoice"
+                  value={values.invoice || ''}
+                  onChange={(e) => {
+                    const invId = e.target.value;
+                    setFieldValue('invoice', invId);
+                    if (invId) {
+                      const inv = openInvoices.find(i => String(i.id) === String(invId));
+                      if (inv) {
+                        const out = roundTo3(Math.max((Number(inv.total_amount) || 0) - (Number(inv.amount_paid) || 0), 0));
+                        setFieldValue('amount', out);
+                        setFieldValue('description', `Payment for invoice ${inv.invoice_number}`);
+                      }
+                    } else {
+                      setFieldValue('description', 'Payment received');
+                    }
+                  }}
+                  className={inputClass}
+                >
+                  <option value="">Auto-apply to oldest open invoices (FIFO)</option>
+                  {openInvoices.map((inv) => {
+                    const out = roundTo3(Math.max((Number(inv.total_amount) || 0) - (Number(inv.amount_paid) || 0), 0));
+                    return (
+                      <option key={inv.id} value={inv.id}>
+                        #{inv.invoice_number} — Due: {getCurrencySymbol()}{formatAmount(out)} ({inv.invoice_date || ''})
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  {values.invoice
+                    ? 'Payment will be applied directly to the selected invoice.'
+                    : 'If no invoice is selected, payment automatically knocks off oldest unpaid invoices first (FIFO).'}
+                </p>
+              </div>
+            )}
+
+            <Field name="customer" type="hidden" />
+            <Field name="invoice" type="hidden" />
+            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
+
+            {/* Amount and Date */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Amount Paid *</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-[var(--text-muted)]">{getCurrencySymbol()}</span>
+                  <Field
+                    id="amount"
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    className={`${inputClass} pl-7`}
+                    placeholder="0.00"
+                  />
+                </div>
+                <ErrorMessage name="amount" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
+              </div>
+
+              <div>
+                <label className={labelClass}>Date *</label>
+                <Field
+                  id="date"
+                  name="date"
+                  type="date"
+                  className={inputClass}
+                />
+                <ErrorMessage name="date" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
+              </div>
+            </div>
+
+            {/* Total Due & Remaining Card */}
+            {activeInvoice && (
+              <div className="grid grid-cols-2 gap-4 p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] animate-fade-in">
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Selected Invoice</div>
-                  <div className="text-white font-semibold">#{initialInvoice.invoice_number}</div>
-                  <div className="text-xs text-gray-400 mt-1">{resolvedCustomer?.name || initialInvoice.customer_name || 'Customer'}</div>
+                  <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold mb-1">Total Due</div>
+                  <div className="text-base font-bold text-[var(--text-primary)]">{getCurrencySymbol()}{formatAmount(activeOutstanding)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Outstanding</div>
-                  <div className="text-green-400 font-bold">{getCurrencySymbol()}{formatAmount(invoiceOutstanding)}</div>
+                  <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold mb-1">Remaining</div>
+                  <div className={`text-base font-bold ${Math.max(roundTo3(activeOutstanding) - roundTo3(values.amount || 0), 0) <= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-warning)]'}`}>
+                    {getCurrencySymbol()}{formatAmount(Math.max(roundTo3(activeOutstanding) - roundTo3(values.amount || 0), 0))}
+                  </div>
                 </div>
               </div>
-              <div className="text-[11px] text-cyan-300/80">
-                This payment will be linked directly to the selected invoice.
-              </div>
+            )}
+
+          {/* Payment Mode Selection */}
+          <div>
+            <label className={labelClass}>Payment Mode</label>
+            <div className="grid grid-cols-4 gap-2">
+              {Object.entries(PAYMENT_MODES).map(([key, modeItem]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => {
+                    setFieldValue('mode', key);
+                    setFieldValue('bank_account_id', BANK_MODES.has(key) ? (values.bank_account_id || defaultBankAccountId(bankAccounts)) : '');
+                  }}
+                  className={`p-3 rounded-xl border text-center transition-all ${
+                    values.mode === key
+                      ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] border-[var(--accent-primary)] shadow-md'
+                      : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)]'
+                  }`}
+                >
+                  {React.createElement(modeItem.icon, {
+                    className: `w-5 h-5 mx-auto mb-1 ${values.mode === key ? 'text-[var(--text-on-accent)]' : 'text-[var(--text-muted)]'}`
+                  })}
+                  <span className={`text-xs font-semibold ${values.mode === key ? 'text-[var(--text-on-accent)]' : 'text-[var(--text-secondary)]'}`}>
+                    {modeItem.label}
+                  </span>
+                </button>
+              ))}
             </div>
-          ) : (
+          </div>
+
+          {BANK_MODES.has(values.mode) && (
             <div>
-              <label className={labelClass}>Customer *</label>
-              <PaymentCustomerAutocomplete values={values} setFieldValue={setFieldValue} />
+              <label className={labelClass}>Bank Account</label>
+              {bankAccounts.length === 0 ? (
+                <p className="text-xs text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-3 py-2">
+                  Add a bank account under Profile → Bank & Payment Details to show it on this receipt.
+                </p>
+              ) : bankAccounts.length === 1 ? (
+                <div className="text-sm text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-3 py-2">
+                  <div className="font-semibold">{bankAccounts[0].bank_name || bankAccounts[0].account_name || 'Bank'}</div>
+                  <div className="text-xs text-[var(--text-muted)] font-mono">
+                    A/C {bankAccounts[0].account_number || '—'}{bankAccounts[0].ifsc_code ? ` · IFSC ${bankAccounts[0].ifsc_code}` : ''}
+                  </div>
+                </div>
+              ) : (
+                <Field as="select" name="bank_account_id" className={inputClass}>
+                  {bankAccounts.map((acc) => (
+                    <option key={acc.id || acc.account_number} value={acc.id || acc.account_number}>
+                      {acc.bank_name || acc.account_name || 'Bank'}{acc.account_number ? ` ···${String(acc.account_number).slice(-4)}` : ''}
+                    </option>
+                  ))}
+                </Field>
+              )}
             </div>
           )}
 
-          <Field name="customer" type="hidden" />
-          <Field name="invoice" type="hidden" />
-          <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
-
-          {/* Amount */}
+          {/* Reference (Optional) */}
           <div>
-            <label className={labelClass}>Payment Amount *</label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">{getCurrencySymbol()}</span>
-              <Field
-                id="amount"
-                name="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                className={`${inputClass} pl-7`}
-                placeholder="0.00"
-              />
-            </div>
-            <ErrorMessage name="amount" component="div" className="mt-1 text-xs text-red-400" />
-          </div>
-
-          {initialInvoice && (
-            <ErrorMessage name="customer" component="div" className="mt-1 text-xs text-red-400" />
-          )}
-
-          {/* Date */}
-          <div>
-            <label className={labelClass}>Payment Date *</label>
+            <label className={labelClass}>Reference (Optional)</label>
             <Field
-              id="date"
-              name="date"
-              type="date"
+              id="reference"
+              name="reference"
+              type="text"
               className={inputClass}
+              placeholder="Cheque No / UPI Transaction ID"
             />
-            <ErrorMessage name="date" component="div" className="mt-1 text-xs text-red-400" />
           </div>
 
-          {/* Description */}
+          {/* Notes (Optional) */}
           <div>
-            <label className={labelClass}>Description</label>
+            <label className={labelClass}>Notes (Optional)</label>
             <Field
               id="description"
               name="description"
               as="textarea"
               rows={2}
               className={inputClass}
-              placeholder="Payment description (optional)"
+              placeholder="Any additional details..."
             />
-            <ErrorMessage name="description" component="div" className="mt-1 text-xs text-red-400" />
+            <ErrorMessage name="description" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)]">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-sm font-medium"
+              className="btn-secondary text-sm px-4 py-2 rounded-xl"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || recordPaymentMutation.isLoading}
-              className="btn-primary py-2 px-6 shadow-lg shadow-blue-500/20"
+              disabled={isSubmitting || recordPaymentMutation.isPending}
+              className="btn-primary py-2.5 px-6 font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
             >
-              {isSubmitting || recordPaymentMutation.isLoading ? (
+              {isSubmitting || recordPaymentMutation.isPending ? (
                 <span className="flex items-center gap-2">
-                   <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                   <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                   Recording...
                 </span>
               ) : (
-                "Record Payment"
+                <>
+                  <CheckCircleIcon className="w-5 h-5" />
+                  <span>Record Payment</span>
+                </>
               )}
             </button>
           </div>
         </Form>
-      )}
+        );
+      }}
     </Formik>
   );
 }

@@ -1,7 +1,10 @@
+import { documentTitle, documentDeclaration } from '../../../utils/gstStatus';
 import React, { forwardRef } from 'react';
-import { amountInWords } from '../../../utils/invoiceSettings';
+import PlaceOfSupplyLine from './PlaceOfSupplyLine';
+import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
+import InvoicePrintShell from '../InvoicePrintShell';
 
 // Professional Template (Marico Style)
 const ProfessionalTemplate = forwardRef(({ 
@@ -9,6 +12,7 @@ const ProfessionalTemplate = forwardRef(({
 }, ref) => {
   const colors = template.colors || {};
   const typography = template.typography || {};
+  const type = resolveTypography(typography);
   const sections = template.sections || {};
   const content = template.content || {};
   const columns = template.columns || [];
@@ -26,185 +30,442 @@ const ProfessionalTemplate = forwardRef(({
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const items = invoice.items || [];
+
+  const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
+  const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
+  const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.branch || '';
+  const bankUpi = businessInfo.bank_upi_id || '';
+  const bankQr = businessInfo.bank_qr_code || '';
+  const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
-  const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0);
-  const taxTotal = items.reduce((sum, item) => sum + ((parseFloat(item.quantity||0) * parseFloat(item.price||0) * parseFloat(item.tax||0)) / 100), 0);
-  const finalTotal = subtotal + taxTotal + (parseFloat(invoice.round_off || 0));
+  const roundOff = parseFloat(invoice.round_off || 0) || 0;
+  const subtotal = items.reduce((sum, item) => {
+    const qty = parseFloat(item.quantity || 0);
+    const price = parseFloat(item.price || 0);
+    const discount = parseFloat(item.discount || 0);
+    const lineBase = qty * price;
+    return sum + (lineBase - (lineBase * discount) / 100);
+  }, 0);
+  const taxTotal = items.reduce((sum, item) => {
+    const qty = parseFloat(item.quantity || 0);
+    const price = parseFloat(item.price || 0);
+    const discount = parseFloat(item.discount || 0);
+    const tax = parseFloat(item.tax || 0);
+    const lineBase = qty * price;
+    const taxable = lineBase - (lineBase * discount) / 100;
+    return sum + ((taxable * tax) / 100);
+  }, 0);
+  const finalTotal = invoice.total_amount != null
+    ? parseFloat(invoice.total_amount)
+    : Number((subtotal + taxTotal + roundOff).toFixed(2));
 
   const taxType = getTaxType(invoice, businessInfo);
   const isIGST = taxType === 'igst';
 
-  const planCode = businessInfo.plan_code || 'free';
-  const showWatermarkFooter = planCode !== 'business';
+  const showWatermarkFooter = true;
 
-  const visibleColumns = columns.filter(col => col.show !== false);
+  const isDeliveryChallan = 
+    invoice.document_type === 'delivery_challan' || 
+    invoice.is_delivery_challan || 
+    content.invoiceTitle === 'DELIVERY CHALLAN' || 
+    Boolean(invoice.challan_number && !invoice.invoice_number);
+
+  const hasAnyDiscount = (items || []).some(item => Number(item?.discount || 0) > 0);
+  const visibleColumns = columns
+    .filter(col => col.show !== false)
+    .filter(col => invoiceSettings.show_item_batch !== false || col.id !== 'batch')
+    .filter(col => invoiceSettings.show_item_hsn !== false || col.id !== 'hsn')
+    .filter(col => invoiceSettings.show_item_free_quantity !== false || col.id !== 'free_qty')
+    .filter(col => (invoiceSettings.show_item_discount !== false && hasAnyDiscount) || col.id !== 'discount')
+    .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
+
+  const getColumnWidth = (columnId) => {
+    switch (columnId) {
+      case 'serial': return '30px';
+      case 'description': return 'auto';
+      case 'batch': return '65px';
+      case 'hsn': return '75px';
+      case 'quantity': return '55px';
+      case 'free_qty': return '50px';
+      case 'unit': return '50px';
+      case 'make': return '70px';
+      case 'pack_size': return '70px';
+      case 'price': return '95px';
+      case 'discount': return '50px';
+      case 'tax': return '50px';
+      case 'amount': return '95px';
+      default: return 'auto';
+    }
+  };
+
+  const getHeaderFontSize = () => `${type.tableHeaderSize}px`;
+
+  const getHeaderLabel = (col) => {
+    switch (col.id) {
+      case 'serial': return 'Sl.';
+      case 'description': return 'DESCRIPTION';
+      case 'batch': return 'BATCH';
+      case 'hsn': return 'HSNC';
+      case 'quantity': return 'QTY';
+      case 'free_qty': return 'FREE';
+      case 'unit': return 'UNIT';
+      case 'make': return 'MAKE';
+      case 'pack_size': return 'PACK SIZE';
+      case 'price': return 'UNIT PRICE';
+      case 'discount': return 'DISC.%';
+      case 'tax': return 'TAX';
+      case 'amount': return 'AMOUNT';
+      default: return col.label?.toUpperCase() || '';
+    }
+  };
 
   return (
     <div 
       ref={ref}
+      data-bill-template="true"
+      className="bg-white invoice-sheet"
       style={{
-        width: '210mm', minHeight: '297mm', padding: '15mm', boxSizing: 'border-box',
+        width: '210mm', minHeight: '297mm', margin: '0 auto', padding: '8mm', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#333333',
-        fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 10}px`,
-        transform: `scale(${scale})`, transformOrigin: 'top left', border: `1px solid ${colors.tableBorder || '#e2e8f0'}`,
-        borderRadius: '12px'
+        fontFamily: type.fontFamily, fontSize: `${type.bodySize}px`, lineHeight: type.lineHeight,
+        ...(scale && scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : {}),
+        border: `1px solid ${colors.tableBorder || '#e2e8f0'}`,
+        borderRadius: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
       }}
     >
+      <InvoicePrintShell
+        theme="professional"
+        headerProps={{
+          companyName,
+          companyAddress,
+          companyPhone: businessInfo.phone || '',
+          companyEmail: businessInfo.email || '',
+          companyGST,
+          companyPAN: businessInfo.pan_number || businessInfo.pan || '',
+          companyGEM: businessInfo.gem_id || '',
+          companyDL: businessInfo.dl_number || '',
+          companyNameColor: colors.primary || '#d11f1f',
+          primaryColor: colors.primary || '#d11f1f',
+          companyNameSize: type.companyNameSize,
+          companyAddressSize: type.companyAddressSize,
+          fontFamily: type.headerFont,
+          smallSize: type.smallSize,
+          companyLogo: template.branding?.logo || '',
+          showLogo: Boolean(sections.showLogo && template.branding?.logo),
+        }}
+      >
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
-        <div className="w-1/2">
+        <div className="w-1/2 invoice-first-page-header">
           {sections.showLogo && template.branding?.logo && (
             <img src={template.branding.logo} alt="Logo" style={{ maxHeight: 60 }} className="mb-4" />
           )}
-          <h1 className="font-bold text-xl mb-1" style={{ color: colors.primary }}>{companyName}</h1>
-          <div className="text-gray-600 space-y-0.5">
+          <h1 className="font-bold mb-1" style={{ color: colors.primary, fontSize: `${type.companyNameSize}px` }}>{companyName}</h1>
+          <div className="text-gray-600 space-y-0.5" style={{ fontSize: `${type.companyAddressSize}px` }}>
             <p className="whitespace-pre-line">{companyAddress}</p>
             {sections.showGST && companyGST && <p><strong>{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'}</strong> {companyGST}</p>}
+            {(businessInfo.pan_number || businessInfo.pan) && <p><strong>PAN:</strong> {businessInfo.pan_number || businessInfo.pan}</p>}
+            {sections.showGEMID && (businessInfo.gem_id || invoice.gem_id) && <p><strong>GeM ID:</strong> {businessInfo.gem_id || invoice.gem_id}</p>}
+            {(businessInfo.dl_number || invoice.dl_number) && <p><strong>DL No:</strong> {businessInfo.dl_number || invoice.dl_number}</p>}
           </div>
         </div>
         <div className="text-right w-1/2">
-          <h2 className="text-2xl font-bold tracking-widest mb-4" style={{ color: '#1f2937' }}>
-            {content.invoiceTitle || 'TAX INVOICE'}
+          <h2 className="font-bold tracking-widest mb-4" style={{ color: '#1f2937', fontSize: `${type.invoiceTitleSize}px` }}>
+            {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : documentTitle(content.invoiceTitle, businessInfo)}
           </h2>
-          <div className="grid grid-cols-2 gap-4 text-left ml-auto max-w-xs border border-gray-200 p-3 bg-gray-50/50">
+{!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
+          <div className="grid grid-cols-2 gap-3 text-left ml-auto max-w-sm border border-gray-200 p-3 bg-gray-50/50 rounded-lg" style={{ fontSize: `${type.bodySize}px` }}>
             <div>
-              <p className="text-xs text-gray-500 font-semibold mb-0.5">Invoice No</p>
-              <p className="font-bold">{invoiceNumber}</p>
+              <p className="text-xs text-gray-700 font-semibold mb-0.5">{isDeliveryChallan ? 'Challan No' : 'Invoice No'}</p>
+              <p className="font-bold text-gray-900">{isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-semibold mb-0.5">Date</p>
-              <p className="font-bold">{invoiceDate}</p>
+              <p className="text-xs text-gray-700 font-semibold mb-0.5">{isDeliveryChallan ? 'Challan Date' : 'Date'}</p>
+              <p className="font-bold text-gray-900">{isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}</p>
             </div>
+            {isDeliveryChallan ? (
+              <>
+                {(invoice.sales_order_number || invoice.po_number) && (
+                  <div>
+                    <p className="text-xs text-gray-700 font-semibold mb-0.5">Ref Order / PO</p>
+                    <p className="font-bold text-gray-900">{invoice.sales_order_number || invoice.po_number}</p>
+                  </div>
+                )}
+                {invoice.vehicle_number && (
+                  <div>
+                    <p className="text-xs text-gray-700 font-semibold mb-0.5">Vehicle No</p>
+                    <p className="font-mono font-bold text-gray-900">{invoice.vehicle_number}</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {(invoice.po_number || invoice.sales_order_number) && (
+                  <div>
+                    <p className="text-xs text-gray-700 font-semibold mb-0.5">PO / Order No</p>
+                    <p className="font-bold text-gray-900">{invoice.po_number || invoice.sales_order_number}</p>
+                  </div>
+                )}
+                {formatLinkedChallanList(invoice) && (
+                  <div>
+                    <p className="text-xs text-gray-700 font-semibold mb-0.5">Challan No</p>
+                    <p className="font-bold text-gray-900">{formatLinkedChallanList(invoice)}</p>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
 
       {/* Bill To & Ship To */}
-      <div className="grid grid-cols-3 gap-6 mb-8 text-sm">
+      <div className="grid grid-cols-3 gap-6 mb-8">
         <div className="col-span-1">
-          <h3 className="font-bold border-b pb-1 mb-2" style={{ borderColor: colors.primary }}>Bill To</h3>
-          <p className="font-bold">{customerName}</p>
-          <p className="whitespace-pre-line text-gray-600">{billingAddress}</p>
+          <h3 className="font-bold border-b pb-1 mb-2" style={{ borderColor: colors.primary, fontSize: `${type.sectionTitleSize}px` }}>{isDeliveryChallan ? 'Customer Address' : 'Bill To'}</h3>
+          <p className="font-bold" style={{ fontSize: `${type.customerNameSize}px` }}>{customerName}</p>
+          <p className="whitespace-pre-line text-gray-600" style={{ fontSize: `${type.addressSize}px` }}>{billingAddress}</p>
           {customerGST && (
             <p className="text-gray-600 mt-1">
               <strong>{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'}</strong> {customerGST}
             </p>
           )}
+          <PlaceOfSupplyLine invoice={invoice} className="text-gray-600 mt-1" />
         </div>
         {(shippingAddress && shippingAddress !== billingAddress) && (
           <div className="col-span-1">
-            <h3 className="font-bold border-b pb-1 mb-2" style={{ borderColor: colors.primary }}>Ship To</h3>
-            <p className="font-bold">{customerName}</p>
-            <p className="whitespace-pre-line text-gray-600">{shippingAddress}</p>
+            <h3 className="font-bold border-b pb-1 mb-2" style={{ borderColor: colors.primary, fontSize: `${type.sectionTitleSize}px` }}>Ship To</h3>
+            <p className="font-bold" style={{ fontSize: `${type.customerNameSize}px` }}>{customerName}</p>
+            <p className="whitespace-pre-line text-gray-600" style={{ fontSize: `${type.addressSize}px` }}>{shippingAddress}</p>
           </div>
         )}
       </div>
 
       {/* Items Table */}
-      <table className="w-full text-left border-collapse mb-8">
-        <thead>
-          <tr className="border-y-2 border-gray-900 bg-gray-50 h-10">
-            {visibleColumns.map(col => (
-              <th key={col.id} className="px-2 text-xs font-bold uppercase tracking-wider">{col.label}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {items.map((item, idx) => (
-            <tr key={idx} className="h-auto hover:bg-gray-50 transition-colors">
-              {visibleColumns.map(col => {
-                let val = '';
-                if(col.id==='serial') val = idx+1;
-                else if(col.id==='description') val = item.product_name || item.product;
-                else if(col.id==='quantity') val = item.quantity;
-                else if(col.id==='price') val = `${getCurrencySymbol()}${parseFloat(item.price||0).toFixed(2)}`;
-                else if(col.id==='tax') val = `${item.tax||0}%`;
-                else if(col.id==='amount') val = `${getCurrencySymbol()}${(item.quantity * item.price).toFixed(2)}`;
-                else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                return <td key={col.id} className="px-2 py-1.5 font-medium text-gray-800">{val}</td>;
-              })}
+      <table className="w-full border-collapse mb-8" style={{ tableLayout: 'fixed' }}>
+          <thead style={{ display: 'table-header-group' }}>
+            <tr className="border-y-2 border-gray-900 bg-gray-50 h-10">
+              {visibleColumns.map((col) => (
+                <th 
+                  key={col.id} 
+                  className="py-2.5 px-1 text-center font-bold text-gray-900" 
+                  style={{ 
+                    width: getColumnWidth(col.id), 
+                    fontSize: getHeaderFontSize(col.id),
+                    whiteSpace: 'nowrap' 
+                  }}
+                >
+                  <strong>{getHeaderLabel(col)}</strong>
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {items.map((item, idx) => {
+              if (item.row_type === 'note') {
+                return (
+                  <tr key={idx} className="bg-gray-50/50">
+                    <td colSpan={visibleColumns.length} className="py-1 px-2 text-left text-gray-700 italic font-medium align-middle" style={{ verticalAlign: 'middle', fontSize: `${type.smallSize}px` }}>
+                      Note: {item.description || item.product_description || item.product || ''}
+                    </td>
+                  </tr>
+                );
+              }
+              return (
+              <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="h-auto hover:bg-gray-50 transition-colors">
+                {visibleColumns.map(col => {
+                  const isNum = ['price', 'amount'].includes(col.id);
+                  const isDesc = col.id === 'description';
+                  const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono font-medium' : 'text-center px-2';
+                  let val = '';
+                  if(col.id==='serial') val = items.slice(0, idx).filter((row) => row.row_type !== 'note').length + 1;
+                  else if(col.id==='description') {
+                    const desc = item.description || item.product_description || item.product_detail?.description;
+                    val = (
+                      <div className="leading-tight py-0">
+                        <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
+                        {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                          <div className="text-xs text-gray-700 font-medium italic mt-0.5">
+                            Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                          </div>
+                        )}
+                        {desc && (
+                          <div className="text-xs text-gray-700 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
+                            {desc}
+                          </div>
+                        )}
+                        {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                          <div className="text-xs text-gray-700 mt-0.5 font-medium">
+                            {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
+                            {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
+                            {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  }
+                  else if(col.id==='quantity') val = item.quantity;
+                  else if(col.id==='batch') val = item.batch_number || item.batch?.batch_number || item.batch || '-';
+                  else if(col.id==='unit') val = item.unit || 'pcs';
+                  else if(col.id==='free_qty') val = item.free_quantity || 0;
+                  else if(col.id==='make') val = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
+                  else if(col.id==='pack_size') val = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
+                  else if(col.id==='price') {
+                    const p = parseFloat(item.price||0);
+                    const pStr = p.toString();
+                    const decCount = (pStr.split('.')[1] || '').length;
+                    const decimals = Math.min(Math.max(2, decCount), 4);
+                    val = `${getCurrencySymbol()}${p.toFixed(decimals)}`;
+                  }
+                  else if(col.id==='discount') {
+                    const discNum = parseFloat(item.discount || 0);
+                    val = discNum > 0 ? `${discNum}%` : '-';
+                  }
+                  else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
+                  else if(col.id==='amount') {
+                    const qty = parseFloat(item.quantity||0);
+                    const price = parseFloat(item.price||0);
+                    const disc = parseFloat(item.discount||0);
+                    const lineBase = qty * price;
+                    val = `${getCurrencySymbol()}${(lineBase - (lineBase * disc) / 100).toFixed(2)}`;
+                  }
+                  else if(col.id==='hsn') val = item.hsn_sac_code || '-';
+                  return (
+                    <td 
+                      key={col.id} 
+                      className="align-middle" 
+                      style={{ 
+                        paddingTop: '0.6px',
+                        paddingBottom: '0.6px',
+                        paddingLeft: '8px', 
+                        paddingRight: '8px',
+                        margin: 0, 
+                        lineHeight: 1.2, 
+                        fontSize: `${type.tableBodySize}px`, 
+                        textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
+                        verticalAlign: 'middle' 
+                      }}
+                    >
+                      {val}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+          </tbody>
+        </table>
 
-      {/* Totals & Details */}
-      <div className="flex justify-between">
-        <div className="w-1/2 pr-8">
-          {sections.showBankDetails && (
-             <div className="mb-6">
-                <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-500">Bank Details</p>
-                <div className="text-xs text-gray-700 bg-gray-50 p-4 rounded-lg">
-                  <p><span className="font-semibold w-16 inline-block">Bank:</span> {content.bankDetails?.bankName}</p>
-                  <p><span className="font-semibold w-16 inline-block">A/C No:</span> {content.bankDetails?.accountNumber}</p>
-                  <p><span className="font-semibold w-16 inline-block">IFSC:</span> {content.bankDetails?.ifscCode}</p>
-                </div>
-             </div>
-          )}
-          {sections.showTerms && (
-             <div>
-                <p className="font-bold text-xs uppercase tracking-wider mb-2 text-gray-500">Notes & Terms</p>
-                <ul className="text-xs text-gray-600 space-y-1 list-disc pl-4">
-                  {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
-                </ul>
-             </div>
-          )}
-        </div>
-
-        <div className="w-1/3">
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
-              <span className="text-gray-600">Subtotal</span>
-              <span className="font-bold">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
-            </div>
-            {isIGST ? (
-              <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
-                <span className="text-gray-600">IGST</span>
-                <span className="font-bold">{getCurrencySymbol()}{taxTotal.toFixed(2)}</span>
-              </div>
-            ) : (
-              <>
-                <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
-                  <span className="text-gray-600">CGST</span>
-                  <span className="font-bold">{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between p-3 border-b border-gray-100 text-sm">
-                  <span className="text-gray-600">SGST</span>
-                  <span className="font-bold">{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</span>
-                </div>
-              </>
+      {/* Totals & Details (Hidden for Delivery Challans). Keep-together: never split across pages. */}
+      {!isDeliveryChallan && (
+        <div className="invoice-totals-block flex justify-between">
+          <div className="w-1/2 pr-8">
+            {sections.showBankDetails && hasBankDetails && (
+               <div className="mb-6">
+                  <p className="font-bold uppercase tracking-wider mb-2 text-gray-700" style={{ fontSize: `${type.sectionTitleSize}px` }}>Bank & Payment Details</p>
+                  <div className="text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-start justify-between gap-4" style={{ fontSize: `${type.bankDetailsSize}px` }}>
+                    <div className="space-y-0.5">
+                      {bankName && <p><span className="font-semibold w-16 inline-block">Bank:</span> {bankName}</p>}
+                      {bankAccount && <p><span className="font-semibold w-16 inline-block">A/C No:</span> <span className="font-mono">{bankAccount}</span></p>}
+                      {bankIfsc && <p><span className="font-semibold w-16 inline-block">IFSC:</span> <span className="font-mono">{bankIfsc}</span></p>}
+                      {bankBranch && <p><span className="font-semibold w-16 inline-block">Branch:</span> {bankBranch}</p>}
+                      {bankUpi && <p><span className="font-semibold w-16 inline-block">UPI:</span> <span className="font-mono">{bankUpi}</span></p>}
+                    </div>
+                    {sections.showQRCode !== false && bankQr && (
+                      <div className="text-center flex-shrink-0">
+                        <img 
+                          src={bankQr} 
+                          alt="Payment QR" 
+                          className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5 bg-white shadow-sm"
+                        />
+                        <span className="text-xs text-gray-700 block mt-0.5 font-medium">Scan to Pay</span>
+                      </div>
+                    )}
+                  </div>
+               </div>
             )}
-            <div className="flex justify-between p-4 bg-gray-50 text-base">
-              <span className="font-bold text-gray-900">Total</span>
-              <span className="font-bold text-indigo-600">{getCurrencySymbol()}{finalTotal.toFixed(2)}</span>
-            </div>
           </div>
-          {sections.showAmountInWords && (
-            <p className="text-xs text-right mt-3 text-gray-500 italic">
-              {amountInWords(finalTotal)}
-            </p>
-          )}
 
-          {sections.showSignature && (
-            <div className="mt-16 text-right">
-              <div className="border-t border-gray-400 inline-block pt-2 w-48 text-center text-xs font-semibold text-gray-500">
-                {content.signatureLabel || 'Authorized Signatory'}
+          <div className="w-1/3">
+            <div className="border border-gray-200 rounded-lg overflow-hidden" style={{ fontSize: `${type.totalsSize}px` }}>
+              <div className="flex justify-between px-3 py-1.5 border-b border-gray-100 text-sm">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-bold">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
+              </div>
+              {isIGST ? (
+                <div className="flex justify-between px-3 py-1.5 border-b border-gray-100 text-sm">
+                  <span className="text-gray-600">IGST</span>
+                  <span className="font-bold">{getCurrencySymbol()}{taxTotal.toFixed(2)}</span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between px-3 py-1.5 border-b border-gray-100 text-sm">
+                    <span className="text-gray-600">CGST</span>
+                    <span className="font-bold">{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between px-3 py-1.5 border-b border-gray-100 text-sm">
+                    <span className="text-gray-600">SGST</span>
+                    <span className="font-bold">{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</span>
+                  </div>
+                </>
+              )}
+              {roundOff !== 0 && (
+                <div className="flex justify-between px-3 py-1.5 border-b border-gray-100 text-sm">
+                  <span className="text-gray-600">Round Off</span>
+                  <span className="font-bold text-gray-700">
+                    {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between px-3 py-2 bg-gray-50 text-sm">
+                <span className="font-bold text-gray-900 whitespace-nowrap">Total</span>
+                <span className="font-bold font-mono text-indigo-600 whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toFixed(2)}</span>
               </div>
             </div>
-          )}
-        </div>
-      </div>
-      
-      <div className="mt-8 pt-4 border-t border-gray-200 text-center text-[10px] text-gray-500">
-        This is a computer generated digital invoice and does not require a signature.
-      </div>
-
-      {showWatermarkFooter && (
-        <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-          Made with Cenvora: Built for Modern Businesses<br />
-          <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
+            {sections.showAmountInWords && (
+              <p className="text-sm font-medium text-right mt-2 text-gray-700 italic">
+                {amountInWords(finalTotal)}
+              </p>
+            )}
+          </div>
         </div>
       )}
+      
+      {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
+      <div className="mt-2 invoice-page-footer">
+        <div className="flex justify-between gap-6 pt-4 border-t border-gray-200">
+          {sections.showTerms && content.termsAndConditions?.length > 0 && (
+            <div className="flex-1 pr-4">
+              <p className="font-bold uppercase tracking-wider mb-2 text-gray-700" style={{ fontSize: `${type.sectionTitleSize}px` }}>Notes & Terms</p>
+              <ul className="text-gray-700 space-y-1 list-disc pl-4" style={{ fontSize: `${type.footerSize}px` }}>
+                {content.termsAndConditions.map((t, i) => <li key={i}>{t}</li>)}
+              </ul>
+            </div>
+          )}
+          <div className="text-right ml-auto">
+            <p className="font-bold text-gray-600 mb-8" style={{ fontSize: `${type.footerSize}px` }}>For {companyName}</p>
+            <div className="border-t border-gray-400 inline-block pt-2 w-48 text-center font-semibold text-gray-700" style={{ fontSize: `${type.footerSize}px` }}>
+              {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
+            </div>
+          </div>
+        </div>
+        <div className="mt-6 pt-3 border-t border-gray-200 text-center text-gray-700 font-medium" style={{ fontSize: `${type.footerSize}px` }}>
+          {isDeliveryChallan
+            ? 'This is a computer generated delivery challan and does not require a signature.'
+            : 'This is a computer generated digital invoice and does not require a signature.'}
+        </div>
+
+        {showWatermarkFooter && (
+          <div className="mt-2 text-center text-xs text-gray-600 print-watermark w-full">
+            Made with Cenvora: Built for Modern Businesses<br />
+            <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+          </div>
+        )}
+      </div>
+      </InvoicePrintShell>
     </div>
   );
 });

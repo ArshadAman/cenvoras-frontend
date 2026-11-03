@@ -8,6 +8,7 @@ import BulkDeleteModal from '../components/BulkDeleteModal';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { typeSignedNetLabel } from '../utils/ledgerBalance';
 
 const ACCOUNT_TYPE_LABELS = {
   asset: 'Asset',
@@ -18,11 +19,11 @@ const ACCOUNT_TYPE_LABELS = {
 };
 
 const ACCOUNT_TYPE_COLORS = {
-  asset: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  liability: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-  equity: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  revenue: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-  expense: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+  asset: 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]',
+  liability: 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)]',
+  equity: 'bg-[var(--action-primary-bg)] text-[var(--accent-primary)] border border-[var(--action-primary-border)]',
+  revenue: 'bg-[var(--signal-primary-bg)] text-[var(--accent-secondary)] border border-[var(--signal-primary-border)]',
+  expense: 'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)]'
 };
 
 export default function ChartOfAccounts() {
@@ -173,11 +174,11 @@ export default function ChartOfAccounts() {
       );
     }
     return sortOrder === 'asc' ? (
-      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-4 h-4 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
       </svg>
     ) : (
-      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-4 h-4 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
       </svg>
     );
@@ -219,10 +220,10 @@ export default function ChartOfAccounts() {
         <div className="mb-8">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-white">
+              <h1 className="text-3xl font-bold text-[var(--text-primary)]">
                 Chart of Accounts
               </h1>
-              <p className="text-[#b6e0f7] mt-2">
+              <p className="text-[var(--text-muted)] text-sm mt-1">
                 Manage your accounting structure and financial categories
               </p>
             </div>
@@ -266,10 +267,10 @@ export default function ChartOfAccounts() {
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
-                      <p className="text-2xl font-bold text-white mt-1">{count}</p>
+                      <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">{label}</p>
+                      <p className="text-2xl font-bold text-[var(--text-primary)] mt-1">{count}</p>
                     </div>
-                    <div className={`p-2 rounded-lg bg-white/5 border border-white/10`}>
+                    <div className="p-2 rounded-lg bg-[var(--border-subtle)]/20 border border-[var(--border-subtle)]">
                       <div className={`w-2 h-2 rounded-full ${ACCOUNT_TYPE_COLORS[type].split(' ')[0].replace('bg-', 'bg-')}`} />
                     </div>
                   </div>
@@ -293,9 +294,9 @@ export default function ChartOfAccounts() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by code, name..."
-                  className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                  className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-2.5 pl-10 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all"
                 />
-                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
@@ -303,13 +304,13 @@ export default function ChartOfAccounts() {
 
             {/* Account Type Filter */}
             <div>
-              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-2">
                 Account Type
               </label>
               <select
                 value={accountTypeFilter}
                 onChange={(e) => setAccountTypeFilter(e.target.value)}
-                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
+                className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] transition-all appearance-none cursor-pointer"
               >
                 <option value="">All Types</option>
                 {Object.entries(ACCOUNT_TYPE_LABELS).map(([value, label]) => (
@@ -320,13 +321,13 @@ export default function ChartOfAccounts() {
 
             {/* Active Filter */}
             <div>
-              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-2">
                 Status
               </label>
               <select
                 value={activeFilter}
                 onChange={(e) => setActiveFilter(e.target.value)}
-                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
+                className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] transition-all appearance-none cursor-pointer"
               >
                 <option value="all">All Accounts</option>
                 <option value="active">Active Only</option>
@@ -336,7 +337,7 @@ export default function ChartOfAccounts() {
 
             {/* Page Size */}
             <div>
-              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-2">
                 Items per Page
               </label>
               <select
@@ -345,7 +346,7 @@ export default function ChartOfAccounts() {
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
+                className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] transition-all appearance-none cursor-pointer"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -375,9 +376,9 @@ export default function ChartOfAccounts() {
                   </button>
                   <button
                     onClick={handleBulkDelete}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    className="btn-destructive !text-sm !py-2 !px-3 !normal-case !tracking-normal !font-semibold"
                   >
-                    <svg className="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="-ml-0.5 mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                     Delete Selected
@@ -391,13 +392,13 @@ export default function ChartOfAccounts() {
         {/* Accounts Table */}
         <div className="bento-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-white/5">
-              <thead className="bg-white/5">
-                <tr>
+            <table className="min-w-full divide-y divide-[var(--border-subtle)]">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+                <tr className="border-b border-[var(--border-subtle)]">
                   <th scope="col" className="relative px-6 py-4">
                     <input
                       type="checkbox"
-                      className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/20 bg-[#111] text-cyan-500 focus:ring-cyan-500/50"
+                      className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/50 cursor-pointer"
                       checked={isAllCurrentPageSelected}
                       ref={(el) => {
                         if (el) el.indeterminate = isSomeCurrentPageSelected && !isAllCurrentPageSelected;
@@ -406,7 +407,7 @@ export default function ChartOfAccounts() {
                     />
                   </th>
                   <th 
-                    className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-white/5 transition-colors"
+                    className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider cursor-pointer hover:bg-[var(--bg-primary)]/40 transition-colors"
                     onClick={() => handleSort('code')}
                   >
                     <div className="flex items-center space-x-1">
@@ -415,7 +416,7 @@ export default function ChartOfAccounts() {
                     </div>
                   </th>
                   <th 
-                    className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-white/5 transition-colors"
+                    className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider cursor-pointer hover:bg-[var(--bg-primary)]/40 transition-colors"
                     onClick={() => handleSort('name')}
                   >
                     <div className="flex items-center space-x-1">
@@ -424,7 +425,7 @@ export default function ChartOfAccounts() {
                     </div>
                   </th>
                   <th 
-                    className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-white/5 transition-colors"
+                    className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider cursor-pointer hover:bg-[var(--bg-primary)]/40 transition-colors"
                     onClick={() => handleSort('account_type')}
                   >
                     <div className="flex items-center space-x-1">
@@ -432,74 +433,81 @@ export default function ChartOfAccounts() {
                       {getSortIcon('account_type')}
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                     Parent Account
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                     Balance
                   </th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-[var(--border-subtle)]">
                 {accounts.map((account) => (
-                  <tr key={account.id} className="hover:bg-white/5 transition-colors">
+                  <tr key={account.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                     <td className="relative px-6 py-4 whitespace-nowrap text-sm">
                       <input
                         type="checkbox"
-                        className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-white/20 bg-[#111] text-cyan-500 focus:ring-cyan-500/50"
+                        className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/50 cursor-pointer"
                         checked={selectedAccounts.includes(account.id)}
                         onChange={(e) => handleSelectAccount(account.id, e.target.checked)}
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-white">
+                      <div className="text-sm font-medium text-[var(--text-primary)]">
                         {account.code}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-white">
+                      <div className="text-sm font-semibold text-[var(--text-primary)]">
                         {account.name}
                       </div>
                       {account.description && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-[var(--text-muted)] mt-1">
                           {account.description}
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${ACCOUNT_TYPE_COLORS[account.account_type]}`}>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${ACCOUNT_TYPE_COLORS[account.account_type]}`}>
                         {ACCOUNT_TYPE_LABELS[account.account_type]}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-400">
+                      <div className="text-sm text-[var(--text-secondary)]">
                         {account.parent_account_name || '-'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="inline-flex items-center">
-                        <div className={`w-2 h-2 rounded-full mr-2 ${account.is_active ? 'bg-green-500' : 'bg-gray-500'}`}></div>
-                        <span className="text-sm text-white">
+                        <div className={`w-2 h-2 rounded-full mr-2 ${account.is_active ? 'bg-[var(--status-success)]' : 'bg-[var(--text-muted)]'}`}></div>
+                        <span className="text-sm text-[var(--text-secondary)]">
                           {account.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-white">
-                        {account.balance !== undefined ? `${getCurrencySymbol()}${Number(account.balance).toLocaleString('en-IN')}` : '-'}
+                      <div className="text-sm font-semibold text-[var(--text-primary)] tabular-nums">
+                        {(() => {
+                          const raw = account.current_balance ?? account.balance;
+                          if (raw === undefined || raw === null || raw === '') return '-';
+                          const n = Number(raw);
+                          if (!Number.isFinite(n)) return '-';
+                          const label = typeSignedNetLabel(n, account.account_type);
+                          return `${getCurrencySymbol()}${Math.abs(n).toLocaleString('en-IN')} ${label}`;
+                        })()}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-3">
                         <button
                           onClick={() => handleViewLedger(account)}
-                          className="text-cyan-400 hover:text-cyan-300 transition-colors p-1 hover:bg-cyan-500/10 rounded-lg"
+                          className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors p-1 rounded-lg"
                           title="View General Ledger"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -508,7 +516,7 @@ export default function ChartOfAccounts() {
                         </button>
                         <button
                           onClick={() => handleEdit(account)}
-                          className="text-blue-400 hover:text-blue-300 transition-colors p-1 hover:bg-blue-500/10 rounded-lg"
+                          className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors p-1 rounded-lg"
                           title="Edit Account"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -517,7 +525,7 @@ export default function ChartOfAccounts() {
                         </button>
                         <button
                           onClick={() => handleDelete(account)}
-                          className="text-red-400 hover:text-red-300 transition-colors p-1 hover:bg-red-500/10 rounded-lg"
+                          className="text-[var(--status-danger)] hover:opacity-80 transition-colors p-1 rounded-lg"
                           title="Delete Account"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -535,13 +543,13 @@ export default function ChartOfAccounts() {
           {/* No results */}
           {accounts.length === 0 && (
             <div className="text-center py-20">
-              <div className="w-24 h-24 mx-auto mb-6 bg-white/5 rounded-full flex items-center justify-center">
-                <svg className="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-24 h-24 mx-auto mb-6 bg-[var(--border-subtle)]/20 rounded-full flex items-center justify-center">
+                <svg className="h-12 w-12 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">No accounts found</h3>
-              <p className="text-gray-400 max-w-sm mx-auto mb-8">
+              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No accounts found</h3>
+              <p className="text-[var(--text-muted)] max-w-sm mx-auto mb-8">
                 Get started by setting up default accounts or creating your first account manually.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -573,26 +581,26 @@ export default function ChartOfAccounts() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="bg-white/5 px-6 py-4 border-t border-white/5">
+            <div className="bg-[var(--bg-primary)] px-6 py-4 border-t border-[var(--border-subtle)]">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-400">
-                  Showing <span className="text-white font-medium">{((currentPage - 1) * pageSize) + 1}</span> to <span className="text-white font-medium">{Math.min(currentPage * pageSize, totalAccounts)}</span> of <span className="text-white font-medium">{totalAccounts}</span> accounts
+                <div className="text-sm text-[var(--text-muted)]">
+                  Showing <span className="text-[var(--text-primary)] font-semibold">{((currentPage - 1) * pageSize) + 1}</span> to <span className="text-[var(--text-primary)] font-semibold">{Math.min(currentPage * pageSize, totalAccounts)}</span> of <span className="text-[var(--text-primary)] font-semibold">{totalAccounts}</span> accounts
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setCurrentPage(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm font-medium text-white bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="px-4 py-2 text-sm font-semibold text-[var(--text-primary)] btn-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     Previous
                   </button>
-                  <span className="px-4 py-2 text-sm font-medium text-white bg-white/5 border border-white/10 rounded-lg">
+                  <span className="px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl">
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
                     onClick={() => setCurrentPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-sm font-medium text-white bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="px-4 py-2 text-sm font-semibold text-[var(--text-primary)] btn-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     Next
                   </button>
@@ -652,7 +660,7 @@ export default function ChartOfAccounts() {
                 </div>
               </div>
               <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">
                   Delete Account
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
@@ -670,7 +678,7 @@ export default function ChartOfAccounts() {
                 <button
                   onClick={confirmDelete}
                   disabled={deleteMutation.isPending}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-destructive !text-sm !py-2 !px-4 !normal-case !tracking-normal !font-medium"
                 >
                   {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
                 </button>
@@ -681,7 +689,7 @@ export default function ChartOfAccounts() {
       )}
 
       {/* Toast Container */}
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+      
     </>
   );
 }

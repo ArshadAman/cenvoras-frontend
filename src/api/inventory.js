@@ -11,10 +11,13 @@ export const createProduct = (data) => {
   // Map frontend fields to backend schema
   const backendData = {
     name: data.name,
+    item_code: data.item_code ? String(data.item_code).trim() : null,
+    internal_reference: data.internal_reference ? String(data.internal_reference).trim() : null,
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
     description: data.description || null,
+    manufacturer: data.manufacturer || null,
     tax: data.tax ? parseFloat(data.tax) : 0,
-    stock: parseInt(data.stock || data.current_stock || 0),
+    stock: Number(data.stock ?? data.current_stock ?? 0) || 0,
     unit: data.unit,
     secondary_unit: data.secondary_unit || null,
     conversion_factor: parseInt(data.conversion_factor || 1),
@@ -22,19 +25,46 @@ export const createProduct = (data) => {
     sale_price: data.sale_price,
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
     warranty_months: parseInt(data.warranty_months || 0),
+    is_active: data.is_active !== undefined ? Boolean(data.is_active) : true,
     meta: data.meta
   };
   return api.post("/inventory/products/", backendData).then(res => res.data);
 };
 
+export const patchProduct = (id, data) => {
+  const payload = {};
+  if (data.name !== undefined) payload.name = data.name;
+  if (data.item_code !== undefined) payload.item_code = data.item_code ? String(data.item_code).trim() : null;
+  if (data.internal_reference !== undefined) payload.internal_reference = data.internal_reference ? String(data.internal_reference).trim() : null;
+  if (data.sale_price !== undefined) payload.sale_price = data.sale_price;
+  if (data.cost_price !== undefined) payload.cost_price = data.cost_price;
+  if (data.price !== undefined) payload.price = data.price;
+  if (data.hsn_sac_code !== undefined) payload.hsn_sac_code = data.hsn_sac_code;
+  if (data.hsn_code !== undefined) payload.hsn_sac_code = data.hsn_code;
+  if (data.tax !== undefined) payload.tax = parseFloat(data.tax) || 0;
+  if (data.description !== undefined) payload.description = data.description;
+  if (data.manufacturer !== undefined) payload.manufacturer = data.manufacturer;
+  if (data.unit !== undefined) payload.unit = data.unit;
+  if (data.stock !== undefined) payload.stock = Number(data.stock) || 0;
+  if (data.is_active !== undefined) payload.is_active = Boolean(data.is_active);
+  return api.patch(`/inventory/products/${id}/`, payload).then(res => res.data);
+};
+
 export const updateProduct = (id, data) => {
+  // If only partial fields are provided (missing name/unit), use PATCH
+  if (!data.name || !data.unit) {
+    return patchProduct(id, data);
+  }
   // Map frontend fields to backend schema
   const backendData = {
     name: data.name,
+    item_code: data.item_code ? String(data.item_code).trim() : null,
+    internal_reference: data.internal_reference ? String(data.internal_reference).trim() : null,
     hsn_sac_code: data.hsn_sac_code || data.hsn_code || null,
     description: data.description || null,
+    manufacturer: data.manufacturer || null,
     tax: data.tax ? parseFloat(data.tax) : 0,
-    stock: parseInt(data.stock || data.current_stock || 0),
+    stock: Number(data.stock ?? data.current_stock ?? 0) || 0,
     unit: data.unit,
     secondary_unit: data.secondary_unit || null,
     conversion_factor: parseInt(data.conversion_factor || 1),
@@ -42,6 +72,7 @@ export const updateProduct = (id, data) => {
     sale_price: data.sale_price,
     low_stock_alert: parseInt(data.low_stock_alert || data.min_stock_level || 0),
     warranty_months: parseInt(data.warranty_months || 0),
+    is_active: data.is_active !== undefined ? Boolean(data.is_active) : true,
     meta: data.meta
   };
   return api.put(`/inventory/products/${id}/`, backendData).then(res => res.data);
@@ -52,6 +83,15 @@ export const deleteProduct = (id) =>
 
 export const bulkDeleteProducts = (ids) =>
   api.post('/inventory/products/bulk-delete/', { ids }).then(res => res.data);
+
+export const bulkRestoreProducts = (ids) =>
+  api.post('/inventory/products/bulk-restore/', { ids }).then(res => res.data);
+
+export const restoreProduct = (id) =>
+  api.post(`/inventory/products/${id}/restore/`).then(res => res.data);
+
+export const getManufacturers = () =>
+  api.get('/inventory/manufacturers/').then(res => res.data);
 
 export const downloadProductCsvTemplate = () =>
   api.get('/inventory/products/template/csv/', { responseType: 'blob' }).then(res => res.data);
@@ -65,12 +105,25 @@ export const bulkUploadProductsCsv = (file, options = {}) => {
   }).then(res => res.data);
 };
 
+export const getInventoryCsvJobStatus = (taskId) =>
+  api.get(`/inventory/products/csv-jobs/${taskId}/`).then(res => res.data);
+
 // Stock management endpoints
 export const getStockMovements = (params) =>
   api.get("/inventory/transfers/", { params }).then(res => res.data);
 
 export const createStockMovement = (data) =>
   api.post("/inventory/transfers/", data).then(res => res.data);
+
+// UAT P1 #15: value + e-way warning before saving (no writes), and the Rule 55 challan print.
+export const previewStockTransfer = (data) =>
+  api.post("/inventory/transfers/preview/", data).then(res => res.data);
+
+export const printTransferChallan = async (id) => {
+  const res = await api.get(`/inventory/transfers/${id}/challan/`, { responseType: 'text' });
+  const w = window.open('', '_blank');
+  if (w) { w.document.open(); w.document.write(res.data); w.document.close(); w.focus(); }
+};
 
 export const getStockAdjustments = (params) =>
   api.get("/inventory/stock-adjustments/", { params }).then(res => res.data);
@@ -130,7 +183,7 @@ export const updatePriceList = (id, data) => api.put(`/inventory/price-lists/${i
 export const deletePriceList = (id) => api.delete(`/inventory/price-lists/${id}/`).then(res => res.data);
 
 // Schemes
-export const getSchemes = () => api.get("/inventory/schemes/").then(res => res.data);
+export const getSchemes = (params) => api.get("/inventory/schemes/", { params }).then(res => res.data);
 export const createScheme = (data) => api.post("/inventory/schemes/", data).then(res => res.data);
 export const getScheme = (id) => api.get(`/inventory/schemes/${id}/`).then(res => res.data);
 export const updateScheme = (id, data) => api.put(`/inventory/schemes/${id}/`, data).then(res => res.data);

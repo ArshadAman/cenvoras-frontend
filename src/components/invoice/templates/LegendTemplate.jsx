@@ -1,7 +1,11 @@
+import { documentTitle, documentDeclaration } from '../../../utils/gstStatus';
 import React, { forwardRef } from 'react';
-import { amountInWords } from '../../../utils/invoiceSettings';
+import PlaceOfSupplyLine from './PlaceOfSupplyLine';
+import { posLabel } from '../../../utils/constants';
+import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
+import InvoicePrintShell from '../InvoicePrintShell';
 
 // Legend Template (ITC Style)
 const LegendTemplate = forwardRef(({ 
@@ -9,6 +13,7 @@ const LegendTemplate = forwardRef(({
 }, ref) => {
   const colors = template.colors || {};
   const typography = template.typography || {};
+  const type = resolveTypography(typography);
   const sections = template.sections || {};
   const content = template.content || {};
   const columns = template.columns || [];
@@ -20,46 +25,115 @@ const LegendTemplate = forwardRef(({
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const items = invoice.items || [];
+
+  const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
+  const bankAccount = businessInfo.bank_account_number || content.bankDetails?.accountNumber || '';
+  const bankIfsc = businessInfo.bank_ifsc_code || content.bankDetails?.ifscCode || '';
+  const bankBranch = businessInfo.bank_branch || content.bankDetails?.branch || '';
+  const bankUpi = businessInfo.bank_upi_id || '';
+  const bankQr = businessInfo.bank_qr_code || '';
+  const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
-  const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.price || 0)), 0);
-  const taxTotal = items.reduce((sum, item) => sum + ((parseFloat(item.quantity||0) * parseFloat(item.price||0) * parseFloat(item.tax||0)) / 100), 0);
-  const finalTotal = subtotal + taxTotal + (parseFloat(invoice.round_off || 0));
+  const roundOff = parseFloat(invoice.round_off || 0) || 0;
+  const subtotal = items.reduce((sum, item) => {
+    const qty = parseFloat(item.quantity || 0);
+    const price = parseFloat(item.price || 0);
+    const discount = parseFloat(item.discount || 0);
+    const lineBase = qty * price;
+    return sum + (lineBase - (lineBase * discount) / 100);
+  }, 0);
+  const taxTotal = items.reduce((sum, item) => {
+    const qty = parseFloat(item.quantity || 0);
+    const price = parseFloat(item.price || 0);
+    const discount = parseFloat(item.discount || 0);
+    const tax = parseFloat(item.tax || 0);
+    const lineBase = qty * price;
+    const taxable = lineBase - (lineBase * discount) / 100;
+    return sum + ((taxable * tax) / 100);
+  }, 0);
+  const finalTotal = invoice.total_amount != null
+    ? parseFloat(invoice.total_amount)
+    : Number((subtotal + taxTotal + roundOff).toFixed(2));
 
   const taxType = getTaxType(invoice, businessInfo);
   const isIGST = taxType === 'igst';
 
-  const visibleColumns = columns.filter(col => col.show !== false);
+  const hasAnyDiscount = (items || []).some(item => Number(item?.discount || 0) > 0);
+  const visibleColumns = columns
+    .filter(col => col.show !== false)
+    .filter(col => invoiceSettings.show_item_batch !== false || col.id !== 'batch')
+    .filter(col => invoiceSettings.show_item_hsn !== false || col.id !== 'hsn')
+    .filter(col => invoiceSettings.show_item_free_quantity !== false || col.id !== 'free_qty')
+    .filter(col => (invoiceSettings.show_item_discount !== false && hasAnyDiscount) || col.id !== 'discount')
+    .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
-  const planCode = businessInfo.plan_code || 'free';
-  const showWatermarkFooter = planCode !== 'business';
+  const showWatermarkFooter = true;
   const borderColor = colors.tableBorder || '#e2e8f0';
+
+  const isDeliveryChallan = 
+    invoice.document_type === 'delivery_challan' || 
+    invoice.is_delivery_challan || 
+    content.invoiceTitle === 'DELIVERY CHALLAN' || 
+    Boolean(invoice.challan_number && !invoice.invoice_number);
 
   return (
     <div 
       ref={ref}
+      data-bill-template="true"
+      className="bg-white invoice-sheet"
       style={{
-        width: '210mm', minHeight: '297mm', padding: '10mm', boxSizing: 'border-box',
+        width: '210mm', minHeight: '297mm', margin: '0 auto', padding: '4mm 3px', boxSizing: 'border-box',
         backgroundColor: colors.background || '#ffffff', color: colors.text || '#000000',
-        fontFamily: typography.fontFamily, fontSize: `${typography.bodySize || 10}px`,
-        transform: `scale(${scale})`, transformOrigin: 'top left',
+        fontFamily: type.fontFamily, fontSize: `${type.bodySize}px`, lineHeight: type.lineHeight,
+        ...(scale && scale !== 1 ? { transform: `scale(${scale})`, transformOrigin: 'top left' } : {}),
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
       }}
     >
-      <div style={{ border: `1px solid ${borderColor}` }} className="h-full flex flex-col">
+      <InvoicePrintShell
+        theme="legend"
+        headerProps={{
+          companyName,
+          companyAddress,
+          companyPhone: businessInfo.phone || '',
+          companyEmail: businessInfo.email || '',
+          companyGST: businessInfo.gstin || '',
+          companyPAN: businessInfo.pan_number || businessInfo.pan || '',
+          companyGEM: businessInfo.gem_id || '',
+          companyDL: businessInfo.dl_number || '',
+          companyNameColor: colors.primary || '#d11f1f',
+          primaryColor: colors.primary || '#d11f1f',
+          companyNameSize: type.companyNameSize,
+          companyAddressSize: type.companyAddressSize,
+          fontFamily: type.headerFont,
+          smallSize: type.smallSize,
+          companyLogo: template.branding?.logo || '',
+          showLogo: Boolean(sections.showLogo && template.branding?.logo),
+        }}
+      >
+      <div style={{ border: `1px solid ${borderColor}` }} className="invoice-sheet-body flex flex-col">
         {/* Header Block */}
         <div className="flex justify-between items-start border-b" style={{ borderColor }}>
-          <div className="p-4 flex gap-4 w-2/3 border-r" style={{ borderColor }}>
+          <div className="p-4 flex gap-4 w-2/3 border-r invoice-first-page-header" style={{ borderColor }}>
             {sections.showLogo && template.branding?.logo && (
               <img src={template.branding.logo} alt="Logo" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
             )}
             <div>
-              <h1 className="font-bold text-lg mb-0.5" style={{ color: colors.primary }}>{companyName}</h1>
+              <h1 className="font-bold mb-0.5" style={{ color: colors.primary, fontSize: `${type.companyNameSize}px` }}>{companyName}</h1>
+              <div style={{ fontSize: `${type.companyAddressSize}px` }}>
               <p className="whitespace-pre-line leading-snug">{companyAddress}</p>
               {sections.showGST && <p className="font-bold mt-1">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {businessInfo.gstin || '-'}</p>}
+              {(businessInfo.pan_number || businessInfo.pan) && <p className="font-bold">PAN: {businessInfo.pan_number || businessInfo.pan}</p>}
+              {sections.showGEMID && (businessInfo.gem_id || invoice.gem_id) && <p>GeM ID: {businessInfo.gem_id || invoice.gem_id}</p>}
+              {(businessInfo.dl_number || invoice.dl_number) && <p>DL No: {businessInfo.dl_number || invoice.dl_number}</p>}
+              </div>
               {invoice.customer_phone && <p>Mobile: {invoice.customer_phone}</p>}
             </div>
           </div>
           <div className="p-4 w-1/3 text-right">
-            <h2 className="text-xl font-bold tracking-widest">{content.invoiceTitle || 'TAX INVOICE'}</h2>
+            <h2 className="font-bold tracking-widest" style={{ fontSize: `${type.invoiceTitleSize}px` }}>{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : documentTitle(content.invoiceTitle, businessInfo)}</h2>
+{!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1">Original for Recipient</p>
           </div>
         </div>
@@ -67,135 +141,312 @@ const LegendTemplate = forwardRef(({
         {/* Info Blocks Grid */}
         <div className="flex border-b" style={{ borderColor }}>
           <div className="w-1/2 p-3 border-r" style={{ borderColor }}>
-             <p className="font-bold uppercase mb-1">Customer Details:</p>
-             <p className="font-bold">{customerName}</p>
-             {invoice.customer_gstin && <p className="font-bold mt-1">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
-             <p className="whitespace-pre-line mt-1 leading-snug">{billingAddress}</p>
+             <p className="font-bold uppercase tracking-wider text-gray-500 mb-0.5" style={{ fontSize: `${type.sectionTitleSize}px` }}>Customer Details:</p>
+             <p className="font-semibold text-gray-900" style={{ fontSize: `${type.customerNameSize}px` }}>{customerName}</p>
+             {invoice.customer_gstin && <p className="font-medium text-xs mt-0.5">{getCountryCode() === 'IN' ? 'GSTIN:' : 'TRN:'} {invoice.customer_gstin}</p>}
+             <PlaceOfSupplyLine invoice={invoice} showDelivery hidePos className="text-xs mt-0.5" />
+             <p className="whitespace-pre-line mt-0.5 text-gray-600 leading-snug" style={{ fontSize: `${type.addressSize}px` }}>{billingAddress}</p>
           </div>
-          <div className="w-1/2">
-             <div className="flex border-b" style={{ borderColor }}>
-                <div className="w-1/2 p-2 border-r" style={{ borderColor }}>
-                   <p className="font-bold">Invoice #:</p>
-                   <p>{invoiceNumber}</p>
+          <div className="w-1/2 flex flex-col justify-between">
+             <div className="flex border-b flex-1" style={{ borderColor }}>
+                <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
+                   <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">{isDeliveryChallan ? 'Challan #' : 'Invoice #'}</p>
+                   <p className="font-semibold text-gray-900">{isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}</p>
                 </div>
-                <div className="w-1/2 p-2">
-                   <p className="font-bold">Date:</p>
-                   <p>{invoiceDate}</p>
+                <div className="w-1/2 p-2.5 flex flex-col justify-center">
+                   <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">{isDeliveryChallan ? 'Challan Date' : 'Date'}</p>
+                   <p className="font-semibold text-gray-900">{isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}</p>
                 </div>
              </div>
-             <div className="p-2">
-                <p className="font-bold">Place of Supply:</p>
-                <p>{invoice.place_of_supply || 'Same State'}</p>
+             <div className="flex flex-1">
+                {isDeliveryChallan ? (
+                  <>
+                    <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
+                       <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Ref Order</p>
+                       <p className="font-semibold text-gray-900">{invoice.sales_order_number || invoice.po_number || '—'}</p>
+                    </div>
+                    <div className="w-1/2 p-2.5 flex flex-col justify-center">
+                       <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Vehicle No.</p>
+                       <p className="font-mono font-semibold text-gray-900">{invoice.vehicle_number || '—'}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
+                       <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Place of Supply</p>
+                       <p className="font-semibold text-gray-900">{posLabel(invoice.place_of_supply) || 'Same State'}</p>
+                       {formatLinkedChallanList(invoice) && (
+                         <p className="text-xs text-gray-500 mt-0.5">Challan: <span className="font-semibold text-gray-800">{formatLinkedChallanList(invoice)}</span></p>
+                       )}
+                    </div>
+                    <div className="w-1/2 p-2.5 flex flex-col justify-center">
+                       {invoice.po_number || invoice.sales_order_number ? (
+                         <>
+                           <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">PO / Order #</p>
+                           <p className="font-semibold text-gray-900">{invoice.po_number || invoice.sales_order_number}</p>
+                         </>
+                       ) : invoice.due_date ? (
+                         <>
+                           <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Due Date</p>
+                           <p className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>
+                         </>
+                       ) : (
+                         <>
+                           <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Payment Terms</p>
+                           <p className="font-semibold text-gray-900">Due on Receipt</p>
+                         </>
+                       )}
+                    </div>
+                  </>
+                )}
              </div>
           </div>
         </div>
 
         {/* Legend Table */}
-        <table className="w-full text-center border-b" style={{ borderColor }}>
-          <thead>
-            <tr style={{ backgroundColor: colors.primary, color: '#fff' }}>
-              {visibleColumns.map(col => (
-                <th key={col.id} className="p-1 border-r border-white font-normal">{col.label}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, idx) => (
-              <tr key={idx} className="border-b border-gray-200">
-              {visibleColumns.map(col => {
-                let val = '';
-                if(col.id==='serial') val = idx+1;
-                else if(col.id==='description') val = <div className="text-left font-semibold">{item.product_name || item.product}</div>;
-                else if(col.id==='quantity') val = item.quantity;
-                else if(col.id==='price') val = parseFloat(item.price||0).toLocaleString('en-IN', {minimumFractionDigits:2});
-                else if(col.id==='tax') val = `${item.tax||0}%`;
-                else if(col.id==='amount') val = (item.quantity * item.price).toLocaleString('en-IN', {minimumFractionDigits:2});
-                else if(col.id==='hsn') val = item.hsn_sac_code || '-';
-                return <td key={col.id} className="py-1 px-2 border-r border-gray-200">{val}</td>;
-              })}
+        <table className="w-full border-collapse border-b" style={{ borderColor, tableLayout: 'fixed' }}>
+            <thead style={{ display: 'table-header-group' }}>
+              <tr className="h-9" style={{ backgroundColor: colors.primary, color: '#fff' }}>
+                {visibleColumns.map((col, idx) => {
+                  const isLast = idx === visibleColumns.length - 1;
+                  const isNum = ['price', 'amount'].includes(col.id);
+                  const isDesc = col.id === 'description';
+                  const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3' : 'text-center px-2';
+                  const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '30%' : col.id === 'batch' ? '10%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'free_qty' ? '7%' : col.id === 'unit' ? '8%' : col.id === 'make' ? '10%' : col.id === 'pack_size' ? '10%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '8%' : col.id === 'tax' ? '10%' : '14%';
+                  return (
+                    <th 
+                      key={col.id} 
+                      className={`py-2 font-bold uppercase tracking-wider ${alignClass} ${!isLast ? 'border-r border-white/20' : ''}`}
+                      style={{ width: colWidth, whiteSpace: 'nowrap', fontSize: `${type.tableHeaderSize}px` }}
+                    >
+                      {col.id === 'serial' ? 'Sl.' : col.label}
+                    </th>
+                  );
+                })}
               </tr>
-            ))}
-            <tr className="font-bold h-8 align-middle">
-              <td colSpan={visibleColumns.length - 2} className="text-left px-2 border-r border-gray-200">
-                Total items: {items.length}
-              </td>
-              <td className="border-r border-gray-200">Subtotal</td>
-              <td>{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
-            </tr>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((item, idx) => {
+                if (item.row_type === 'note') {
+                  return (
+                    <tr key={idx} className="border-b border-gray-200 bg-gray-50/50">
+                      <td colSpan={visibleColumns.length} className="py-1.5 px-2 text-left text-gray-700 italic font-medium" style={{ fontSize: `${type.smallSize}px` }}>
+                        Note: {item.description || item.product_description || item.product || ''}
+                      </td>
+                    </tr>
+                  );
+                }
+                return (
+                <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="border-b border-gray-200">
+                {visibleColumns.map((col, cIdx) => {
+                  const isLast = cIdx === visibleColumns.length - 1;
+                  const isNum = ['price', 'amount'].includes(col.id);
+                  const isDesc = col.id === 'description';
+                  const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3 font-mono' : 'text-center px-2';
+                  let val = '';
+                  if(col.id==='serial') val = items.slice(0, idx).filter((row) => row.row_type !== 'note').length + 1;
+                  else if(col.id==='description') {
+                    const desc = item.description || item.product_description || item.product_detail?.description;
+                    val = (
+                      <div className="leading-tight py-0">
+                        <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
+                        {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
+                          <div className="text-xs text-gray-500 font-medium italic mt-0.5">
+                            Mfr: {item.manufacturer || item.product_detail?.manufacturer}
+                          </div>
+                        )}
+                        {desc && (
+                          <div className="text-xs text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
+                            {desc}
+                          </div>
+                        )}
+                        {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
+                          <div className="text-xs text-gray-500 mt-0.5 font-medium">
+                            {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
+                            {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
+                            {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  }
+                  else if(col.id==='quantity') val = item.quantity;
+                  else if(col.id==='batch') val = item.batch_number || item.batch?.batch_number || item.batch || '-';
+                  else if(col.id==='unit') val = item.unit || 'pcs';
+                  else if(col.id==='free_qty') val = item.free_quantity || 0;
+                  else if(col.id==='make') val = item.make || item.product_detail?.make || item.brand || item.product_detail?.brand || '-';
+                  else if(col.id==='pack_size') val = item.pack_size || item.product_detail?.pack_size || item.packing || item.product_detail?.packing || item.unit || '-';
+                  else if(col.id==='price') {
+                    const p = parseFloat(item.price||0);
+                    const pStr = p.toString();
+                    const decCount = (pStr.split('.')[1] || '').length;
+                    const decimals = Math.min(Math.max(2, decCount), 4);
+                    val = p.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: decimals });
+                  }
+                  else if(col.id==='discount') {
+                    const discNum = parseFloat(item.discount || 0);
+                    val = discNum > 0 ? `${discNum}%` : '-';
+                  }
+                  else if(col.id==='tax') val = `${Math.round(item.tax||0)}%`;
+                  else if(col.id==='amount') {
+                    const qty = parseFloat(item.quantity||0);
+                    const price = parseFloat(item.price||0);
+                    const disc = parseFloat(item.discount||0);
+                    const lineBase = qty * price;
+                    val = (lineBase - (lineBase * disc) / 100).toLocaleString('en-IN', {minimumFractionDigits:2});
+                  }
+                  else if(col.id==='hsn') val = item.hsn_sac_code || '-';
+                  return (
+                    <td 
+                      key={col.id} 
+                      className={`align-middle ${!isLast ? 'border-r border-gray-200' : ''}`} 
+                      style={{ 
+                        paddingTop: '0.6px',
+                        paddingBottom: '0.6px',
+                        paddingLeft: '8px', 
+                        paddingRight: '8px',
+                        margin: 0, 
+                        lineHeight: 1.2, 
+                        fontSize: `${type.tableBodySize}px`, 
+                        textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
+                        verticalAlign: 'middle' 
+                      }}
+                    >
+                      {val}
+                    </td>
+                  );
+                })}
+                </tr>
+              );
+            })}
+              {!isDeliveryChallan && (
+                <tr className="font-bold h-9 bg-gray-50/50">
+                  <td colSpan={visibleColumns.length - 2} className="text-left px-3 border-r border-gray-200 text-xs text-gray-600">
+                    Total items: {items.filter((row) => row.row_type !== 'note').length}
+                  </td>
+                  <td colSpan={2} className="text-right px-3 text-xs">
+                    <span className="uppercase tracking-wider font-semibold text-gray-700 mr-3">Subtotal</span>
+                    <span className="font-mono font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
 
-        {/* Footer Details */}
-        <div className="flex flex-1">
-          <div className="w-3/5 p-3 border-r flex flex-col justify-between" style={{ borderColor }}>
-             <div>
-               <p className="italic mb-2">Total amount (in words): <strong>INR {amountInWords(finalTotal)}</strong></p>
-               {sections.showBankDetails && (
-                 <div>
-                    <h4 className="font-bold border-b border-gray-300 inline-block mb-1">Bank Details:</h4>
-                    <table className="text-xs">
-                      <tbody>
-                        <tr><td className="pr-4 py-0.5">Bank:</td><td className="font-semibold">{content.bankDetails?.bankName}</td></tr>
-                        <tr><td className="pr-4 py-0.5">Account #:</td><td className="font-semibold">{content.bankDetails?.accountNumber}</td></tr>
-                        <tr><td className="pr-4 py-0.5">IFSC:</td><td className="font-semibold">{content.bankDetails?.ifscCode}</td></tr>
-                        <tr><td className="pr-4 py-0.5">Branch:</td><td className="font-semibold">{content.bankDetails?.accountHolder}</td></tr>
-                      </tbody>
-                    </table>
-                 </div>
-               )}
-             </div>
-             
-             {sections.showTerms && (
-               <div className="mt-4">
-                 <p className="font-bold border-b border-gray-300 inline-block mb-1">Notes:</p>
-                 <p className="mb-2">{content.footerNote}</p>
-                 <p className="font-bold border-b border-gray-300 inline-block mb-1">Terms & Conditions:</p>
-                 <ul className="list-decimal pl-4 space-y-0.5">
-                   {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
-                 </ul>
+        {/* Bank + totals (Hidden for Delivery Challans). Keep-together: never split across pages. */}
+        {!isDeliveryChallan ? (
+          <div className="invoice-totals-block flex flex-1">
+            <div className="w-3/5 p-3 border-r flex flex-col justify-between" style={{ borderColor }}>
+               <div>
+                 <p className="italic mb-2 text-sm font-medium text-gray-800">Total amount (in words): <strong>INR {amountInWords(finalTotal)}</strong></p>
+                 {sections.showBankDetails && hasBankDetails && (
+                   <div className="flex items-start justify-between gap-3 mt-2 bg-gray-50/60 p-2.5 rounded border border-gray-100">
+                     <div>
+                       <h4 className="font-bold border-b border-gray-300 inline-block mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Bank Details:</h4>
+                       <table style={{ fontSize: `${type.bankDetailsSize}px` }}>
+                         <tbody>
+                           {bankName && <tr><td className="pr-4 py-0.5 text-gray-600">Bank:</td><td className="font-semibold">{bankName}</td></tr>}
+                           {bankAccount && <tr><td className="pr-4 py-0.5 text-gray-600">Account #:</td><td className="font-semibold font-mono">{bankAccount}</td></tr>}
+                           {bankIfsc && <tr><td className="pr-4 py-0.5 text-gray-600">IFSC:</td><td className="font-semibold font-mono">{bankIfsc}</td></tr>}
+                           {bankBranch && <tr><td className="pr-4 py-0.5 text-gray-600">Branch:</td><td className="font-semibold">{bankBranch}</td></tr>}
+                           {bankUpi && <tr><td className="pr-4 py-0.5 text-gray-600">UPI / VPA:</td><td className="font-semibold font-mono">{bankUpi}</td></tr>}
+                         </tbody>
+                       </table>
+                     </div>
+                     {sections.showQRCode !== false && bankQr && (
+                       <div className="text-center flex-shrink-0">
+                         <img 
+                           src={bankQr} 
+                           alt="Scan & Pay" 
+                           className="w-16 h-16 object-contain rounded border border-gray-200 p-0.5 bg-white shadow-sm"
+                         />
+                         <span className="text-xs text-gray-500 block mt-0.5">Scan to Pay</span>
+                       </div>
+                     )}
+                   </div>
+                 )}
                </div>
-             )}
-          </div>
-          
-          {/* Totals Block */}
-          <div className="w-2/5 flex flex-col justify-between">
-             <table className="w-full text-right p-3 block text-sm">
-               <tbody className="w-full block">
-                 <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">Taxable Amount</td><td>{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+               
+            </div>
+            
+            {/* Totals Block — stays under table */}
+            <div className="w-2/5 flex flex-col">
+               <div className="p-3 space-y-1" style={{ fontSize: `${type.totalsSize}px` }}>
+                 <div className="flex justify-between items-center py-0.5">
+                   <span className="font-semibold text-gray-700 whitespace-nowrap">Taxable Amount</span>
+                   <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                 </div>
                  {isIGST ? (
-                   <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">IGST</td><td>{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                   <div className="flex justify-between items-center py-0.5">
+                     <span className="font-semibold text-gray-700 whitespace-nowrap">IGST</span>
+                     <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                   </div>
                  ) : (
                    <>
-                     <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">CGST</td><td>{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-                     <tr className="w-full flex justify-between px-3 py-1"><td className="font-semibold">SGST</td><td>{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                     <div className="flex justify-between items-center py-0.5">
+                       <span className="font-semibold text-gray-700 whitespace-nowrap">CGST</span>
+                       <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                     </div>
+                     <div className="flex justify-between items-center py-0.5">
+                       <span className="font-semibold text-gray-700 whitespace-nowrap">SGST</span>
+                       <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                     </div>
                    </>
                  )}
-                 <tr className="w-full flex justify-between px-3 py-2 border-t-2 border-b-2 bg-gray-100" style={{ borderColor }}>
-                   <td className="font-bold text-lg">Total Amount</td>
-                   <td className="font-bold text-lg">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
-                 </tr>
-               </tbody>
-             </table>
-             
-             {sections.showSignature && (
-               <div className="p-3 text-right text-xs">
-                  <p className="font-bold mb-10">For {companyName}</p>
-                  <p className="border-t border-gray-400 inline-block pt-1">{content.signatureLabel || 'Authorized Signatory'}</p>
+                 {roundOff !== 0 && (
+                   <div className="flex justify-between items-center py-0.5">
+                     <span className="font-semibold text-gray-700 whitespace-nowrap">Round Off</span>
+                     <span className="font-mono text-gray-900 whitespace-nowrap">{roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}</span>
+                   </div>
+                 )}
+                 <div className="flex justify-between items-center px-2 py-2 border-t-2 border-b-2 bg-gray-100 font-bold mt-1" style={{ borderColor }}>
+                   <span className="text-xs uppercase tracking-wider text-gray-900 whitespace-nowrap">Total Amount</span>
+                   <span className="text-sm font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                 </div>
                </div>
-             )}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Pinned last-page footer: terms + signatory + Made with Cenvora */}
+      <div className="mt-2 invoice-page-footer">
+        <div className="flex justify-between gap-6 p-4">
+          {sections.showTerms && (
+            <div className="flex-1">
+              {content.footerNote && (
+                <>
+                  <p className="font-bold border-b border-gray-300 inline-block mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Notes:</p>
+                  <p className="mb-2" style={{ fontSize: `${type.footerSize}px` }}>{content.footerNote}</p>
+                </>
+              )}
+              <p className="font-bold border-b border-gray-300 inline-block mb-1" style={{ fontSize: `${type.sectionTitleSize}px` }}>Terms & Conditions:</p>
+              <ul className="list-decimal pl-4 space-y-0.5 text-gray-600" style={{ fontSize: `${type.footerSize}px` }}>
+                {content.termsAndConditions?.map((t, i) => <li key={i}>{t}</li>)}
+              </ul>
+            </div>
+          )}
+          <div className="text-right p-3 ml-auto" style={{ fontSize: `${type.footerSize}px` }}>
+            <p className="font-bold mb-10">For {companyName}</p>
+            <p className="border-t border-gray-400 inline-block pt-1">
+              {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
+            </p>
           </div>
         </div>
-      </div>
-      <div className="mt-6 text-center text-[10px] text-gray-500 font-medium w-full">
-        This is a computer generated digital invoice and does not require a signature.
-      </div>
-      
-      {showWatermarkFooter && (
-        <div className="mt-2 text-center text-[10px] text-gray-400 print-watermark w-full">
-          Made with Cenvora: Built for Modern Businesses<br />
-          <a href="https://cenvora.app" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.app</a>
+        <div className="mt-2 text-center text-gray-500 font-medium w-full" style={{ fontSize: `${type.footerSize}px` }}>
+          {isDeliveryChallan
+            ? 'This is a computer generated delivery challan and does not require a signature.'
+            : 'This is a computer generated digital invoice and does not require a signature.'}
         </div>
-      )}
+        
+        {showWatermarkFooter && (
+          <div className="mt-2 text-center text-xs text-gray-400 print-watermark w-full">
+            Made with Cenvora: Built for Modern Businesses<br />
+            <a href="https://cenvora.co.in" className="text-blue-500 font-medium" target="_blank" rel="noreferrer">https://cenvora.co.in</a>
+          </div>
+        )}
+      </div>
+      </InvoicePrintShell>
     </div>
   );
 });

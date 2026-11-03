@@ -4,7 +4,7 @@ import api from './api';
 export const getSalesInvoices = params =>
   api.get("/billing/sales-invoices/", { params }).then(res => res.data);
 
-export const getNextInvoiceNumber = (prefix = "INV-") =>
+export const getNextInvoiceNumber = (prefix = "INV") =>
   api.get(`/billing/sales-invoices/next-number/?prefix=${prefix}`).then(res => res.data);
 
 export const getSalesAnalytics = params =>
@@ -22,6 +22,9 @@ export const createSalesInvoice = data =>
 export const updateSalesInvoice = (id, data) =>
   api.put(`/billing/sales-invoices/${id}/edit/`, data).then(res => res.data);
 
+export const patchSalesInvoice = (id, data) =>
+  api.patch(`/billing/sales-invoices/${id}/edit/`, data).then(res => res.data);
+
 export const deleteSalesInvoice = id =>
   api.delete(`/billing/sales-invoices/${id}/edit/`)
     .then(res => res.data)
@@ -36,8 +39,13 @@ export const uploadSalesCsv = (formData, options = {}) =>
     onUploadProgress: options.onUploadProgress,
   }).then(res => res.data);
 
-export const exportSalesInvoicesCsv = params =>
-  api.get("/billing/sales-invoices/export-csv/", { params }).then(res => res.data);
+export const exportSalesInvoicesCsv = params => {
+  const config = { params };
+  if (params?.direct) {
+    config.responseType = "blob";
+  }
+  return api.get("/billing/sales-invoices/export-csv/", config).then(res => res.data);
+};
 
 export const getSalesCsvJobStatus = taskId =>
   api.get(`/billing/sales-invoices/csv-jobs/${taskId}/`).then(res => res.data);
@@ -59,6 +67,19 @@ export const getProducts = (params = {}) =>
 // Customer API endpoints for sales form
 export const getCustomers = () =>
   api.get("/billing/customers/").then(res => res.data);
+
+export const downloadSalesInvoicePDF = (id, payload) => {
+  if (payload) {
+    const body = typeof payload === 'object' && ('html' in payload || 'template' in payload)
+      ? payload
+      : { template: payload };
+    return api.post(`/billing/sales-invoices/${id}/pdf/`, body, { responseType: 'blob' })
+      .then(res => res.data);
+  }
+  return api.get(`/billing/sales-invoices/${id}/pdf/`, { responseType: 'blob' })
+    .then(res => res.data);
+};
+
 
 export const createCustomer = (data) =>
   api.post("/billing/customers/", data).then(res => res.data);

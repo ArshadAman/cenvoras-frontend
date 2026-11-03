@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import { getUserProfile } from '../../api/users';
 import {
   XMarkIcon,
   PaintBrushIcon,
@@ -19,14 +21,16 @@ import {
 import InvoicePreview from '../invoice/InvoicePreview';
 import {
   getInvoiceTemplates,
-  getActiveTemplate,
-  setActiveTemplate,
+  getActiveTemplateForSection,
+  setActiveTemplateForSection,
   saveInvoiceTemplate,
   deleteInvoiceTemplate,
   createTemplateFromPreset,
   duplicateTemplate,
+  documentTypeToSectionKey,
   templatePresets,
   defaultInvoiceTemplate,
+  resolveTypography,
 } from '../../utils/invoiceSettings';
 
 // Color Picker Component
@@ -56,12 +60,12 @@ const ToggleSwitch = ({ label, checked, onChange, description }) => (
   <div className="flex items-center justify-between py-2">
     <div>
       <span className="text-sm text-white">{label}</span>
-      {description && <p className="text-xs text-gray-500">{description}</p>}
+      {description && <p className="text-xs text-[var(--text-muted)]">{description}</p>}
     </div>
     <button
       onClick={() => onChange(!checked)}
       className={`relative w-11 h-6 rounded-full transition-colors ${
-        checked ? 'bg-cyan-500' : 'bg-white/10'
+        checked ? 'bg-[var(--accent-primary)]' : 'bg-[var(--border-subtle)]'
       }`}
     >
       <span
@@ -74,9 +78,9 @@ const ToggleSwitch = ({ label, checked, onChange, description }) => (
 );
 
 // Number Input Component
-const NumberInput = ({ label, value, onChange, min = 0, max = 100, unit = '' }) => (
+const NumberInput = ({ label, value, onChange, min = 0, max = 100, unit = '', step }) => (
   <div className="flex items-center justify-between gap-3">
-    <span className="text-sm text-gray-300">{label}</span>
+    <span className="text-sm text-[var(--text-secondary)]">{label}</span>
     <div className="flex items-center gap-1">
       <input
         type="number"
@@ -84,9 +88,10 @@ const NumberInput = ({ label, value, onChange, min = 0, max = 100, unit = '' }) 
         onChange={(e) => onChange(Number(e.target.value))}
         min={min}
         max={max}
-        className="w-16 px-2 py-1 bg-white/5 border border-white/10 rounded text-sm text-white text-center"
+        step={step}
+        className="w-16 px-2 py-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg text-sm text-[var(--text-primary)] text-center font-mono"
       />
-      {unit && <span className="text-xs text-gray-500">{unit}</span>}
+      {unit && <span className="text-xs text-[var(--text-muted)]">{unit}</span>}
     </div>
   </div>
 );
@@ -94,13 +99,13 @@ const NumberInput = ({ label, value, onChange, min = 0, max = 100, unit = '' }) 
 // Text Input Component
 const TextInput = ({ label, value, onChange, placeholder = '' }) => (
   <div className="space-y-1">
-    <label className="text-sm text-gray-300">{label}</label>
+    <label className="form-label !mb-1">{label}</label>
     <input
       type="text"
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500"
+      className="form-input text-sm"
     />
   </div>
 );
@@ -108,13 +113,13 @@ const TextInput = ({ label, value, onChange, placeholder = '' }) => (
 // Textarea Component
 const TextArea = ({ label, value, onChange, rows = 3, placeholder = '' }) => (
   <div className="space-y-1">
-    <label className="text-sm text-gray-300">{label}</label>
+    <label className="form-label !mb-1">{label}</label>
     <textarea
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
       rows={rows}
       placeholder={placeholder}
-      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 resize-none"
+      className="form-input text-sm resize-none"
     />
   </div>
 );
@@ -122,14 +127,14 @@ const TextArea = ({ label, value, onChange, rows = 3, placeholder = '' }) => (
 // Select Component
 const Select = ({ label, value, onChange, options }) => (
   <div className="flex items-center justify-between gap-3">
-    <span className="text-sm text-gray-300">{label}</span>
+    <span className="text-sm text-[var(--text-secondary)]">{label}</span>
     <select
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
-      className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white"
+      className="px-3 py-1.5 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-sm text-[var(--text-primary)]"
     >
       {options.map(opt => (
-        <option key={opt.value} value={opt.value} className="bg-gray-900">
+        <option key={opt.value} value={opt.value} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
           {opt.label}
         </option>
       ))}
@@ -145,7 +150,7 @@ const SectionHeader = ({ children }) => (
 );
 
 // Main Component
-export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo = {} }) {
+export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo = {}, documentType = 'invoice', invoice = null }) {
   const [templates, setTemplates] = useState([]);
   const [activeTemplateId, setActiveTemplateId] = useState(null);
   const [currentTemplate, setCurrentTemplate] = useState(defaultInvoiceTemplate);
@@ -155,6 +160,42 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
   const [showTemplateList, setShowTemplateList] = useState(false);
   const [viewMode, setViewMode] = useState('design'); // 'design' or 'preview'
   const previewRef = useRef(null);
+
+  const sectionKey = documentTypeToSectionKey(documentType);
+
+  const isDeliveryChallan = Boolean(
+    documentType === 'delivery_challan' ||
+    invoice?.document_type === 'delivery_challan' ||
+    invoice?.is_delivery_challan
+  );
+
+  // Fetch profile to get configured multi-bank accounts
+  const { data: userProfileData } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const billingProfile = userProfileData?.billing_profile || userProfileData?.profile || {};
+  const allBankAccounts = (billingProfile.bank_accounts && billingProfile.bank_accounts.length > 0)
+    ? billingProfile.bank_accounts
+    : (businessInfo.bank_accounts && businessInfo.bank_accounts.length > 0)
+    ? businessInfo.bank_accounts
+    : (billingProfile.bank_name || businessInfo.bank_name)
+    ? [{
+        id: 'bank_acc_1',
+        account_name: 'Primary Account',
+        bank_name: billingProfile.bank_name || businessInfo.bank_name || '',
+        account_number: billingProfile.bank_account_number || businessInfo.bank_account_number || '',
+        ifsc_code: billingProfile.bank_ifsc_code || businessInfo.bank_ifsc_code || '',
+        account_holder: billingProfile.business_name || businessInfo.business_name || '',
+        branch: billingProfile.bank_branch || businessInfo.bank_branch || '',
+        upi_id: billingProfile.bank_upi_id || businessInfo.bank_upi_id || '',
+        qr_code: billingProfile.bank_qr_code || businessInfo.bank_qr_code || '',
+        is_default: true,
+      }]
+    : [];
 
   // Sample invoice data for preview
   const sampleInvoice = {
@@ -172,18 +213,50 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     ],
   };
 
-  // Load templates on mount
+  const sampleDeliveryChallan = {
+    challan_number: 'DC-001',
+    challan_date: new Date().toISOString(),
+    invoice_number: 'DC-001',
+    invoice_date: new Date().toISOString(),
+    customer_name: 'Acme Corporation',
+    customer_address: '123 Business Park, Tech City\nKarnataka, India - 560001',
+    customer_gstin: '29AAKCG6382L1ZU',
+    vehicle_number: 'KA-01-AB-1234',
+    transporter_name: 'Fast Track Logistics',
+    transport_mode: 'Road',
+    eway_bill_number: 'EWB-998877665544',
+    is_delivery_challan: true,
+    document_type: 'delivery_challan',
+    items: [
+      { product: 'Industrial Valve 50mm', hsn_sac_code: '8481', quantity: 10, price: 2500, tax: 18, unit: 'pcs', make: 'Kitz', pack_size: 'Box of 5' },
+      { product: 'Pressure Gauge 0-10 Bar', hsn_sac_code: '9026', quantity: 4, price: 1500, tax: 18, unit: 'nos', make: 'Baumer', pack_size: 'Single' },
+      { product: 'Flange Gasket Kit', hsn_sac_code: '4016', quantity: 20, price: 350, tax: 18, unit: 'sets', make: 'Klinger', pack_size: 'Pack of 10' },
+    ],
+  };
+
+  const previewInvoice = invoice
+    ? {
+        ...(isDeliveryChallan ? sampleDeliveryChallan : sampleInvoice),
+        ...invoice,
+        is_delivery_challan: isDeliveryChallan,
+        document_type: documentType,
+      }
+    : isDeliveryChallan
+    ? sampleDeliveryChallan
+    : sampleInvoice;
+
+  // Load templates for this section only
   useEffect(() => {
     if (isOpen) {
-      const loadedTemplates = getInvoiceTemplates();
+      const loadedTemplates = getInvoiceTemplates(sectionKey);
       setTemplates(loadedTemplates);
       
-      const active = getActiveTemplate();
+      const active = getActiveTemplateForSection({ sectionKey });
       setActiveTemplateId(active.id);
       setCurrentTemplate(active);
       setHasChanges(false);
     }
-  }, [isOpen]);
+  }, [isOpen, sectionKey]);
 
   // Update template field
   const updateTemplate = (path, value) => {
@@ -204,11 +277,11 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     setHasChanges(true);
   };
 
-  // Save current template
+  // Save current template (section-scoped — does not sync to other sections)
   const handleSave = () => {
-    const saved = saveInvoiceTemplate(currentTemplate);
+    const saved = saveInvoiceTemplate(currentTemplate, sectionKey);
     if (saved) {
-      setTemplates(getInvoiceTemplates());
+      setTemplates(getInvoiceTemplates(sectionKey));
       setHasChanges(false);
       toast.success('Template saved successfully!');
     } else {
@@ -216,23 +289,29 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     }
   };
 
-  // Set as active template
+  // Set as active template for this section only
   const handleSetActive = () => {
-    setActiveTemplate(currentTemplate.id);
-    setActiveTemplateId(currentTemplate.id);
-    toast.success('Template set as default!');
+    setActiveTemplateForSection(sectionKey, currentTemplate.id);
+    const refreshed = getInvoiceTemplates(sectionKey);
+    const active = refreshed.find((t) => t.id === currentTemplate.id) || currentTemplate;
+    setTemplates(refreshed);
+    setCurrentTemplate(active);
+    setActiveTemplateId(active.id);
+    toast.success('Template set as default for this section!');
   };
 
   // Create new template
   const handleCreateNew = () => {
     const newName = prompt('Enter template name:', 'My Custom Template');
     if (newName) {
-      const newTemplate = createTemplateFromPreset('classic', newName);
+      const newTemplate = createTemplateFromPreset('classic', newName, sectionKey);
       if (newTemplate) {
-        setTemplates(getInvoiceTemplates());
-        setCurrentTemplate(newTemplate);
-        setActiveTemplateId(newTemplate.id);
-        setActiveTemplate(newTemplate.id);
+        setActiveTemplateForSection(sectionKey, newTemplate.id);
+        const refreshed = getInvoiceTemplates(sectionKey);
+        const active = refreshed.find((t) => t.id === newTemplate.id) || newTemplate;
+        setTemplates(refreshed);
+        setCurrentTemplate(active);
+        setActiveTemplateId(active.id);
         toast.success('New template created!');
       }
     }
@@ -240,9 +319,9 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
 
   // Duplicate template
   const handleDuplicate = () => {
-    const duplicated = duplicateTemplate(currentTemplate.id);
+    const duplicated = duplicateTemplate(currentTemplate.id, sectionKey);
     if (duplicated) {
-      setTemplates(getInvoiceTemplates());
+      setTemplates(getInvoiceTemplates(sectionKey));
       setCurrentTemplate(duplicated);
       toast.success('Template duplicated!');
     }
@@ -256,10 +335,12 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     }
     
     if (confirm('Are you sure you want to delete this template?')) {
-      deleteInvoiceTemplate(currentTemplate.id);
-      const remaining = getInvoiceTemplates();
+      deleteInvoiceTemplate(currentTemplate.id, sectionKey);
+      const remaining = getInvoiceTemplates(sectionKey);
+      const next = remaining.find((t) => t.isDefault) || remaining[0] || defaultInvoiceTemplate;
       setTemplates(remaining);
-      setCurrentTemplate(remaining[0] || defaultInvoiceTemplate);
+      setCurrentTemplate(next);
+      setActiveTemplateId(next?.id || null);
       toast.success('Template deleted!');
     }
   };
@@ -305,7 +386,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     { id: 'layout', label: 'Layout', icon: Squares2X2Icon },
     { id: 'branding', label: 'Branding', icon: PhotoIcon },
     { id: 'colors', label: 'Colors', icon: SwatchIcon },
-    { id: 'typography', label: 'Typography', icon: DocumentTextIcon },
+    { id: 'typography', label: 'Font', icon: DocumentTextIcon },
     { id: 'sections', label: 'Sections', icon: Squares2X2Icon },
     { id: 'content', label: 'Content', icon: Cog6ToothIcon },
     { id: 'columns', label: 'Columns', icon: Squares2X2Icon },
@@ -319,13 +400,13 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
       <div className="lg:hidden flex border-b border-white/10 bg-[#111]">
         <button 
           onClick={() => setViewMode('design')}
-          className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${viewMode === 'design' ? 'text-cyan-400 bg-cyan-400/5 border-b-2 border-cyan-400' : 'text-gray-500'}`}
+          className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${viewMode === 'design' ? 'text-[var(--accent-primary)] bg-[var(--action-primary-bg)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`}
         >
           Design
         </button>
         <button 
           onClick={() => setViewMode('preview')}
-          className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'text-cyan-400 bg-cyan-400/5 border-b-2 border-cyan-400' : 'text-gray-500'}`}
+          className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'text-[var(--accent-primary)] bg-[var(--action-primary-bg)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`}
         >
           Preview
         </button>
@@ -336,8 +417,12 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
         {/* Header */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white">Invoice Designer</h2>
-            <p className="text-xs text-gray-500">Customize your invoice template</p>
+            <h2 className="text-lg font-bold text-white">
+              {isDeliveryChallan ? 'Challan Designer' : 'Invoice Designer'}
+            </h2>
+            <p className="text-xs text-[var(--text-muted)]">
+              {isDeliveryChallan ? 'Customize your delivery challan template' : 'Customize your invoice template'}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -364,8 +449,8 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
             className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-left flex items-center justify-between hover:bg-white/10 transition-colors"
           >
             <span className="text-white font-medium truncate">{currentTemplate.name}</span>
-            {activeTemplateId === currentTemplate.id && (
-              <span className="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded">Active</span>
+            {(templates.find((t) => t.isDefault)?.id === currentTemplate.id || activeTemplateId === currentTemplate.id) && (
+              <span className="text-xs bg-[var(--action-primary-bg)] text-[var(--accent-primary)] border border-[var(--action-primary-border)] px-2 py-0.5 rounded">Active</span>
             )}
           </button>
           
@@ -381,7 +466,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                   }`}
                 >
                   <span className="text-white">{template.name}</span>
-                  {activeTemplateId === template.id && (
+                  {template.isDefault && (
                     <CheckIcon className="w-4 h-4 text-cyan-400" />
                   )}
                 </button>
@@ -437,13 +522,12 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                 options={[
                   { value: 'classic', label: 'Classic Professional' },
                   { value: 'professional', label: 'Professional (Clean)' },
-                  { value: 'genz', label: 'GenZ Modern (Bold)' },
                   { value: 'service', label: 'Service Template' },
                   { value: 'legend', label: 'Legend Corporate' },
                   { value: 'billship', label: 'Bill To - Ship To' },
                 ]}
               />
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-[var(--text-muted)] mt-2">
                 This changes the overall structural arrangement of your invoice. Specific options like colors and custom fields will adapt to the chosen layout.
               </p>
             </div>
@@ -495,7 +579,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                       onChange={handleLogoUpload}
                       className="w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white/10 file:text-white file:cursor-pointer hover:file:bg-white/20"
                     />
-                    <p className="text-xs text-gray-500">Max 500KB, JPG/PNG</p>
+                    <p className="text-xs text-[var(--text-muted)]">Max 500KB, JPG/PNG</p>
                   </div>
                   
                   {currentTemplate.branding?.logo && (
@@ -606,8 +690,11 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
             </div>
           )}
 
-          {/* Typography Tab */}
-          {activeTab === 'typography' && (
+          {/* Font Tab */}
+          {activeTab === 'typography' && (() => {
+            const type = resolveTypography(currentTemplate.typography);
+            const setSize = (field) => (v) => updateTemplate(`typography.${field}`, v);
+            return (
             <div className="space-y-4">
               <SectionHeader>Fonts</SectionHeader>
               <Select
@@ -622,60 +709,47 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                   { value: 'Courier New, monospace', label: 'Courier New' },
                 ]}
               />
-              
-              <SectionHeader>Font Sizes</SectionHeader>
-              <NumberInput
-                label="Company Name"
-                value={currentTemplate.typography?.companyNameSize}
-                onChange={(v) => updateTemplate('typography.companyNameSize', v)}
-                min={14}
-                max={36}
-                unit="px"
-              />
-              <NumberInput
-                label="Invoice Title"
-                value={currentTemplate.typography?.invoiceTitleSize}
-                onChange={(v) => updateTemplate('typography.invoiceTitleSize', v)}
-                min={12}
-                max={28}
-                unit="px"
-              />
-              <NumberInput
-                label="Section Titles"
-                value={currentTemplate.typography?.sectionTitleSize}
-                onChange={(v) => updateTemplate('typography.sectionTitleSize', v)}
-                min={10}
-                max={16}
-                unit="px"
-              />
-              <NumberInput
-                label="Body Text"
-                value={currentTemplate.typography?.bodySize}
-                onChange={(v) => updateTemplate('typography.bodySize', v)}
-                min={8}
-                max={14}
-                unit="px"
-              />
-              <NumberInput
-                label="Small Text"
-                value={currentTemplate.typography?.smallSize}
-                onChange={(v) => updateTemplate('typography.smallSize', v)}
-                min={7}
-                max={12}
-                unit="px"
-              />
-              
+
+              <SectionHeader>Header</SectionHeader>
+              <NumberInput label="Company Name" value={type.companyNameSize} onChange={setSize('companyNameSize')} min={14} max={36} unit="px" />
+              <NumberInput label="Company Address" value={type.companyAddressSize} onChange={setSize('companyAddressSize')} min={7} max={16} unit="px" />
+
+              <SectionHeader>Document</SectionHeader>
+              <NumberInput label="Invoice Title" value={type.invoiceTitleSize} onChange={setSize('invoiceTitleSize')} min={12} max={32} unit="px" />
+              <NumberInput label="Invoice Details" value={type.bodySize} onChange={setSize('bodySize')} min={8} max={16} unit="px" />
+              <NumberInput label="Section Titles" value={type.sectionTitleSize} onChange={setSize('sectionTitleSize')} min={8} max={18} unit="px" />
+
+              <SectionHeader>Parties</SectionHeader>
+              <NumberInput label="Customer Name" value={type.customerNameSize} onChange={setSize('customerNameSize')} min={8} max={18} unit="px" />
+              <NumberInput label="Bill / Ship Address" value={type.addressSize} onChange={setSize('addressSize')} min={7} max={16} unit="px" />
+
+              <SectionHeader>Table</SectionHeader>
+              <NumberInput label="Table Header" value={type.tableHeaderSize} onChange={setSize('tableHeaderSize')} min={7} max={14} unit="px" />
+              <NumberInput label="Line Items" value={type.tableBodySize} onChange={setSize('tableBodySize')} min={7} max={16} unit="px" />
+              <NumberInput label="Line Notes" value={type.smallSize} onChange={setSize('smallSize')} min={7} max={14} unit="px" />
+
+              <SectionHeader>Totals</SectionHeader>
+              <NumberInput label="Totals" value={type.totalsSize} onChange={setSize('totalsSize')} min={8} max={18} unit="px" />
+
+              <SectionHeader>Bank</SectionHeader>
+              <NumberInput label="Bank Details" value={type.bankDetailsSize} onChange={setSize('bankDetailsSize')} min={7} max={16} unit="px" />
+
+              <SectionHeader>Terms / Footer</SectionHeader>
+              <NumberInput label="Terms / Footer" value={type.footerSize} onChange={setSize('footerSize')} min={7} max={14} unit="px" />
+
               <SectionHeader>Spacing</SectionHeader>
               <NumberInput
                 label="Line Height"
-                value={currentTemplate.typography?.lineHeight}
-                onChange={(v) => updateTemplate('typography.lineHeight', v)}
+                value={type.lineHeight}
+                onChange={setSize('lineHeight')}
                 min={1}
                 max={2}
+                step={0.1}
                 unit=""
               />
             </div>
-          )}
+            );
+          })()}
 
           {/* Sections Tab */}
           {activeTab === 'sections' && (
@@ -767,30 +841,70 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
               />
               
               <SectionHeader>Bank Details</SectionHeader>
-              <TextInput
-                label="Bank Name"
-                value={currentTemplate.content?.bankDetails?.bankName}
-                onChange={(v) => updateTemplate('content.bankDetails.bankName', v)}
-                placeholder="State Bank of India"
-              />
-              <TextInput
-                label="Account Number"
-                value={currentTemplate.content?.bankDetails?.accountNumber}
-                onChange={(v) => updateTemplate('content.bankDetails.accountNumber', v)}
-                placeholder="1234567890"
-              />
-              <TextInput
-                label="IFSC Code"
-                value={currentTemplate.content?.bankDetails?.ifscCode}
-                onChange={(v) => updateTemplate('content.bankDetails.ifscCode', v)}
-                placeholder="SBIN0001234"
-              />
-              <TextInput
-                label="Account Holder"
-                value={currentTemplate.content?.bankDetails?.accountHolder}
-                onChange={(v) => updateTemplate('content.bankDetails.accountHolder', v)}
-                placeholder="Your Business Name"
-              />
+              <div className="py-2">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm text-white">Bank Account to Print</span>
+                  <span className="text-xs text-gray-400">Profile Linked</span>
+                </div>
+                <select
+                  value={currentTemplate.content?.bankAccountId || (currentTemplate.content?.hideBankDetails ? 'none' : (allBankAccounts[0]?.id || ''))}
+                  onChange={(e) => {
+                    const selId = e.target.value;
+                    if (selId === 'none') {
+                      updateTemplate('content.bankAccountId', 'none');
+                      updateTemplate('content.hideBankDetails', true);
+                      updateTemplate('content.bankDetails', { bankName: '', accountNumber: '', ifscCode: '', accountHolder: '' });
+                    } else {
+                      const acc = allBankAccounts.find(a => a.id === selId);
+                      if (acc) {
+                        updateTemplate('content.bankAccountId', acc.id);
+                        updateTemplate('content.hideBankDetails', false);
+                        updateTemplate('content.bankDetails', {
+                          bankName: acc.bank_name || '',
+                          accountNumber: acc.account_number || '',
+                          ifscCode: acc.ifsc_code || '',
+                          accountHolder: acc.account_holder || '',
+                          branch: acc.branch || '',
+                          upiId: acc.upi_id || '',
+                        });
+                      }
+                    }
+                  }}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-purple-500 focus:outline-none cursor-pointer"
+                >
+                  <option value="none" className="bg-[var(--bg-surface)] text-[var(--text-muted)]">Do not print bank details (None)</option>
+                  {allBankAccounts.map((acc, idx) => (
+                    <option key={acc.id || idx} value={acc.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+                      {acc.account_name || `Account ${idx + 1}`} {acc.bank_name ? `• ${acc.bank_name}` : ''} {acc.account_number ? `(••••${acc.account_number.slice(-4)})` : ''}{acc.is_default ? ' [Default]' : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-[var(--text-muted)] mt-1.5">
+                  Choose which profile account to print. To add or edit accounts, visit Profile → Bank & Payment Details.
+                </p>
+
+                {(() => {
+                  const selId = currentTemplate.content?.bankAccountId;
+                  const isNone = selId === 'none' || currentTemplate.content?.hideBankDetails;
+                  if (isNone) return null;
+                  const activeAcc = allBankAccounts.find(a => a.id === selId) || allBankAccounts[0];
+                  if (!activeAcc || (!activeAcc.bank_name && !activeAcc.account_number)) return null;
+                  return (
+                    <div className="mt-3 p-3 rounded-lg border border-purple-500/20 bg-purple-500/5 text-xs space-y-1.5">
+                      <div className="flex justify-between text-gray-300">
+                        <span>Bank: <strong className="text-white font-medium">{activeAcc.bank_name || '—'}</strong></span>
+                        <span>IFSC: <strong className="text-white font-mono">{activeAcc.ifsc_code || '—'}</strong></span>
+                      </div>
+                      <div className="flex justify-between text-gray-300">
+                        <span>A/C: <strong className="text-white font-mono">{activeAcc.account_number || '—'}</strong></span>
+                        {activeAcc.account_holder && (
+                          <span>Holder: <strong className="text-white font-medium">{activeAcc.account_holder}</strong></span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
               
               <SectionHeader>Terms & Conditions</SectionHeader>
               <TextArea
@@ -821,7 +935,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
           {activeTab === 'columns' && (
             <div className="space-y-2">
               <SectionHeader>Table Columns</SectionHeader>
-              <p className="text-xs text-gray-500 mb-4">
+              <p className="text-xs text-[var(--text-muted)] mb-4">
                 Toggle which columns appear in your invoice items table.
               </p>
               
@@ -835,7 +949,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                       onClick={() => toggleColumn(col.id)}
                       className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                         col.show
-                          ? 'bg-cyan-500 border-cyan-500'
+                          ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)]'
                           : 'border-gray-500 hover:border-gray-400'
                       }`}
                     >
@@ -843,7 +957,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
                     </button>
                     <span className="text-white">{col.label}</span>
                   </div>
-                  <span className="text-xs text-gray-500">{col.width}</span>
+                  <span className="text-xs text-[var(--text-muted)]">{col.width}</span>
                 </div>
               ))}
             </div>
@@ -858,8 +972,8 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
               disabled={!hasChanges}
               className={`flex-1 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-all ${
                 hasChanges
-                  ? 'bg-cyan-500 text-white hover:bg-cyan-400'
-                  : 'bg-white/5 text-gray-500 cursor-not-allowed'
+                  ? 'btn-primary'
+                  : 'bg-white/5 text-[var(--text-muted)] cursor-not-allowed'
               }`}
             >
               <ArrowDownTrayIcon className="w-4 h-4" />
@@ -904,15 +1018,25 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
         </div>
 
         {/* Preview Content */}
-        <div className="flex-1 overflow-auto p-8 flex justify-center">
-          <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top center' }}>
-            <InvoicePreview
-              ref={previewRef}
-              invoice={sampleInvoice}
-              template={currentTemplate}
-              businessInfo={businessInfo}
-              scale={1}
-            />
+        <div className="flex-1 overflow-auto p-8 flex justify-center bg-[var(--bg-primary)]">
+          <div 
+            style={{ 
+              transform: `scale(${previewScale})`, 
+              transformOrigin: 'top center',
+              width: '210mm',
+              marginBottom: previewScale < 1 ? `calc(297mm * (${previewScale} - 1))` : 0,
+            }}
+          >
+            <div className="shadow-2xl bg-white" data-bill-template="true">
+              <InvoicePreview
+                ref={previewRef}
+                invoice={previewInvoice}
+                documentType={documentType}
+                template={currentTemplate}
+                businessInfo={businessInfo}
+                scale={1}
+              />
+            </div>
           </div>
         </div>
       </div>

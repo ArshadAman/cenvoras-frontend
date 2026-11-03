@@ -12,19 +12,19 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, trend, icon }) =>
   const { formatCurrency } = useRegion();
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md hover:-translate-y-1">
+    <div className="bg-[var(--bg-surface)] rounded-2xl p-6 shadow-sm border border-[var(--border-default)] transition-all hover:shadow-md hover:-translate-y-1">
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{title}</h3>
-        {icon && <div className="text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg">{icon}</div>}
+        <h3 className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wider">{title}</h3>
+        {icon && <div className="text-[var(--accent-primary)] bg-[var(--action-primary-bg)] p-2 rounded-lg">{icon}</div>}
       </div>
       
       <div className="flex items-end gap-3">
-        <span className="text-3xl font-bold text-slate-800 dark:text-white">
+        <span className="text-3xl font-bold text-[var(--text-primary)]">
           {formatCurrency(value)}
         </span>
         
         {trend !== undefined && (
-          <span className={`text-sm font-semibold mb-1 flex items-center ${trend >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+          <span className={`text-sm font-semibold mb-1 flex items-center ${trend >= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-danger)]'}`}>
             {trend >= 0 ? (
               <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -80,8 +80,8 @@ export const FinancialDashboard: React.FC = () => {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Financial Dashboard</h2>
-        <div className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-full text-sm font-medium">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)]">Financial Dashboard</h2>
+        <div className="bg-[var(--action-primary-bg)] text-[var(--accent-primary)] border border-[var(--action-primary-border)] px-4 py-2 rounded-full text-sm font-medium">
           Live Updates
         </div>
       </div>

@@ -77,6 +77,24 @@ export const getAccounts = async (params = {}) => {
   }
 };
 
+export const getBankDepositSummary = async () => {
+  try {
+    const response = await api.get('/ledger/bank-deposit/summary/');
+    return response.data;
+  } catch (error) {
+    throw createUserFriendlyError(error, 'Failed to load bank balances.');
+  }
+};
+
+export const createBankDeposit = async (payload) => {
+  try {
+    const response = await api.post('/ledger/bank-deposit/', payload);
+    return response.data;
+  } catch (error) {
+    throw createUserFriendlyError(error, 'Failed to record bank deposit.');
+  }
+};
+
 // Get specific account
 export const getAccount = async (id) => {
   try {
@@ -191,12 +209,62 @@ export const getGeneralLedgerEntries = async (params = {}) => {
     if (params.page_size) queryString.append('page_size', params.page_size);
     if (params.ordering) queryString.append('ordering', params.ordering);
     if (params.customer) queryString.append('customer', params.customer);
+    if (params.vendor) queryString.append('vendor', params.vendor);
 
     const response = await api.get(`/ledger/general-ledger-entries/?${queryString}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching general ledger entries:', error);
     throw createUserFriendlyError(error, 'Failed to load general ledger entries. Please try again.');
+  }
+};
+
+// Get partner statement (Customer or Vendor Sub-Ledger)
+export const getPartnerStatement = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams();
+    if (params.partner_type) queryString.append('partner_type', params.partner_type);
+    if (params.partner_id) queryString.append('partner_id', params.partner_id);
+    if (params.date_from) queryString.append('date_from', params.date_from);
+    if (params.date_to) queryString.append('date_to', params.date_to);
+    if (params.page) queryString.append('page', params.page);
+    if (params.page_size) queryString.append('page_size', params.page_size);
+
+    const response = await api.get(`/ledger/partner-statement/?${queryString}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching partner statement:', error);
+    throw createUserFriendlyError(error, 'Failed to load partner statement.');
+  }
+};
+
+// Download Vector PDF Statement via Warm Chromium CDP
+export const downloadPartnerStatementPdf = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams();
+    if (params.partner_type) queryString.append('partner_type', params.partner_type);
+    if (params.partner_id) queryString.append('partner_id', params.partner_id);
+    if (params.date_from) queryString.append('date_from', params.date_from);
+    if (params.date_to) queryString.append('date_to', params.date_to);
+
+    const response = await api.get(`/ledger/partner-statement/pdf/?${queryString}`, {
+      responseType: 'blob'
+    });
+
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const safeName = (params.partner_name || params.partner_type || 'Statement').replace(/\s+/g, '_');
+    link.setAttribute('download', `Statement_${safeName}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    return true;
+  } catch (error) {
+    console.error('Error downloading statement PDF:', error);
+    throw createUserFriendlyError(error, 'Failed to download statement PDF.');
   }
 };
 
@@ -233,18 +301,25 @@ export const getGeneralLedger = async (accountId, params = {}) => {
 
     const url = `/ledger/general-ledger/${accountId}/${queryString.toString() ? `?${queryString}` : ''}`;
     const response = await api.get(url);
-    
-    // Handle both array and paginated responses
-    if (Array.isArray(response.data)) {
+    const data = response.data;
+
+    if (Array.isArray(data)) {
       return {
-        results: response.data,
-        count: response.data.length,
+        results: data,
+        entries: data,
+        count: data.length,
         next: null,
         previous: null
       };
     }
-    
-    return response.data;
+
+    const entries = data?.entries || data?.results || [];
+    return {
+      ...data,
+      entries,
+      results: entries,
+      count: data?.count ?? entries.length,
+    };
   } catch (error) {
     console.error('Error fetching general ledger:', error);
     throw createUserFriendlyError(error, 'Failed to load general ledger for this account. Please try again.');
@@ -298,13 +373,46 @@ export const deleteLedgerEntry = async (id) => {
 // ==================== TRIAL BALANCE API ====================
 
 // Get trial balance for all accounts
-export const getTrialBalance = async () => {
+export const getTrialBalance = async (params = {}) => {
   try {
-    const response = await api.get('/ledger/trial-balance/');
+    const queryString = new URLSearchParams();
+    const asOfDate = typeof params === 'string' ? params : (params?.as_of || params?.asOf);
+    if (asOfDate) queryString.append('as_of', asOfDate);
+
+    const url = queryString.toString() ? `/ledger/trial-balance/?${queryString}` : '/ledger/trial-balance/';
+    const response = await api.get(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching trial balance:', error);
     throw createUserFriendlyError(error, 'Failed to load trial balance. Please try again.');
+  }
+};
+
+// Allocate unlinked payment / customer advance
+export const allocatePayment = async (paymentId, invoiceId = null, amount = null) => {
+  try {
+    const payload = {};
+    if (invoiceId) {
+      payload.invoice_id = invoiceId;
+    }
+    if (amount !== null && amount !== undefined && amount !== '') {
+      payload.amount = amount;
+    }
+    const response = await api.post(`/billing/payments/${paymentId}/allocate/`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error allocating payment:', error);
+    throw createUserFriendlyError(error, 'Failed to allocate payment.');
+  }
+};
+
+// Undo an advance application (posts a mirror entry dated today; nothing is deleted)
+export const reverseAdvanceAdjustment = async (adjustmentId) => {
+  try {
+    const response = await api.post(`/billing/payments/adjustments/${adjustmentId}/reverse/`, {});
+    return response.data;
+  } catch (error) {
+    throw createUserFriendlyError(error, 'Failed to un-apply advance.');
   }
 };
 
@@ -469,9 +577,11 @@ export const recordClientPayment = async (paymentData) => {
       customer: paymentData.customer,
       invoice: paymentData.invoice || undefined,
       amount: parseFloat(paymentData.amount),
+      mode: paymentData.mode || 'cash',
       notes: paymentData.description || paymentData.notes || "Payment received",
       date: paymentData.date || new Date().toLocaleDateString('sv-SE'),
-      reference: paymentData.reference || ""
+      reference: paymentData.reference || "",
+      bank_account_id: paymentData.bank_account_id || undefined,
     };
 
     const response = await api.post('/billing/payments/', requestData);

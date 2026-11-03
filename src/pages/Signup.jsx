@@ -1,90 +1,117 @@
 import React, { useState } from 'react';
-import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import api from '../api/api.js';
 import Loader from '../components/Loader';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, CheckCircleIcon, ArrowLeftIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Select from 'react-select';
 import { State, City } from 'country-state-city';
 import Seo from '../components/Seo';
+import AuthPrismCanvas from '../components/3d/AuthPrismCanvas';
+import BrandLogo from '../components/common/BrandLogo';
+import { yupGstinOptional } from '../utils/gstin';
 
-const customSelectStyles = {
-    control: (provided, state) => ({
-        ...provided,
-        backgroundColor: '#1e293b',
-        borderColor: state.isFocused ? '#06b6d4' : '#334155',
-        borderRadius: '0.75rem',
-        padding: '2px',
-        color: 'white',
-        boxShadow: state.isFocused ? '0 0 0 1px #06b6d4' : 'none',
-        '&:hover': {
-            borderColor: '#334155'
-        }
-    }),
-    menu: (provided) => ({
-        ...provided,
-        backgroundColor: '#1e293b',
-        border: '1px solid #334155',
-        borderRadius: '0.75rem',
-        zIndex: 50
-    }),
-    option: (provided, state) => ({
-        ...provided,
-        backgroundColor: state.isSelected ? '#06b6d4' : state.isFocused ? '#334155' : 'transparent',
-        color: 'white',
-        '&:active': {
-            backgroundColor: '#06b6d4'
-        }
-    }),
-    singleValue: (provided) => ({
-        ...provided,
-        color: 'white'
-    }),
-    input: (provided) => ({
-        ...provided,
-        color: 'white'
-    }),
-    placeholder: (provided) => ({
-        ...provided,
-        color: '#64748b'
-    })
+const selectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: 'var(--bg-primary)',
+    borderColor: state.isFocused ? 'var(--accent-primary)' : 'var(--border-subtle)',
+    borderRadius: '0.75rem',
+    padding: '3px',
+    color: 'var(--text-primary)',
+    boxShadow: 'none',
+    '&:hover': { borderColor: 'var(--accent-primary)' }
+  }),
+  menu: (provided) => ({
+    ...provided,
+    backgroundColor: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: '0.75rem',
+    zIndex: 50
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    backgroundColor: state.isSelected ? 'var(--accent-primary)' : state.isFocused ? 'var(--bg-primary)' : 'transparent',
+    color: state.isSelected ? 'var(--text-on-accent)' : 'var(--text-primary)',
+    fontWeight: state.isSelected ? '600' : 'normal',
+    cursor: 'pointer'
+  }),
+  singleValue: (provided) => ({ ...provided, color: 'var(--text-primary)', fontSize: '0.875rem' }),
+  placeholder: (provided) => ({ ...provided, color: 'var(--text-muted)', fontSize: '0.875rem' })
 };
 
-const SignupSchema = Yup.object().shape({
-  email: Yup.string().email('Invalid email').required('Required'),
-  password: Yup.string().min(8, 'Too short!').required('Required'),
-  confirm_password: Yup.string().oneOf([Yup.ref('password')], 'Passwords must match').required('Required'),
-  phone: Yup.string().required('Required'),
-  business_name: Yup.string().nullable(),
-  country: Yup.string().required('Country is required'),
-  gstin: Yup.string().when('country', {
-    is: 'IN',
-    then: (schema) => schema.length(15, 'GSTIN must be 15 characters').nullable(),
-    otherwise: (schema) => schema.nullable(),
+const stepSchemas = [
+  Yup.object().shape({
+    email: Yup.string().email('Enter a valid email').required('Email is required'),
+    password: Yup.string().min(8, 'At least 8 characters').required('Password is required'),
+    confirm_password: Yup.string().oneOf([Yup.ref('password')], 'Passwords do not match').required('Please confirm password'),
   }),
-  trn: Yup.string().when('country', {
-    is: 'AE',
-    then: (schema) => schema.matches(/^\d{15}$/, 'TRN must be exactly 15 digits').nullable(),
-    otherwise: (schema) => schema.nullable(),
+  Yup.object().shape({
+    phone: Yup.string().required('Phone number is required'),
+    business_name: Yup.string().nullable(),
+    state: Yup.string().required('State is required'),
+    city: Yup.string().nullable(),
   }),
-  state: Yup.string().required('State/Region is required'),
-  city: Yup.string().nullable(),
-  termsAccepted: Yup.boolean().oneOf([true], 'You must accept the Terms of Service').required('You must accept the Terms of Service'),
-});
+  Yup.object().shape({
+    gstin: yupGstinOptional(Yup).test(
+      'gstin-length-when-set',
+      'GSTIN must be 15 characters',
+      (value) => !value || String(value).length === 15
+    ),
+    termsAccepted: Yup.boolean().oneOf([true], 'You must accept the terms').required('Required'),
+  }),
+];
+
+const STEP_LABELS = ['Account', 'Business', 'Finish'];
+
+function InputField({ label, required, error, children }) {
+  return (
+    <div>
+      <label className="form-label">
+        {label}{required && <span className="text-[var(--text-muted)] ml-0.5">*</span>}
+      </label>
+      {children}
+      {error && <p className="form-error">{error}</p>}
+    </div>
+  );
+}
 
 export default function Signup() {
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1);
   const [otpRequested, setOtpRequested] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
   const [signupMessage, setSignupMessage] = useState('');
   const [googleError, setGoogleError] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    confirm_password: '',
+    phone: '',
+    business_name: '',
+    country: 'IN',
+    gstin: '',
+    state: '',
+    city: '',
+    otp: '',
+    termsAccepted: false,
+  });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const phoneParam = searchParams.get('phone') || '';
   const emailParam = searchParams.get('email') || '';
-  const [showManualForm, setShowManualForm] = useState(!!(phoneParam || emailParam));
-  const [isSubmitAttempted, setIsSubmitAttempted] = useState(false);
+
+  React.useEffect(() => {
+    if (phoneParam || emailParam) {
+      setFormData(prev => ({ ...prev, phone: phoneParam, email: emailParam }));
+      setShowManualForm(true);
+    }
+  }, []);
 
   React.useEffect(() => {
     /* global google */
@@ -95,14 +122,8 @@ export default function Signup() {
           callback: handleGoogleCredentialResponse,
         });
         window.google.accounts.id.renderButton(
-          document.getElementById("googleSignUpDiv"),
-          { 
-            theme: "filled_blue", 
-            size: "large", 
-            width: "100%",
-            text: "signup_with",
-            shape: "pill"
-          }
+          document.getElementById('googleSignUpDiv'),
+          { theme: 'outline', size: 'large', width: '100%', text: 'signup_with', shape: 'rectangular' }
         );
       } else {
         setTimeout(initGoogleSignUp, 100);
@@ -115,436 +136,463 @@ export default function Signup() {
     setLoading(true);
     setGoogleError('');
     try {
-      const payload = {
-        credential: response.credential,
-      };
-      const res = await api.post('/users/google-login/', payload);
+      const res = await api.post('/users/google-login/', { credential: response.credential });
       const token = res.data.token || res.data.access;
       if (token) {
         localStorage.setItem('token', token);
         localStorage.setItem('refresh', res.data.refresh);
-        
         try {
           const payload = JSON.parse(atob(token.split('.')[1]));
           localStorage.setItem('role', payload.role || 'admin');
-        } catch (e) {
-          console.error("Failed to parse token", e);
-        }
-
+        } catch (e) { console.error('Failed to parse token', e); }
         window.location.href = '/profile';
       } else {
-        setGoogleError('Failed to sign up with Google: No token received');
+        setGoogleError('Could not sign up with Google. Please try again.');
       }
     } catch (err) {
-      console.error(err);
-      setGoogleError(err?.response?.data?.error || 'Google Sign-up failed. Please try again.');
+      setGoogleError(err?.response?.data?.error || 'Google sign-up failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const setField = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: undefined }));
+  };
+
+  const validateStep = async (stepNum) => {
+    try {
+      await stepSchemas[stepNum - 1].validate(formData, { abortEarly: false });
+      setFormErrors({});
+      return true;
+    } catch (err) {
+      const errs = {};
+      err.inner?.forEach(e => { errs[e.path] = e.message; });
+      setFormErrors(errs);
+      setTouched(prev => {
+        const t = { ...prev };
+        Object.keys(errs).forEach(k => { t[k] = true; });
+        return t;
+      });
+      return false;
+    }
+  };
+
+  const handleNext = async () => {
+    const valid = await validateStep(step);
+    if (valid) setStep(s => s + 1);
+  };
+
+  const handleBack = () => {
+    setFormErrors({});
+    setStep(s => s - 1);
+  };
+
+  const handleSubmit = async () => {
+    const valid = await validateStep(3);
+    if (!valid) return;
+    setLoading(true);
+    try {
+      if (!otpRequested) {
+        const payload = {
+          email: formData.email,
+          password: formData.password,
+          confirm_password: formData.confirm_password,
+          phone: formData.phone,
+          business_name: formData.business_name,
+          country: 'IN',
+          gstin: formData.gstin || '',
+          state: formData.state,
+          city: formData.city,
+        };
+        const response = await api.post('/users/signup/', payload);
+        if (response?.data?.otp_required) {
+          setOtpRequested(true);
+          setPendingEmail(formData.email);
+          setSignupMessage('We sent a verification code to your email. Enter it below to finish setup:');
+        }
+      } else {
+        const response = await api.post('/users/signup/', {
+          email: pendingEmail || formData.email,
+          otp: formData.otp,
+        });
+        if (response.status === 201) navigate('/login');
+      }
+    } catch (error) {
+      const backendErrors = error?.response?.data?.errors;
+      const backendError = error?.response?.data?.error;
+      if (backendErrors) setFormErrors(backendErrors);
+      else if (backendError) setFormErrors({ email: backendError });
+      else setFormErrors({ email: 'Could not create account. Please check your details and try again.' });
+    }
+    setLoading(false);
+  };
+
+  const fieldClass = "form-input";
+  const fieldErr = (name) => formErrors[name] ? '!border-[var(--status-danger)] focus:!border-[var(--status-danger)]' : '';
+
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white font-sans flex overflow-hidden">
-            <Seo
-                title="Create Account"
-                description="Create your Cenvora account to start using billing and inventory software for your business."
-                canonicalPath="/signup"
-                noindex
-            />
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-body flex flex-col justify-between">
+      <Seo
+        title="Start 14-Day Free Trial | Cenvora"
+        description="Try Cenvora free for 14 days. Create GST invoices, manage stock, and track customer payments with zero obligation."
+        canonicalPath="/signup"
+        noindex
+      />
       {loading && <Loader />}
-      
-      {/* Left Side - Visual & Value Prop (Hidden on Mobile) */}
-      <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 bg-[#020617] overflow-hidden">
-        {/* Abstract Background Mesh - Purple/Blue Theme for Signup */}
-        <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-900/20 via-[#0f172a] to-blue-900/20"></div>
-            <div className="absolute top-[-20%] right-[-20%] w-[80%] h-[80%] bg-purple-500/10 rounded-full blur-[120px] animate-pulse-slow"></div>
-            <div className="absolute bottom-[-20%] left-[-20%] w-[80%] h-[80%] bg-blue-600/10 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
-            {/* Grid Pattern Overlay */}
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-        </div>
 
-        {/* Brand Logo */}
-        <Link to="/" className="relative z-10 flex items-center hover:opacity-90 transition-opacity">
-            <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[180px] h-auto object-contain" />
-        </Link>
+      <div className="flex-1 flex w-full">
+        {/* Left Panel */}
+        <div className="hidden lg:flex lg:w-1/2 relative bg-[var(--bg-surface)] border-r border-[var(--border-subtle)] p-12 flex-col justify-between overflow-hidden">
+          <div className="absolute -top-32 -left-32 w-96 h-96 bg-[var(--accent-primary)]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[var(--accent-primary)]/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Value Prop */}
-        <div className="relative z-10 max-w-lg">
-            <h2 className="text-4xl font-bold leading-tight mb-6">
-                Take control of your billing and inventory in minutes.
-            </h2>
-            <ul className="space-y-6 text-lg text-slate-300">
-                <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 shrink-0 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mt-1 font-semibold">✓</div>
-                    <div>
-                        <strong className="text-white block font-semibold mb-0.5">14-Day Free Pro Trial</strong>
-                        <span className="text-sm text-slate-400 leading-relaxed">Instant access to all premium features. No credit card required.</span>
-                    </div>
-                </li>
-                <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 shrink-0 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mt-1 font-semibold">✓</div>
-                    <div>
-                        <strong className="text-white block font-semibold mb-0.5">Setup in under 2 minutes</strong>
-                        <span className="text-sm text-slate-400 leading-relaxed">Import your items and start raising GST invoices immediately.</span>
-                    </div>
-                </li>
-                <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 shrink-0 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mt-1 font-semibold">✓</div>
-                    <div>
-                        <strong className="text-white block font-semibold mb-0.5">Staff-ready simplicity</strong>
-                        <span className="text-sm text-slate-400 leading-relaxed">An interface so intuitive your team can use it with zero training.</span>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        {/* Footer Links */}
-        <div className="relative z-10 flex gap-6 text-sm text-slate-500">
-            <p>© 2026 Cenvora Inc.</p>
-        </div>
-      </div>
-
-      {/* Right Side - Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-[#0f172a] relative overflow-y-auto">
-        {/* Mobile Navbar */}
-        <nav className="absolute top-0 left-0 w-full p-6 lg:hidden flex justify-between items-center z-20">
-            <Link to="/" className="flex items-center">
-                <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="w-[140px] h-auto object-contain" />
+          <div className="relative z-10">
+            <Link to="/" className="inline-flex items-center gap-2 hover:opacity-90 transition-opacity">
+              <BrandLogo className="h-12 sm:h-14 w-auto" />
             </Link>
-        </nav>
+            <div className="mt-8">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--status-success)] text-xs font-semibold mb-3">
+                <CheckCircleIcon className="w-4 h-4 text-[var(--status-success)]" />
+                No Credit Card Required
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight leading-snug font-display">
+                Experience effortless billing and real-time inventory management.
+              </h2>
+            </div>
+          </div>
 
-        <div className="w-full max-w-md space-y-8 my-auto pt-16 lg:pt-0">
-            <div className="text-center">
-                <h2 className="text-3xl font-bold text-white tracking-tight">Create your account</h2>
-                <p className="mt-2 text-slate-400">
-                    Start your 14-day Pro trial. No credit card required.
-                </p>
+          <div className="relative z-10 my-4 flex items-center justify-center">
+            <AuthPrismCanvas />
+          </div>
+
+          <div className="relative z-10 border-t border-[var(--border-subtle)] pt-6">
+            <div className="grid grid-cols-2 gap-3 text-xs text-[var(--text-primary)]">
+              {['Instant GST Invoicing', 'Live Stock Valuation', 'Customer Ledgers', 'Multi-Device Access'].map(f => (
+                <div key={f} className="flex items-center gap-2 bg-[var(--bg-primary)] p-2.5 rounded-xl border border-[var(--border-subtle)]">
+                  <CheckCircleIcon className="w-4 h-4 text-[var(--status-success)] shrink-0" />
+                  <span>{f}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Panel */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative">
+          <div className="w-full max-w-md">
+            {/* Mobile header */}
+            <div className="lg:hidden text-center mb-8">
+              <Link to="/" className="inline-block hover:opacity-90 transition-opacity mb-4">
+                <BrandLogo className="h-10 sm:h-11 w-auto mx-auto" />
+              </Link>
+              <h2 className="text-xl font-bold text-[var(--text-primary)] font-display">Start 14-day free trial</h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1">No credit card required</p>
             </div>
 
-            <Formik
-                initialValues={{ 
-                    email: emailParam || '', 
-                    password: '', 
-                    confirm_password: '', 
-                    phone: phoneParam || '', 
-                    business_name: '', 
-                    country: 'IN',
-                    gstin: '',
-                    trn: '',
-                    state: '',
-                    city: '',
-                    otp: '',
-                    termsAccepted: false
-                }}
-                validationSchema={SignupSchema}
-                onSubmit={async (values, { setSubmitting, setFieldError }) => {
-                    setLoading(true);
-                    try {
-                        if (!otpRequested) {
-                            const payload = {
-                                email: values.email,
-                                password: values.password,
-                                confirm_password: values.confirm_password,
-                                phone: values.phone,
-                                business_name: values.business_name,
-                                country: values.country,
-                                gstin: values.gstin,
-                                trn: values.trn,
-                                state: values.state,
-                                city: values.city,
-                            };
-                            const response = await api.post('/users/signup/', payload);
-                            if (response?.data?.otp_required) {
-                                setOtpRequested(true);
-                                setPendingEmail(values.email);
-                                setSignupMessage('OTP sent to your email. Enter it below to complete signup.');
-                            }
-                        } else {
-                            const response = await api.post('/users/signup/', {
-                                email: pendingEmail || values.email,
-                                otp: values.otp,
-                            });
-                            if (response.status === 201) {
-                                navigate('/login');
-                            }
-                        }
-                    } catch (error) {
-                        const backendErrors = error?.response?.data?.errors;
-                        const backendError = error?.response?.data?.error;
-                        if (backendErrors) {
-                            Object.entries(backendErrors).forEach(([key, val]) => {
-                                setFieldError(key, Array.isArray(val) ? val[0] : String(val));
-                            });
-                        } else if (backendError) {
-                            setFieldError(otpRequested ? 'otp' : 'email', backendError);
-                        } else {
-                            setFieldError('email', 'Signup failed. Please try again.');
-                        }
-                    }
-                    setLoading(false);
-                    setSubmitting(false);
-                }}
-            >
-                {({ isSubmitting, setFieldValue, values, errors, submitCount, resetForm, handleSubmit }) => (
-                    <form 
-                        className="mt-8 space-y-5"
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            if (isSubmitAttempted) {
-                                handleSubmit(e);
-                            }
-                        }}
-                    >
-                        {signupMessage ? (
-                            <div className="text-sm text-cyan-300 mb-4">{signupMessage}</div>
-                        ) : null}
+            <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+              <div className="mb-6">
+                <h1 className="text-2xl font-extrabold text-[var(--text-primary)] tracking-tight font-display">Create your account</h1>
+                <p className="text-xs text-[var(--text-muted)] mt-1.5">Start your 14-day full free trial in less than a minute</p>
+              </div>
 
-                        {otpRequested ? (
-                          <div className="space-y-4">
-                            <div>
-                              <label className="block text-sm font-medium text-slate-300 mb-1.5">Signup OTP</label>
-                              <Field
-                                  type="text"
-                                  name="otp"
-                                  className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                  placeholder="Enter 6-digit OTP"
-                              />
-                              {isSubmitAttempted && errors.otp && <div className="text-red-400 text-xs mt-1">{errors.otp}</div>}
-                              <p className="text-xs text-slate-400 mt-2">Sent to: {pendingEmail || 'your email'}</p>
+              {/* Google Sign-Up Gate */}
+              {!showManualForm && !otpRequested && (
+                <div className="space-y-4">
+                  {googleError && <div className="text-[var(--status-danger)] text-xs text-center">{googleError}</div>}
+                  <div id="googleSignUpDiv" className="w-full flex justify-center min-h-[40px]" />
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-[var(--border-subtle)]" />
+                    </div>
+                    <div className="relative flex justify-center text-xs text-[var(--text-muted)] font-medium">
+                      <span className="bg-[var(--bg-surface)] px-3">or sign up with email</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowManualForm(true)}
+                    className="btn-secondary w-full py-3.5 text-xs flex items-center justify-center gap-2"
+                  >
+                    <span>Continue with email</span>
+                    <ArrowRightIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                  </button>
+                </div>
+              )}
+
+              {/* OTP Verification */}
+              {otpRequested && (
+                <div className="space-y-4">
+                  {signupMessage && (
+                    <div className="p-3.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-secondary)]">
+                      {signupMessage}
+                    </div>
+                  )}
+                  <InputField label="Verification Code" required error={formErrors.otp}>
+                    <input
+                      type="text"
+                      value={formData.otp}
+                      onChange={e => setField('otp', e.target.value)}
+                      className={`${fieldClass} text-center font-mono tracking-widest`}
+                      placeholder="123456"
+                    />
+                  </InputField>
+                  <p className="text-xs text-[var(--text-muted)]">Sent to {pendingEmail}</p>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="btn-primary w-full py-2.5 text-sm font-semibold shadow-md flex items-center justify-center gap-2"
+                  >
+                    {loading ? 'Verifying...' : 'Verify & Create Account'}
+                    {!loading && <ArrowRightIcon className="w-4 h-4" />}
+                  </button>
+                </div>
+              )}
+
+              {/* Multi-Step Form */}
+              {showManualForm && !otpRequested && (
+                <div>
+                  {/* Step Progress */}
+                  <div className="flex items-center gap-2 mb-7">
+                    {STEP_LABELS.map((label, i) => {
+                      const s = i + 1;
+                      const isActive = s === step;
+                      const isDone = s < step;
+                      return (
+                        <React.Fragment key={label}>
+                          <div className="flex flex-col items-center gap-1">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                              isDone ? 'bg-[var(--status-success-fill)] text-[var(--status-success-on-fill)]' : isActive ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-muted)]'
+                            }`}>
+                              {isDone ? '✓' : s}
                             </div>
-
-                            <button
-                                type="submit"
-                                onClick={() => setIsSubmitAttempted(true)}
-                                disabled={isSubmitting}
-                                className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
-                            >
-                                {isSubmitting ? 'Verifying OTP...' : 'Verify OTP & Create Account'}
-                                {!isSubmitting && <ArrowRightIcon className="w-5 h-5" />}
-                            </button>
+                            <span className={`text-xs font-semibold transition-colors ${isActive ? 'text-[var(--text-primary)]' : isDone ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
+                              {label}
+                            </span>
                           </div>
-                        ) : showManualForm ? (
-                          <div className="space-y-5 animate-fade-in">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                resetForm();
-                                setIsSubmitAttempted(false);
-                                setShowManualForm(false);
-                              }}
-                              className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 mb-2 font-semibold"
-                            >
-                              ← Back to Google sign-up
-                            </button>
+                          {i < STEP_LABELS.length - 1 && (
+                            <div className={`flex-1 h-px mt-[-14px] transition-all duration-500 ${isDone ? 'bg-[var(--status-success)]' : 'bg-[var(--border-subtle)]'}`} />
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
 
-                            <div className="grid grid-cols-1 gap-5">
-                              <div>
-                                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Email address</label>
-                                  <Field
-                                      type="email"
-                                      name="email"
-                                      className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                      placeholder="name@company.com"
-                                  />
-                                  {isSubmitAttempted && errors.email && <div className="text-red-400 text-xs mt-1">{errors.email}</div>}
-                              </div>
+                  {/* Step 1: Account credentials */}
+                  {step === 1 && (
+                    <div className="space-y-4 animate-fadeIn">
+                      <InputField label="Email Address" required error={formErrors.email}>
+                        <input
+                          type="email"
+                          value={formData.email}
+                          onChange={e => setField('email', e.target.value)}
+                          className={`${fieldClass} ${fieldErr('email')}`}
+                          placeholder="name@company.com"
+                          autoFocus
+                        />
+                      </InputField>
 
-                              <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                      <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
-                                      <Field
-                                          type="password"
-                                          name="password"
-                                          className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                          placeholder="••••••••"
-                                      />
-                                      {isSubmitAttempted && errors.password && <div className="text-red-400 text-xs mt-1">{errors.password}</div>}
-                                  </div>
-                                  <div>
-                                      <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirm</label>
-                                      <Field
-                                          type="password"
-                                          name="confirm_password"
-                                          className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                          placeholder="••••••••"
-                                      />
-                                      {isSubmitAttempted && errors.confirm_password && <div className="text-red-400 text-xs mt-1">{errors.confirm_password}</div>}
-                                  </div>
-                              </div>
+                      <InputField label="Password" required error={formErrors.password}>
+                        <div className="relative">
+                          <input
+                            type={showPw ? 'text' : 'password'}
+                            value={formData.password}
+                            onChange={e => setField('password', e.target.value)}
+                            className={`${fieldClass} pr-11 ${fieldErr('password')}`}
+                            placeholder="At least 8 characters"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPw(v => !v)}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                          >
+                            {showPw ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </InputField>
 
-                              <div>
-                                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone Number</label>
-                                  <Field
-                                      type="text"
-                                      name="phone"
-                                      className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                      placeholder="+91 98765 43210"
-                                  />
-                                  {isSubmitAttempted && errors.phone && <div className="text-red-400 text-xs mt-1">{errors.phone}</div>}
-                              </div>
+                      <InputField label="Confirm Password" required error={formErrors.confirm_password}>
+                        <div className="relative">
+                          <input
+                            type={showConfirmPw ? 'text' : 'password'}
+                            value={formData.confirm_password}
+                            onChange={e => setField('confirm_password', e.target.value)}
+                            className={`${fieldClass} pr-11 ${fieldErr('confirm_password')}`}
+                            placeholder="Same as above"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPw(v => !v)}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                          >
+                            {showConfirmPw ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </InputField>
 
-                              <div>
-                                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Business Name (Optional)</label>
-                                  <Field
-                                      type="text"
-                                      name="business_name"
-                                      className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                      placeholder="Acme Corp"
-                                  />
-                              </div>
+                      <button
+                        onClick={handleNext}
+                        className="btn-primary w-full mt-2 py-3.5 text-xs shadow-md flex items-center justify-center gap-2"
+                      >
+                        Continue <ArrowRightIcon className="w-3.5 h-3.5" />
+                      </button>
 
-                              <div>
-                                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Country <span className="text-red-400">*</span></label>
-                                  <Select
-                                      options={[
-                                          { value: 'IN', label: 'India' },
-                                          { value: 'AE', label: 'United Arab Emirates' }
-                                      ]}
-                                      className="react-select-container"
-                                      classNamePrefix="react-select"
-                                      placeholder="Select Country"
-                                      styles={customSelectStyles}
-                                      onChange={(option) => {
-                                          setFieldValue('country', option.value);
-                                          setFieldValue('state', '');
-                                          setFieldValue('city', '');
-                                      }}
-                                      value={{ value: values.country, label: values.country === 'IN' ? 'India' : 'United Arab Emirates' }}
-                                  />
-                                  {isSubmitAttempted && errors.country && <div className="text-red-400 text-xs mt-1">{errors.country}</div>}
-                              </div>
+                      <button
+                        type="button"
+                        onClick={() => { setShowManualForm(false); setFormErrors({}); }}
+                        className="w-full text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center justify-center gap-1 transition-colors pt-1"
+                      >
+                        <ArrowLeftIcon className="w-3 h-3" /> Back to Google sign-up
+                      </button>
+                    </div>
+                  )}
 
-                              {values.country === 'IN' && (
-                                  <div>
-                                      <label className="block text-sm font-medium text-slate-300 mb-1.5">GSTIN (Optional)</label>
-                                      <Field
-                                          type="text"
-                                          name="gstin"
-                                          className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                          placeholder="22AAAAA0000A1Z5"
-                                      />
-                                      {isSubmitAttempted && errors.gstin && <div className="text-red-400 text-xs mt-1">{errors.gstin}</div>}
-                                  </div>
-                              )}
+                  {/* Step 2: Business info */}
+                  {step === 2 && (
+                    <div className="space-y-4 animate-fadeIn">
+                      <div className="grid grid-cols-2 gap-3">
+                        <InputField label="Mobile Number" required error={formErrors.phone}>
+                          <input
+                            type="text"
+                            value={formData.phone}
+                            onChange={e => setField('phone', e.target.value)}
+                            className={`${fieldClass} ${fieldErr('phone')}`}
+                            placeholder="+91 98765 43210"
+                            autoFocus
+                          />
+                        </InputField>
+                        <InputField label="Business Name" error={formErrors.business_name}>
+                          <input
+                            type="text"
+                            value={formData.business_name}
+                            onChange={e => setField('business_name', e.target.value)}
+                            className={fieldClass}
+                            placeholder="My Enterprise"
+                          />
+                        </InputField>
+                      </div>
 
-                              {values.country === 'AE' && (
-                                  <div>
-                                      <label className="block text-sm font-medium text-slate-300 mb-1.5">TRN (Optional, 15-digit)</label>
-                                      <Field
-                                          type="text"
-                                          name="trn"
-                                          className="w-full px-4 py-3 bg-[#1e293b] border border-slate-700 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-white placeholder-slate-500"
-                                          placeholder="100000000000003"
-                                      />
-                                      {isSubmitAttempted && errors.trn && <div className="text-red-400 text-xs mt-1">{errors.trn}</div>}
-                                  </div>
-                              )}
+                      <div className="grid grid-cols-2 gap-3">
+                        <InputField label="State" required error={formErrors.state}>
+                          <Select
+                            options={State.getStatesOfCountry('IN').map(s => ({ value: s.isoCode, label: s.name }))}
+                            placeholder="Select State"
+                            styles={selectStyles}
+                            onChange={option => { setField('state', option.value); setField('city', ''); }}
+                            value={formData.state ? { value: formData.state, label: State.getStateByCodeAndCountry(formData.state, 'IN')?.name || formData.state } : null}
+                          />
+                        </InputField>
+                        <InputField label="City" error={formErrors.city}>
+                          <Select
+                            options={City.getCitiesOfState('IN', formData.state).map(c => ({ value: c.name, label: c.name }))}
+                            placeholder="Select City"
+                            styles={selectStyles}
+                            isDisabled={!formData.state}
+                            onChange={option => setField('city', option.value)}
+                            value={formData.city ? { value: formData.city, label: formData.city } : null}
+                          />
+                        </InputField>
+                      </div>
 
-                              {values.country && (
-                                  <div className="grid grid-cols-2 gap-4">
-                                      <div>
-                                          <label className="block text-sm font-medium text-slate-300 mb-1.5">State <span className="text-red-400">*</span></label>
-                                          <Select
-                                              options={State.getStatesOfCountry(values.country).map(state => ({ value: state.isoCode, label: state.name }))}
-                                              className="react-select-container"
-                                              classNamePrefix="react-select"
-                                              placeholder="Select State"
-                                              styles={customSelectStyles}
-                                              onChange={(option) => {
-                                                  setFieldValue('state', option.value);
-                                                  setFieldValue('city', '');
-                                              }}
-                                              value={values.state ? { value: values.state, label: State.getStateByCodeAndCountry(values.state, values.country)?.name || values.state } : null}
-                                          />
-                                          {isSubmitAttempted && errors.state && <div className="text-red-400 text-xs mt-1">{errors.state}</div>}
-                                      </div>
-                                      <div>
-                                          <label className="block text-sm font-medium text-slate-300 mb-1.5">City</label>
-                                          <Select
-                                              options={City.getCitiesOfState(values.country, values.state).map(city => ({ value: city.name, label: city.name }))}
-                                              className="react-select-container"
-                                              classNamePrefix="react-select"
-                                              placeholder="Select City"
-                                              styles={customSelectStyles}
-                                              isDisabled={!values.state}
-                                              onChange={(option) => setFieldValue('city', option.value)}
-                                              value={values.city ? { value: values.city, label: values.city } : null}
-                                          />
-                                          {isSubmitAttempted && errors.city && <div className="text-red-400 text-xs mt-1">{errors.city}</div>}
-                                      </div>
-                                  </div>
+                      <div className="flex gap-3 pt-1">
+                        <button
+                          onClick={handleBack}
+                          className="btn-secondary flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5"
+                        >
+                          <ArrowLeftIcon className="w-4 h-4" /> Back
+                        </button>
+                        <button
+                          onClick={handleNext}
+                          className="btn-primary flex-[2] py-2.5 text-sm font-semibold shadow-md flex items-center justify-center gap-2"
+                        >
+                          Continue <ArrowRightIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: GSTIN + Terms */}
+                  {step === 3 && (
+                    <div className="space-y-4 animate-fadeIn">
+                      <InputField label="GSTIN (optional)" error={formErrors.gstin}>
+                        <input
+                          type="text"
+                          value={formData.gstin}
+                          onChange={e => setField('gstin', e.target.value.toUpperCase())}
+                          className={`${fieldClass} uppercase tracking-wider ${fieldErr('gstin')}`}
+                          placeholder="22AAAAA0000A1Z5"
+                          autoFocus
+                          maxLength={15}
+                        />
+                      </InputField>
+
+                      <p className="text-xs text-[var(--text-muted)]">You can add this later from your profile settings.</p>
+
+                      <div className="pt-1">
+                        <label className="flex items-start gap-3 cursor-pointer group">
+                          <div className="relative mt-0.5 shrink-0">
+                            <input
+                              type="checkbox"
+                              checked={formData.termsAccepted}
+                              onChange={e => setField('termsAccepted', e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-4 h-4 rounded border border-[var(--border-subtle)] bg-[var(--bg-primary)] peer-checked:bg-[var(--accent-primary)] peer-checked:border-[var(--accent-primary)] transition-all flex items-center justify-center">
+                              {formData.termsAccepted && (
+                                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 12 12">
+                                  <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
                               )}
                             </div>
-
-                            <div className="mt-4">
-                                <div className="flex items-start gap-3">
-                                    <Field 
-                                        type="checkbox" 
-                                        name="termsAccepted"
-                                        className="mt-1 w-4 h-4 rounded border-slate-600 bg-[#1e293b] text-cyan-500 focus:ring-cyan-500" 
-                                    />
-                                    <p className="text-sm text-slate-400">
-                                        I agree to the <Link to="/terms" className="text-cyan-400 hover:text-cyan-300">Terms of Service</Link> and <Link to="/privacy" className="text-cyan-400 hover:text-cyan-300">Privacy Policy</Link>.
-                                    </p>
-                                </div>
-                                {isSubmitAttempted && errors.termsAccepted && <div className="text-red-400 text-xs mt-1 ml-7">{errors.termsAccepted}</div>}
-                            </div>
-
-                            <button
-                                type="submit"
-                                onClick={() => setIsSubmitAttempted(true)}
-                                disabled={isSubmitting}
-                                className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
-                            >
-                                {isSubmitting ? 'Sending OTP...' : 'Continue with OTP'}
-                                {!isSubmitting && <ArrowRightIcon className="w-5 h-5" />}
-                            </button>
                           </div>
-                        ) : (
-                          <div className="space-y-6 animate-fade-in">
-                            {googleError && (
-                              <div className="text-red-400 text-xs text-center font-medium mt-2">{googleError}</div>
-                            )}
-
-                            <div id="googleSignUpDiv" className="w-full flex justify-center min-h-[44px]"></div>
-
-                            <div className="relative my-5">
-                              <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-slate-800"></div>
-                              </div>
-                              <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-[#0f172a] px-2 text-slate-400 font-medium">Or</span>
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                resetForm();
-                                setIsSubmitAttempted(false);
-                                setShowManualForm(true);
-                              }}
-                              className="w-full py-3.5 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl font-semibold text-slate-200 shadow-md transition-all duration-200 flex items-center justify-center gap-2"
-                            >
-                              Enter details manually <ArrowRightIcon className="w-5 h-5" />
-                            </button>
-                          </div>
+                          <span className="text-xs text-[var(--text-muted)] leading-relaxed">
+                            I agree to the{' '}
+                            <Link to="/terms" className="text-[var(--accent-primary)] hover:underline font-medium">Terms of Service</Link>
+                            {' '}and{' '}
+                            <Link to="/privacy" className="text-[var(--accent-primary)] hover:underline font-medium">Privacy Policy</Link>.
+                          </span>
+                        </label>
+                        {formErrors.termsAccepted && (
+                          <p className="text-[var(--status-danger)] text-xs mt-1.5 ml-7">{formErrors.termsAccepted}</p>
                         )}
-                    </form>
-                )}
-            </Formik>
+                      </div>
 
-            <p className="text-center text-sm text-slate-400">
+                      <div className="flex gap-3 pt-1">
+                        <button
+                          onClick={handleBack}
+                          className="btn-secondary flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5"
+                        >
+                          <ArrowLeftIcon className="w-4 h-4" /> Back
+                        </button>
+                        <button
+                          onClick={handleSubmit}
+                          disabled={loading}
+                          className="btn-primary flex-[2] py-2.5 text-sm font-semibold shadow-md flex items-center justify-center gap-2"
+                        >
+                          {loading ? 'Creating account...' : 'Create Free Account'}
+                          {!loading && <ArrowRightIcon className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-8 pt-6 border-t border-[var(--border-subtle)] text-center text-xs text-[var(--text-muted)]">
                 Already have an account?{' '}
-                <Link to="/login" className="text-cyan-400 font-bold hover:text-cyan-300 transition-colors">
-                    Sign in
+                <Link to="/login" className="text-[var(--accent-primary)] font-semibold hover:underline transition-colors">
+                  Sign in
                 </Link>
-            </p>
+              </div>
+            </div>
+
+            <div className="mt-8 text-center text-xs text-[var(--text-muted)]">
+              <Link to="/" className="hover:text-[var(--text-primary)] transition-colors">
+                ← Back to Cenvora homepage
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

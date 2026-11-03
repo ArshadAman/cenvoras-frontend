@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLoadingPolicy } from '../hooks/useLoadingPolicy';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import {
   BanknotesIcon,
   PlusIcon,
@@ -17,11 +16,20 @@ import {
   UserIcon,
   CalendarIcon,
   PencilSquareIcon,
-  TrashIcon
+  TrashIcon,
+  LinkIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
+import { formError, clearFormErrors } from '../utils/formToasts';
 import api from '../api/api';
-import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { allocatePayment, reverseAdvanceAdjustment } from '../api/ledger';
+import { extractServerMessage } from '../utils/fieldErrors';
+import { INDIAN_STATES } from '../utils/constants';
+import { getGSTR1Filing } from '../api/gst';
+import { getCurrencySymbol } from '../utils/currency';
+import { getTodayKolkata } from '../utils/date';
+import { getUserProfile } from '../api/users';
+import { profileBankAccounts, defaultBankAccountId, findBankAccount, bankAccountLabel, BANK_MODES } from '../utils/profileBanks';
 
 const roundTo3 = (value) => {
   const num = Number(value || 0);
@@ -36,56 +44,90 @@ const formatAmount = (value) => roundTo3(value).toLocaleString('en-IN', {
 
 // Payment mode icons and colors
 const PAYMENT_MODES = {
-  cash: { label: 'Cash', icon: CurrencyRupeeIcon, color: 'text-green-400', bg: 'bg-green-500/10' },
-  upi: { label: 'UPI', icon: DevicePhoneMobileIcon, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  bank_transfer: { label: 'Bank Transfer', icon: BuildingLibraryIcon, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  cheque: { label: 'Cheque', icon: DocumentTextIcon, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  cash: { label: 'Cash', icon: CurrencyRupeeIcon, color: 'text-[var(--status-success)]', bg: 'bg-[var(--status-success)]/10' },
+  upi: { label: 'UPI', icon: DevicePhoneMobileIcon, color: 'text-[var(--accent-primary)]', bg: 'bg-[var(--accent-primary)]/10' },
+  bank_transfer: { label: 'Bank Transfer', icon: BuildingLibraryIcon, color: 'text-[var(--status-info)]', bg: 'bg-[var(--status-info)]/10' },
+  cheque: { label: 'Cheque', icon: DocumentTextIcon, color: 'text-[var(--status-warning)]', bg: 'bg-[var(--status-warning)]/10' },
 };
 
 // Payment card component
-function PaymentCard({ payment, onEdit, onDelete }) {
+function PaymentCard({ payment, onEdit, onDelete, onAllocate }) {
   const mode = PAYMENT_MODES[payment.mode] || PAYMENT_MODES.cash;
   const ModeIcon = mode.icon;
   
   return (
-    <div className="bento-card !p-4 group hover:border-white/20 transition-all">
+    <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 group hover:border-[var(--accent-primary)]/40 transition-all shadow-sm">
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${mode.bg}`}>
+          <div className={`p-2 rounded-xl ${mode.bg}`}>
             <ModeIcon className={`w-5 h-5 ${mode.color}`} />
           </div>
           <div>
-            <div className="text-sm font-semibold text-white">{payment.customer_name}</div>
-            <div className="text-xs text-gray-500">{mode.label}</div>
+            <div className="text-sm font-semibold text-[var(--text-primary)]">{payment.customer_name}</div>
+            <div className="text-xs text-[var(--text-muted)]">{mode.label}</div>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-bold text-green-400">{getCurrencySymbol()}{formatAmount(payment.amount)}</div>
-          <div className="text-xs text-gray-500">{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+          <div className="text-lg font-bold text-[var(--status-success)]">{getCurrencySymbol()}{formatAmount(payment.amount)}</div>
+          <div className="text-xs text-[var(--text-muted)]">{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
         </div>
       </div>
       
-      {payment.reference && (
-        <div className="text-xs text-gray-400 bg-white/5 px-2 py-1 rounded inline-block">
-          Ref: {payment.reference}
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        {payment.invoice_number ? (
+          <span className="text-xs font-medium text-[var(--status-info)] bg-[var(--status-info)]/10 border border-[var(--status-info)]/20 px-2 py-0.5 rounded-md">
+            Invoice #{payment.invoice_number}
+          </span>
+        ) : (
+          <span className="text-xs font-medium text-[var(--status-warning)] bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 px-2 py-0.5 rounded-md">
+            Customer Advance{(payment.adjustments?.some((a) => !a.reversed_on) || (payment.unapplied_amount != null && Number(payment.unapplied_amount) < Number(payment.amount))) ? ` · ${getCurrencySymbol()}${formatAmount(payment.unapplied_amount)} unapplied` : ''}
+          </span>
+        )}
+        {payment.bank_account_label && (
+          <span className="text-xs text-[var(--text-secondary)] bg-[var(--bg-primary)] px-2 py-0.5 rounded-md border border-[var(--border-subtle)]">
+            {payment.bank_account_label}
+          </span>
+        )}
+        {payment.reference && (
+          <span className="text-xs text-[var(--text-secondary)] bg-[var(--bg-primary)] px-2 py-0.5 rounded-md border border-[var(--border-subtle)]">
+            Ref: {payment.reference}
+          </span>
+        )}
+      </div>
       
       {payment.notes && (
-        <div className="text-xs text-gray-500 mt-2 line-clamp-1">{payment.notes}</div>
+        <div className="text-xs text-[var(--text-secondary)] mt-2 line-clamp-1">{payment.notes}</div>
       )}
       
-      <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-white/5 transition-opacity">
+      <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-[var(--border-subtle)] transition-opacity">
+        {!payment.invoice && !payment.invoice_number && (
+          <button 
+            onClick={() => onAllocate(payment)} 
+            className="p-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--status-success)] hover:bg-[var(--status-success)]/10 rounded-lg transition-all border border-[var(--border-subtle)]" 
+            title="Allocate Advance to Invoices"
+          >
+            <LinkIcon className="w-4 h-4" />
+          </button>
+        )}
+        {payment.receipt_voucher_number && (
+          <button
+            onClick={() => openReceiptVoucher(payment)}
+            className="px-2 py-1 text-xs bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] rounded-lg border border-[var(--border-subtle)]"
+            title="View / print receipt voucher (Rule 50)"
+          >
+            {payment.receipt_voucher_number}
+          </button>
+        )}
         <button 
           onClick={() => onEdit(payment)} 
-          className="p-2 bg-white/5 text-gray-400 hover:text-cyan-400 hover:bg-cyan-400/20 rounded-lg transition-all border border-white/5" 
+          className="p-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 rounded-lg transition-all border border-[var(--border-subtle)]" 
           title="Edit Payment"
         >
           <PencilSquareIcon className="w-4 h-4" />
         </button>
         <button 
           onClick={() => onDelete(payment)} 
-          className="p-2 bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-all border border-white/5" 
+          className="p-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--status-danger)] hover:bg-[var(--status-danger)]/10 rounded-lg transition-all border border-[var(--border-subtle)]" 
           title="Delete Payment"
         >
           <TrashIcon className="w-4 h-4" />
@@ -95,25 +137,60 @@ function PaymentCard({ payment, onEdit, onDelete }) {
   );
 }
 
+// Map a server state name/code to the picker's option value (exact INDIAN_STATES name), else ''.
+function matchStateName(v) {
+  if (!v) return '';
+  const t = String(v).trim().toLowerCase();
+  const hit = INDIAN_STATES.find((st) => st.name.toLowerCase() === t || st.code.toLowerCase() === t);
+  return hit ? hit.name : '';
+}
+
+// Rule 50 receipt voucher (service advances): open the printable HTML in a new tab.
+async function openReceiptVoucher(payment) {
+  try {
+    const res = await api.get(`/billing/payments/${payment.id}/receipt-voucher/`, { responseType: 'text' });
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'text/html' }));
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (err) {
+    formError('payment', extractServerMessage(err, 'Could not open receipt voucher'));
+  }
+}
+
 // Payment Modal (Creates & Edits)
-function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
+function PaymentModal({ isOpen, onClose, customers, onSuccess, editData, bankAccounts = [] }) {
   const [formData, setFormData] = useState({
     customer: '',
     invoice: '',
     amount: '',
-    date: new Date().toLocaleDateString('sv-SE'),
+    date: getTodayKolkata(),
     mode: 'cash',
     reference: '',
-    notes: ''
+    notes: '',
+    receipt_mode: 'advance',
+    supply_kind: '',
+    gst_rate: '',
+    place_of_supply: '',
+    bank_account_id: ''
   });
+  // R18 (Rudra CA): advance classification is suggested from past invoices but must be confirmed.
+  const [classConfirmed, setClassConfirmed] = useState(false);
+  const [editReason, setEditReason] = useState('');
+  const [classHint, setClassHint] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const errorRef = useRef(null);
   
   // Search & Invoice Logic
   const [customerSearch, setCustomerSearch] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [invoices, setInvoices] = useState([]);
+  // R20: fetch a customer's invoices once; re-filter locally when the receipt date changes (no refetch).
+  const [rawInvoices, setRawInvoices] = useState([]);
+  const setInvoices = setRawInvoices;
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [needsReconfirm, setNeedsReconfirm] = useState(false);
+  const touchedRef = useRef(new Set());
+  const defaultsReqRef = useRef(0);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
 
   const extractApiErrorMessage = (err) => {
@@ -155,12 +232,24 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         customer: editData.customer || '',
         invoice: editData.invoice || '',
         amount: editData.amount || '',
-        date: editData.date ? new Date(editData.date).toISOString().split('T')[0] : new Date().toLocaleDateString('sv-SE'),
+        date: editData.date
+          ? (typeof editData.date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(editData.date)
+            ? editData.date.slice(0, 10)
+            : getTodayKolkata(new Date(editData.date)))
+          : getTodayKolkata(),
         mode: editData.mode || 'cash',
         reference: editData.reference || '',
-        notes: editData.notes || ''
+        notes: editData.notes || '',
+        receipt_mode: 'advance',
+        supply_kind: editData.supply_kind || '',
+        gst_rate: editData.gst_rate != null ? String(Number(editData.gst_rate)) : '',
+        place_of_supply: editData.place_of_supply || '',
+        bank_account_id: editData.bank_account_id || ''
       });
+      setClassConfirmed(false);
       setCustomerSearch(editData.customer_name || '');
+      setError(null);
+      setShowCustomerDropdown(false);
     } else if (isOpen && !editData) {
       resetForm();
     }
@@ -174,16 +263,33 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
 
   const selectedCustomer = customers.find(c => String(c.id) === String(formData.customer));
 
-  // Fetch invoices when customer changes
+  const linkedInvoiceId = formData.invoice || editData?.invoice || null;
+  const invoices = useMemo(() => {
+    const receiptDate = formData.date;
+    const open = rawInvoices.filter((inv) => {
+      if (inv?.status === 'draft') return false;
+      // R19: a receipt can only be linked to an invoice dated on/before it (else it is an advance).
+      if (receiptDate && inv?.invoice_date && String(inv.invoice_date).slice(0, 10) > receiptDate) return false;
+      return roundTo3((inv?.total_amount || 0) - (inv?.amount_paid || 0)) > 0;
+    });
+    if (linkedInvoiceId && !open.some((inv) => String(inv.id) === String(linkedInvoiceId))) {
+      const linked = rawInvoices.find((inv) => String(inv.id) === String(linkedInvoiceId));
+      if (linked) return [linked, ...open];
+    }
+    return open;
+  }, [rawInvoices, formData.date, linkedInvoiceId]);
+
+  // Fetch invoices when the customer changes (not on every date/invoice change)
   useEffect(() => {
     if (formData.customer) {
-      fetchInvoices(formData.customer, formData.invoice || editData?.invoice || null);
+      fetchInvoices(formData.customer, editData?.invoice || null);
     } else {
       setInvoices([]);
       setSelectedInvoice(null);
-      setFormData(prev => ({ ...prev, invoice: '', amount: '' }));
+      // Keep the typed amount; only drop the invoice link.
+      setFormData(prev => (prev.invoice ? { ...prev, invoice: '' } : prev));
     }
-  }, [formData.customer, formData.invoice, editData?.invoice]);
+  }, [formData.customer, editData?.invoice]);
 
   const fetchInvoices = async (customerId, currentInvoiceId = null) => {
     setIsLoadingInvoices(true);
@@ -191,22 +297,8 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       const res = await api.get(`/billing/sales-invoices/?customer=${customerId}`);
       // Handle array or object results
       const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
-      const openInvoices = data.filter((inv) => {
-        if (inv?.status === 'draft') return false;
-        const outstanding = roundTo3((inv?.total_amount || 0) - (inv?.amount_paid || 0));
-        return outstanding > 0;
-      });
-
-      let invoiceOptions = openInvoices;
-      if (currentInvoiceId) {
-        const linkedInvoice = data.find((inv) => String(inv.id) === String(currentInvoiceId));
-        const alreadyIncluded = openInvoices.some((inv) => String(inv.id) === String(currentInvoiceId));
-        if (linkedInvoice && !alreadyIncluded) {
-          invoiceOptions = [linkedInvoice, ...openInvoices];
-        }
-      }
-
-      setInvoices(invoiceOptions);
+      setRawInvoices(data);
+      const invoiceOptions = data;
 
       if (currentInvoiceId) {
         const current = invoiceOptions.find((inv) => String(inv.id) === String(currentInvoiceId));
@@ -220,7 +312,24 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   };
 
   const handleSelectCustomer = (customer) => {
-    setFormData({ ...formData, customer: customer.id, invoice: '', amount: '' });
+    // Functional update: keep amount/date/mode already filled (R18 P2: picker reset the form).
+    setFormData(prev => ({ ...prev, customer: customer.id, invoice: '' }));
+    setClassConfirmed(false);
+    // R20: ignore stale responses (customer changed meanwhile) and never overwrite fields the user edited.
+    const reqId = ++defaultsReqRef.current;
+    api.get('/billing/payments/advance-defaults/', { params: { customer: customer.id } })
+      .then(({ data }) => {
+        if (reqId !== defaultsReqRef.current) return;
+        setClassHint(data);
+        const touched = touchedRef.current;
+        setFormData(prev => ({
+          ...prev,
+          ...(touched.has('supply_kind') ? {} : { supply_kind: data?.supply_kind || prev.supply_kind || '' }),
+          ...(touched.has('gst_rate') ? {} : { gst_rate: data?.gst_rate != null ? String(Number(data.gst_rate)) : prev.gst_rate }),
+          ...(touched.has('place_of_supply') ? {} : { place_of_supply: matchStateName(data?.place_of_supply) || prev.place_of_supply }),
+        }));
+      })
+      .catch(() => { if (reqId === defaultsReqRef.current) setClassHint(null); });
     setCustomerSearch(customer.name);
     setSelectedInvoice(null);
     setShowCustomerDropdown(false);
@@ -258,43 +367,72 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
     let targetCustomerId = formData.customer;
 
     try {
-      // Handle manual entry for new customer if no UUID selected
-      if (!targetCustomerId && customerSearch.trim()) {
-        const custRes = await api.post('/billing/customers/', {
-          name: customerSearch.trim()
-        });
-        targetCustomerId = custRes.data.id;
-      }
-
       if (!targetCustomerId) {
-        throw new Error("Please select or enter a customer name");
+        throw new Error("Save this customer first before recording a payment.");
       }
 
+      const { receipt_mode: receiptMode, ...rest } = formData;
       const paymentPayload = {
-        ...formData,
-        customer: targetCustomerId,
+        ...rest,
         amount: roundTo3(formData.amount)
       };
+      paymentPayload.customer = targetCustomerId;
+      if (!BANK_MODES.has(formData.mode)) {
+        delete paymentPayload.bank_account_id;
+      } else if (!paymentPayload.bank_account_id && bankAccounts.length) {
+        paymentPayload.bank_account_id = defaultBankAccountId(bankAccounts);
+      }
 
       if (formData.invoice) {
         paymentPayload.invoice = formData.invoice;
+        delete paymentPayload.supply_kind;
+        delete paymentPayload.gst_rate;
+        delete paymentPayload.place_of_supply;
       } else {
         delete paymentPayload.invoice;
+        // 'dues': oldest open invoices dated on/before the receipt; any remainder stays a classified advance.
+        // 'advance': never auto-applied; apply later from "Allocate".
+        if (!editData) paymentPayload.auto_allocate = receiptMode === 'dues';
+        if (!['goods', 'services'].includes(formData.supply_kind)) {
+          throw new Error('Choose whether the advance is for goods or services.');
+        }
+        if (formData.supply_kind === 'services' && (!formData.gst_rate || !formData.place_of_supply)) {
+          throw new Error(!formData.place_of_supply
+            ? 'Select the place of supply (state) for this service advance.'
+            : 'Select a GST rate (choose Unknown to use 18%).');
+        }
+        if (!classConfirmed) {
+          throw new Error('Please confirm the advance classification.');
+        }
+        if (formData.supply_kind === 'goods') {
+          delete paymentPayload.gst_rate;
+          delete paymentPayload.place_of_supply;
+        }
       }
 
       if (editData) {
+        if (editReason.trim()) paymentPayload.edit_reason = editReason.trim();
         await api.put(`/billing/payments/${editData.id}/`, paymentPayload);
+        setEditReason('');
+        clearFormErrors('payment');
         toast.success("Payment updated successfully");
       } else {
-        await api.post('/billing/payments/', paymentPayload);
-        toast.success("Payment recorded successfully");
+        const { data: saved } = await api.post('/billing/payments/', paymentPayload);
+        clearFormErrors('payment');
+        toast.success(saved?.receipt_voucher_number
+          ? `Advance saved. Receipt voucher ${saved.receipt_voucher_number}`
+          : (saved?.invoice ? 'Payment recorded' : 'Advance saved'));
       }
       
       onSuccess();
       onClose();
       if (!editData) resetForm();
     } catch (err) {
-      setError(extractApiErrorMessage(err));
+      const msg = extractApiErrorMessage(err);
+      setError(msg);
+      // R20: visible even when the inline error is off-screen; stays until dismissed.
+      formError('payment', msg, { toastId: 'payment-save-error', autoClose: false });
+      setTimeout(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
     } finally {
       setIsSubmitting(false);
     }
@@ -308,26 +446,41 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
       date: new Date().toLocaleDateString('sv-SE'),
       mode: 'cash',
       reference: '',
-      notes: ''
+      notes: '',
+      receipt_mode: 'advance',
+      supply_kind: '',
+      gst_rate: '',
+      place_of_supply: '',
+      bank_account_id: defaultBankAccountId(bankAccounts)
     });
+    setClassConfirmed(false);
+    setClassHint(null);
+    setNeedsReconfirm(false);
+    touchedRef.current = new Set();
+    defaultsReqRef.current += 1;
     setCustomerSearch('');
     setSelectedInvoice(null);
     setInvoices([]);
+    // R21: no stale inline error / dropdown / submit state when the form is reopened.
+    setError(null);
+    setShowCustomerDropdown(false);
+    setIsSubmitting(false);
+    setEditReason('');
   };
 
   if (!isOpen) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div className="relative bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <BanknotesIcon className="w-6 h-6 text-green-400" />
+          <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+            <BanknotesIcon className="w-6 h-6 text-[var(--status-success)]" />
             {editData ? "Edit Payment" : "Record Payment"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
@@ -335,7 +488,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Searchable Customer Selection */}
           <div className="relative">
-            <label className="block text-sm text-gray-400 mb-1">Customer *</label>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Customer *</label>
             <div className="relative">
               <input
                 type="text"
@@ -347,29 +500,29 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                   if (formData.customer) setFormData({ ...formData, customer: '' });
                 }}
                 onFocus={() => setShowCustomerDropdown(true)}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
               />
-              <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" />
             </div>
             
             {showCustomerDropdown && customerSearch && (
-              <div className="absolute z-50 w-full mt-1 bg-[#111] border border-white/10 rounded-lg shadow-xl max-h-48 overflow-y-auto overflow-x-hidden">
+              <div className="absolute z-50 w-full mt-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-xl max-h-48 overflow-y-auto overflow-x-hidden">
                 {filteredCustomers.length > 0 ? (
                   filteredCustomers.map(c => (
                     <button
                       key={c.id}
                       type="button"
                       onClick={() => handleSelectCustomer(c)}
-                      className="w-full text-left p-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
+                      className="w-full text-left p-3 hover:bg-[var(--bg-primary)] transition-colors border-b border-[var(--border-subtle)] last:border-0"
                     >
-                      <div className="text-sm font-medium text-white">{c.name}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-sm font-medium text-[var(--text-primary)]">{c.name}</div>
+                      <div className="text-xs text-[var(--text-muted)] font-mono">
                         ID: {c.id.slice(0, 8)} • Balance: {getCurrencySymbol()}{formatAmount(c.current_balance)}
                       </div>
                     </button>
                   ))
                 ) : (
-                  <div className="p-3 text-sm text-gray-500 italic">
+                  <div className="p-3 text-sm text-[var(--text-muted)] italic">
                     New customer will be created
                   </div>
                 )}
@@ -379,16 +532,16 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
 
           {/* Optional Invoice Selection */}
           <div className={`transition-all duration-300 ${formData.customer ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
-            <label className="block text-sm text-gray-400 mb-1">Link to Invoice (Optional)</label>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Link to Invoice (Optional)</label>
             <select
               value={formData.invoice}
               onChange={(e) => handleSelectInvoice(e.target.value)}
-              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+              className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
               disabled={isLoadingInvoices}
             >
-              <option value="" className="bg-gray-900 text-white">Select an invoice...</option>
+              <option value="" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Select an invoice...</option>
               {invoices.map((inv) => (
-                <option key={inv.id} value={inv.id} className="bg-gray-900 text-white">
+                <option key={inv.id} value={inv.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
                   {inv.invoice_number} ({new Date(inv.invoice_date).toLocaleDateString()}) - Due {getCurrencySymbol()}{formatAmount(getInvoiceOutstanding(inv))}
                 </option>
               ))}
@@ -398,9 +551,9 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
           <div className="grid grid-cols-2 gap-4">
             {/* Amount */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Amount Paid *</label>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Amount Paid *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{getCurrencySymbol()}</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]">{getCurrencySymbol()}</span>
                 <input
                   type="number"
                   required
@@ -409,34 +562,34 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
                   placeholder="5,000"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className="w-full p-3 pl-7 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-4 py-2.5 pl-7 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
                 />
               </div>
             </div>
             
             {/* Date */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Date *</label>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Date *</label>
               <input
                 type="date"
                 required
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
               />
             </div>
           </div>
 
           {/* Info Fields (Non-gate/Display only) */}
           {selectedInvoice && (
-            <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-xl border border-white/10 animate-fade-in">
+            <div className="grid grid-cols-2 gap-4 p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-subtle)] animate-fade-in">
               <div>
-                <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Total Due</div>
-                <div className="text-base font-bold text-white">{getCurrencySymbol()}{formatAmount(getInvoiceOutstanding(selectedInvoice))}</div>
+                <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-semibold mb-1">Total Due</div>
+                <div className="text-base font-bold text-[var(--text-primary)]">{getCurrencySymbol()}{formatAmount(getInvoiceOutstanding(selectedInvoice))}</div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Remaining</div>
-                <div className={`text-base font-bold ${calculateRemainingDue() <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
+                <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-semibold mb-1">Remaining</div>
+                <div className={`text-base font-bold ${calculateRemainingDue() <= 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-warning)]'}`}>
                   {getCurrencySymbol()}{formatAmount(calculateRemainingDue())}
                 </div>
               </div>
@@ -445,52 +598,153 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
           
           {/* Payment Mode */}
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Payment Mode</label>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Payment Mode</label>
             <div className="grid grid-cols-4 gap-2">
               {Object.entries(PAYMENT_MODES).map(([key, { label, icon: Icon, color, bg }]) => (
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setFormData({ ...formData, mode: key })}
-                  className={`p-3 rounded-lg border text-center transition-all ${
+                  onClick={() => setFormData({
+                    ...formData,
+                    mode: key,
+                    bank_account_id: BANK_MODES.has(key) ? (formData.bank_account_id || defaultBankAccountId(bankAccounts)) : '',
+                  })}
+                  className={`p-3 rounded-xl border text-center transition-all ${
                     formData.mode === key
-                      ? `${bg} border-white/30 ring-2 ring-white/20`
-                      : 'bg-white/5 border-white/10 hover:border-white/20'
+                      ? `${bg} border-[var(--accent-primary)] ring-2 ring-[var(--accent-primary)]/20`
+                      : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 mx-auto mb-1 ${formData.mode === key ? color : 'text-gray-400'}`} />
-                  <span className={`text-xs ${formData.mode === key ? 'text-white' : 'text-gray-500'}`}>{label}</span>
+                  <Icon className={`w-5 h-5 mx-auto mb-1 ${formData.mode === key ? color : 'text-[var(--text-muted)]'}`} />
+                  <span className={`text-xs ${formData.mode === key ? 'text-[var(--text-primary)] font-semibold' : 'text-[var(--text-secondary)] font-medium'}`}>{label}</span>
                 </button>
               ))}
             </div>
           </div>
+
+          {BANK_MODES.has(formData.mode) && (
+            <div>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Bank Account</label>
+              {bankAccounts.length === 0 ? (
+                <p className="text-xs text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-3 py-2">
+                  Add a bank account under Profile → Bank & Payment Details to show it on this receipt.
+                </p>
+              ) : bankAccounts.length === 1 ? (
+                <div className="text-sm text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-3 py-2">
+                  <div className="font-semibold">{bankAccounts[0].bank_name || bankAccounts[0].account_name || 'Bank'}</div>
+                  <div className="text-xs text-[var(--text-muted)] font-mono">
+                    A/C {bankAccounts[0].account_number || '—'}{bankAccounts[0].ifsc_code ? ` · IFSC ${bankAccounts[0].ifsc_code}` : ''}
+                  </div>
+                </div>
+              ) : (
+                <select
+                  value={formData.bank_account_id || defaultBankAccountId(bankAccounts)}
+                  onChange={(e) => setFormData({ ...formData, bank_account_id: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
+                >
+                  {bankAccounts.map((acc) => (
+                    <option key={acc.id || acc.account_number} value={acc.id || acc.account_number}>
+                      {acc.bank_name || acc.account_name || 'Bank'}{acc.account_number ? ` ···${String(acc.account_number).slice(-4)}` : ''}{acc.ifsc_code ? ` · ${acc.ifsc_code}` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Reference (Optional)</label>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Reference (Optional)</label>
               <input
                 type="text"
                 placeholder="Cheque No / UPI Transaction ID"
                 value={formData.reference}
                 onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
               />
             </div>
             
+            {!formData.invoice && (
+              <div className="space-y-3">
+                {!editData && (
+                  <div>
+                    <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Receipt type</label>
+                    <select value={formData.receipt_mode} onChange={(e) => setFormData(prev => ({ ...prev, receipt_mode: e.target.value }))} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                      <option value="advance">Advance (apply to an invoice later)</option>
+                      <option value="dues">Against open invoices dated on/before this receipt (oldest first)</option>
+                    </select>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
+                    {formData.receipt_mode === 'dues' ? 'Any amount left over is an advance for' : 'Advance for'}
+                  </label>
+                  <select value={formData.supply_kind} onChange={(e) => { touchedRef.current.add('supply_kind'); if (classConfirmed) setNeedsReconfirm(true); setClassConfirmed(false); setFormData(prev => ({ ...prev, supply_kind: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                    <option value="">Select goods or services</option>
+                    <option value="services">Services (GST at receipt, receipt voucher issued)</option>
+                    <option value="goods">Goods (no GST at receipt)</option>
+                  </select>
+                  {classHint?.supply_kind && (
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">Suggested from this customer's past invoices ({Object.entries(classHint.line_counts || {}).map(([k, v]) => `${v} ${k}`).join(', ')} lines). Please check.</p>
+                  )}
+                </div>
+                {formData.supply_kind === 'services' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">GST rate</label>
+                      <select value={formData.gst_rate} onChange={(e) => { touchedRef.current.add('gst_rate'); setFormData(prev => ({ ...prev, gst_rate: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                        <option value="">Select</option>
+                        {['0', '5', '12', '18', '28'].map(r => <option key={r} value={r}>{r}%</option>)}
+                        <option value="unknown">Unknown (use 18%)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Place of supply *</label>
+                      <select value={formData.place_of_supply} onChange={(e) => { touchedRef.current.add('place_of_supply'); setFormData(prev => ({ ...prev, place_of_supply: e.target.value })); }} className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm">
+                        <option value="">Select</option>
+                        {INDIAN_STATES.map(st => <option key={st.code} value={st.name}>{st.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )}
+                <label className="flex items-start gap-2 text-xs text-[var(--text-primary)]">
+                  <input type="checkbox" checked={classConfirmed} onChange={(e) => { setClassConfirmed(e.target.checked); if (e.target.checked) setNeedsReconfirm(false); }} className="mt-0.5" />
+                  <span>I confirm this classification{formData.receipt_mode === 'dues' ? ' for any amount not applied to invoices' : ''}.</span>
+                </label>
+                {needsReconfirm && !classConfirmed && (
+                  <p className="text-xs text-[var(--status-warning)]">Goods/services changed: please confirm the classification again.</p>
+                )}
+              </div>
+            )}
+
+            {editData && (
+              <div>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Reason for edit (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="Receipt edited"
+                  value={editReason}
+                  onChange={(e) => setEditReason(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
+                />
+                <p className="mt-1 text-xs text-[var(--text-muted)]">The original entries are kept; a reversal and a corrected entry are posted with this reason.</p>
+              </div>
+            )}
+
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Notes (Optional)</label>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Notes (Optional)</label>
               <textarea
                 placeholder="Any additional details..."
                 rows={1}
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:outline-none resize-none"
+                className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm resize-none"
               />
             </div>
           </div>
           
           {error && (
-            <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+            <div ref={errorRef} className="text-sm text-[var(--status-danger)] bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 rounded-xl p-3">
               {error}
             </div>
           )}
@@ -499,17 +753,17 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg font-medium transition-colors"
+              className="btn-secondary flex-1 py-2.5 text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-3 bg-gradient-to-r from-green-500 to-cyan-500 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
                   <CheckCircleIcon className="w-5 h-5" />
@@ -525,22 +779,211 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData }) {
   );
 }
 
+// Modal to allocate an unlinked payment / customer advance
+function AllocatePaymentModal({ isOpen, onClose, payment, onSuccess }) {
+  const [invoices, setInvoices] = useState([]);
+  const [selectedInvoice, setSelectedInvoice] = useState('');
+  const [allocAmount, setAllocAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [qrmpWarning, setQrmpWarning] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    getGSTR1Filing(getTodayKolkata().slice(0, 7))
+      .then((f) => setQrmpWarning(f?.qrmp_warning || null))
+      .catch(() => setQrmpWarning(null));
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !payment?.customer) return;
+    setAllocAmount('');
+    setLoading(true);
+    api.get(`/billing/sales-invoices/?customer=${payment.customer}`)
+      .then(res => {
+        const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+        const unpaid = data.filter(inv => {
+          if (inv?.status === 'draft') return false;
+          const outstanding = Math.max((Number(inv?.total_amount) || 0) - (Number(inv?.amount_paid) || 0), 0);
+          return outstanding > 0.01;
+        });
+        setInvoices(unpaid);
+      })
+      .catch(err => {
+        console.error('Failed to load invoices for allocation', err);
+      })
+      .finally(() => setLoading(false));
+  }, [isOpen, payment]);
+
+  if (!isOpen || !payment) return null;
+
+  const handleAllocate = async () => {
+    setSubmitting(true);
+    try {
+      const amt = allocAmount === '' ? null : Number(allocAmount);
+      if (amt !== null) {
+        const unapplied = Number(payment.unapplied_amount ?? payment.amount) || 0;
+        if (!(amt > 0)) { formError('payment', 'Enter an amount greater than 0.'); setSubmitting(false); return; }
+        if (amt > unapplied + 0.001) { formError('payment', `Amount exceeds the unapplied advance (max ${formatAmount(unapplied)}).`); setSubmitting(false); return; }
+        const inv = invoices.find(i => String(i.id) === String(selectedInvoice));
+        const due = inv ? Math.max((Number(inv.total_amount) || 0) - (Number(inv.amount_paid) || 0), 0) : null;
+        if (due !== null && amt > due + 0.001) { formError('payment', `Amount exceeds the invoice outstanding (max ${formatAmount(due)}).`); setSubmitting(false); return; }
+      }
+      const res = await allocatePayment(payment.id, selectedInvoice || null, amt);
+      clearFormErrors('payment');
+      toast.success(res?.message || 'Payment successfully allocated to invoice(s)!');
+      if (onSuccess) onSuccess(res);
+      onClose();
+    } catch (err) {
+      formError('payment', extractServerMessage(err, err.message || 'Failed to allocate payment'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUnapply = async (adj) => {
+    setSubmitting(true);
+    try {
+      await reverseAdvanceAdjustment(adj.id);
+      clearFormErrors('payment');
+      toast.success(`Un-applied from ${adj.invoice_number}`);
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err) {
+      formError('payment', extractServerMessage(err, err.message || 'Failed to un-apply'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  const activeAdjustments = (payment.adjustments || []).filter((a) => !a.reversed_on);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+            <LinkIcon className="w-5 h-5 text-[var(--accent-primary)]" />
+            Allocate Payment / Advance
+          </h3>
+          <button onClick={onClose} className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg transition-colors">
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="bg-[var(--bg-primary)] rounded-xl p-3 border border-[var(--border-subtle)] mb-4 space-y-1">
+          <div className="flex justify-between text-sm">
+            <span className="text-[var(--text-secondary)]">Customer:</span>
+            <span className="text-[var(--text-primary)] font-semibold">{payment.customer_name}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-[var(--text-secondary)]">Payment Amount:</span>
+            <span className="text-[var(--status-success)] font-bold">{getCurrencySymbol()}{formatAmount(payment.amount)}</span>
+          </div>
+          {qrmpWarning && (
+            <div className="rounded-lg border border-[var(--status-warning)]/40 bg-[var(--status-warning)]/10 px-3 py-2 text-xs text-[var(--text-primary)]">{qrmpWarning}</div>
+          )}
+          {payment.unapplied_amount != null && (
+            <div className="flex justify-between text-sm">
+              <span className="text-[var(--text-secondary)]">Unapplied:</span>
+              <span className="text-[var(--text-primary)] font-semibold">{getCurrencySymbol()}{formatAmount(payment.unapplied_amount)}</span>
+            </div>
+          )}
+          {activeAdjustments.map((a) => (
+            <div key={a.id} className="flex justify-between items-center text-xs">
+              <span className="text-[var(--text-secondary)]">Applied {getCurrencySymbol()}{formatAmount(a.amount)} to #{a.invoice_number} on {a.date}</span>
+              <button type="button" disabled={submitting} onClick={() => handleUnapply(a)} className="text-[var(--status-danger)] hover:underline">Un-apply</button>
+            </div>
+          ))}
+          <div className="flex justify-between text-xs text-[var(--text-muted)]">
+            <span>Date:</span>
+            <span>{new Date(payment.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          </div>
+        </div>
+
+        <div className="space-y-2 mb-6">
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
+            Select Invoice to Apply
+          </label>
+          {loading ? (
+            <div className="py-4 text-center text-xs text-[var(--text-muted)]">Loading open invoices...</div>
+          ) : (
+            <select
+              value={selectedInvoice}
+              onChange={(e) => setSelectedInvoice(e.target.value)}
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none"
+            >
+              <option value="" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Auto-apply to oldest open invoices (FIFO)</option>
+              {invoices.map(inv => {
+                const outstanding = Math.max((Number(inv.total_amount) || 0) - (Number(inv.amount_paid) || 0), 0);
+                return (
+                  <option key={inv.id} value={inv.id} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+                    #{inv.invoice_number} — Due: {getCurrencySymbol()}{formatAmount(outstanding)} ({inv.invoice_date || ''})
+                  </option>
+                );
+              })}
+            </select>
+          )}
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mt-3 mb-1.5">
+            Amount to apply (optional)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder={`Full: up to ${formatAmount(payment.unapplied_amount ?? payment.amount)}`}
+            value={allocAmount}
+            onChange={(e) => setAllocAmount(e.target.value)}
+            className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none"
+          />
+          <p className="text-xs text-[var(--text-muted)]">
+            {selectedInvoice
+              ? 'This unlinked payment will pay down the selected invoice.'
+              : 'Auto-apply will automatically knock off the oldest unpaid invoices for this customer.'}
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="btn-secondary flex-1 py-2.5 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAllocate}
+            disabled={submitting}
+            className="btn-primary flex-1 py-2.5 text-sm flex justify-center items-center gap-2"
+          >
+            {submitting ? 'Allocating...' : 'Allocate Now'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // Main Payments Page
-export default function Payments({ onLogout }) {
-  const navigate = useNavigate();
+export default function Payments() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDueModalOpen, setIsDueModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState(null);
+  const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false);
+  const [paymentToAllocate, setPaymentToAllocate] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('all');
   const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'month'
+  const [sortBy, setSortBy] = useState('date-desc'); // 'date-desc', 'date-asc', 'amount-desc', 'amount-asc', 'customer-asc'
 
   const invalidatePaymentRelatedQueries = () => Promise.all([
     queryClient.invalidateQueries({ queryKey: ['payments'] }),
     queryClient.invalidateQueries({ queryKey: ['customers'] }),
+    queryClient.invalidateQueries({ queryKey: ['salesInvoices'] }),
+    queryClient.invalidateQueries({ queryKey: ['salesAnalytics'] }),
     queryClient.invalidateQueries({ queryKey: ['generalLedgerEntries'] }),
     queryClient.invalidateQueries({ queryKey: ['ledgerStats'] }),
     queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] }),
@@ -550,43 +993,24 @@ export default function Payments({ onLogout }) {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/billing/payments/${id}/`),
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['payments'] });
-      const previousPayments = queryClient.getQueryData(['payments']);
-
-      queryClient.setQueryData(['payments'], (old) => {
-        if (!old) return old;
-        if (Array.isArray(old)) {
-          return old.filter((payment) => payment.id !== id);
-        }
-
-        if (Array.isArray(old.results)) {
-          return {
-            ...old,
-            results: old.results.filter((payment) => payment.id !== id),
-            count: Math.max(Number(old.count || 0) - 1, 0),
-          };
-        }
-
-        return old;
-      });
-
-      setIsDeleteModalOpen(false);
-      setPaymentToDelete(null);
-      return { previousPayments };
-    },
     onSuccess: async () => {
       await invalidatePaymentRelatedQueries();
+      clearFormErrors('payment');
       toast.success("Payment deleted successfully");
       setIsDeleteModalOpen(false);
       setPaymentToDelete(null);
     },
-    onError: (err, _id, context) => {
-      if (context?.previousPayments) {
-        queryClient.setQueryData(['payments'], context.previousPayments);
-      }
-      toast.error(err.response?.data?.detail || "Failed to delete payment");
-    }
+    onError: (err) => {
+      // R18 P2: not optimistic; the card stays until the server answers, and we show its reason.
+      setIsDeleteModalOpen(false);
+      setPaymentToDelete(null);
+      // R20: the refusal reason stays until dismissed.
+      formError('payment', extractServerMessage(err, "Failed to delete payment"), { toastId: 'payment-delete-error', autoClose: false });
+    },
+    onSettled: () => {
+      // R19 P2: never leave the dialog spinning (reset pending state whatever the outcome).
+      setTimeout(() => deleteMutation.reset(), 0);
+    },
   });
 
   const handleEdit = (payment) => {
@@ -597,6 +1021,11 @@ export default function Payments({ onLogout }) {
   const handleDelete = (payment) => {
     setPaymentToDelete(payment);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleAllocate = (payment) => {
+    setPaymentToAllocate(payment);
+    setIsAllocateModalOpen(true);
   };
   
   
@@ -613,6 +1042,12 @@ export default function Payments({ onLogout }) {
     queryFn: () => api.get('/billing/customers/').then(res => res.data)
   });
   const customers = Array.isArray(customersData) ? customersData : (customersData?.results || []);
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+    staleTime: 10 * 60 * 1000,
+  });
+  const bankAccounts = profileBankAccounts(userProfile);
   const loadingPolicy = useLoadingPolicy(isLoading);
   
   // Filter and search payments
@@ -627,6 +1062,27 @@ export default function Payments({ onLogout }) {
       (dateFilter === 'month' && paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear());
     return matchesSearch && matchesMode && matchesDate;
   });
+
+  const sortedAndFilteredPayments = useMemo(() => {
+    return [...filteredPayments].sort((a, b) => {
+      if (sortBy === 'date-desc') {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      }
+      if (sortBy === 'date-asc') {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+      if (sortBy === 'amount-desc') {
+        return Number(b.amount || 0) - Number(a.amount || 0);
+      }
+      if (sortBy === 'amount-asc') {
+        return Number(a.amount || 0) - Number(b.amount || 0);
+      }
+      if (sortBy === 'customer-asc') {
+        return (a.customer_name || '').localeCompare(b.customer_name || '');
+      }
+      return 0;
+    });
+  }, [filteredPayments, sortBy]);
   
   // Calculate stats
   const todayTotal = (payments || [])
@@ -651,11 +1107,11 @@ export default function Payments({ onLogout }) {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
-              <BanknotesIcon className="w-8 h-8 text-green-400" />
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-3">
+              <BanknotesIcon className="w-8 h-8 text-[var(--status-success)]" />
               Payments
             </h1>
-            <p className="text-gray-400 text-sm">Record and track customer payments</p>
+            <p className="text-[var(--text-secondary)] text-sm">Record and track customer payments</p>
           </div>
           
           <button
@@ -663,7 +1119,7 @@ export default function Payments({ onLogout }) {
               setSelectedPayment(null);
               setIsModalOpen(true);
             }}
-            className="btn-primary text-sm py-2.5 px-5 shadow-lg shadow-cyan-500/20 flex items-center gap-2"
+            className="btn-primary text-sm py-2.5 px-5 flex items-center gap-2"
           >
             <PlusIcon className="w-5 h-5" />
             Record Payment
@@ -674,40 +1130,52 @@ export default function Payments({ onLogout }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div 
             onClick={() => setDateFilter(dateFilter === 'today' ? 'all' : 'today')}
-            className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'today' ? 'border-green-500/50 bg-green-500/5' : 'border-white/5 hover:border-white/20'}`}
+            className={`bg-[var(--bg-surface)] border rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${
+              dateFilter === 'today' 
+                ? 'border-[var(--status-success)]/40 bg-[var(--status-success)]/5' 
+                : 'border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+            }`}
           >
             <div className="flex justify-between items-start mb-1">
-              <div className="text-xs text-gray-500">Today's Collection</div>
-              {dateFilter === 'today' && <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />}
+              <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Today's Collection</div>
+              {dateFilter === 'today' && <div className="w-2 h-2 rounded-full bg-[var(--status-success)] animate-pulse" />}
             </div>
-            <div className="text-2xl font-bold text-green-400">{getCurrencySymbol()}{todayTotal.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-bold text-[var(--status-success)]">{getCurrencySymbol()}{todayTotal.toLocaleString('en-IN')}</div>
           </div>
           <div
             onClick={() => setDateFilter(dateFilter === 'month' ? 'all' : 'month')}
-            className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'month' ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-white/5 hover:border-white/20'}`}
+            className={`bg-[var(--bg-surface)] border rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${
+              dateFilter === 'month' 
+                ? 'border-[var(--accent-primary)]/40 bg-[var(--accent-primary)]/5' 
+                : 'border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+            }`}
           >
             <div className="flex justify-between items-start mb-1">
-              <div className="text-xs text-gray-500">Monthly Collection</div>
-              {dateFilter === 'month' && <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />}
+              <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Monthly Collection</div>
+              {dateFilter === 'month' && <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />}
             </div>
-            <div className="text-2xl font-bold text-cyan-400">{getCurrencySymbol()}{thisMonthTotal.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-bold text-[var(--accent-primary)]">{getCurrencySymbol()}{thisMonthTotal.toLocaleString('en-IN')}</div>
           </div>
           <div 
             onClick={() => setDateFilter('all')}
-            className={`bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border ${dateFilter === 'all' ? 'border-white/20 bg-white/5' : 'border-white/5 hover:border-white/20'}`}
+            className={`bg-[var(--bg-surface)] border rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.01] shadow-sm ${
+              dateFilter === 'all' 
+                ? 'border-[var(--accent-primary)]/40 bg-[var(--bg-surface)]' 
+                : 'border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+            }`}
           >
-            <div className="text-xs text-gray-500 mb-1">Total Collection Till Date</div>
-            <div className="text-2xl font-bold text-white">{getCurrencySymbol()}{totalCollection.toLocaleString('en-IN')}</div>
+            <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Total Collection Till Date</div>
+            <div className="text-2xl font-bold text-[var(--text-primary)]">{getCurrencySymbol()}{totalCollection.toLocaleString('en-IN')}</div>
           </div>
           <div 
             onClick={() => setIsDueModalOpen(true)}
-            className="bento-card !p-4 cursor-pointer transition-all hover:scale-[1.02] border border-white/5 hover:border-amber-500/30 group"
+            className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.01] hover:border-[var(--status-warning)]/40 group shadow-sm"
           >
             <div className="flex justify-between items-start mb-1">
-              <div className="text-xs text-gray-500 group-hover:text-amber-400/80 transition-colors">Customers with Due</div>
-              <PlusIcon className="w-4 h-4 text-gray-600 group-hover:text-amber-400 transition-colors" />
+              <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider group-hover:text-[var(--status-warning)] transition-colors">Customers with Due</div>
+              <PlusIcon className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--status-warning)] transition-colors" />
             </div>
-            <div className="text-2xl font-bold text-amber-400">
+            <div className="text-2xl font-bold text-[var(--status-warning)]">
               {customers?.filter(c => parseFloat(c.current_balance) > 0).length || 0}
             </div>
           </div>
@@ -716,36 +1184,53 @@ export default function Payments({ onLogout }) {
         {/* Search and Filters */}
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" />
             <input
               type="text"
               placeholder="Search by customer or reference..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-cyan-500 focus:outline-none"
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
             />
           </div>
           
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilterMode('all')}
-              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                filterMode === 'all' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              All
-            </button>
-            {Object.entries(PAYMENT_MODES).map(([key, { label, color }]) => (
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-1 bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-subtle)]">
               <button
-                key={key}
-                onClick={() => setFilterMode(key)}
-                className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                  filterMode === key ? `bg-white/10 ${color}` : 'text-gray-400 hover:text-white'
+                onClick={() => setFilterMode('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  filterMode === 'all' ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] font-semibold shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                {label}
+                All
               </button>
-            ))}
+              {Object.entries(PAYMENT_MODES).map(([key, { label, color }]) => (
+                <button
+                  key={key}
+                  onClick={() => setFilterMode(key)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    filterMode === key ? `bg-[var(--bg-primary)] ${color} font-semibold shadow-sm` : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-xs text-[var(--text-secondary)] hidden sm:inline">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
+              >
+                <option value="date-desc">Date (Newest First)</option>
+                <option value="date-asc">Date (Oldest First)</option>
+                <option value="amount-desc">Amount (High to Low)</option>
+                <option value="amount-asc">Amount (Low to High)</option>
+                <option value="customer-asc">Customer (A to Z)</option>
+              </select>
+            </div>
           </div>
         </div>
         
@@ -753,22 +1238,22 @@ export default function Payments({ onLogout }) {
         {loadingPolicy.visible ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array(6).fill(0).map((_, i) => (
-              <div key={i} className="bento-card !p-4 animate-pulse">
+              <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 animate-pulse">
                 <div className="flex gap-3">
-                  <div className="w-10 h-10 bg-white/10 rounded-lg" />
+                  <div className="w-10 h-10 bg-[var(--bg-primary)] rounded-lg" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32 bg-white/10 rounded" />
-                    <div className="h-3 w-20 bg-white/5 rounded" />
+                    <div className="h-4 w-32 bg-[var(--bg-primary)] rounded" />
+                    <div className="h-3 w-20 bg-[var(--bg-primary)]/50 rounded" />
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        ) : filteredPayments.length === 0 ? (
-          <div className="text-center py-16">
-            <BanknotesIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">No payments found</h3>
-            <p className="text-gray-500 mb-6">
+        ) : sortedAndFilteredPayments.length === 0 ? (
+          <div className="text-center py-16 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl">
+            <BanknotesIcon className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No payments found</h3>
+            <p className="text-[var(--text-secondary)] text-sm mb-6">
               {searchQuery || filterMode !== 'all' 
                 ? 'Try adjusting your search or filters'
                 : 'Start recording customer payments to track cash flow'}
@@ -778,7 +1263,7 @@ export default function Payments({ onLogout }) {
                 setSelectedPayment(null);
                 setIsModalOpen(true);
               }}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-cyan-500 text-white rounded-xl hover:opacity-90"
+              className="btn-primary text-sm py-2.5 px-6 inline-flex items-center gap-2"
             >
               <PlusIcon className="w-5 h-5" />
               Record First Payment
@@ -786,12 +1271,16 @@ export default function Payments({ onLogout }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPayments.map((payment) => (
+            {sortedAndFilteredPayments.map((payment) => (
               <PaymentCard 
                 key={payment.id} 
-                payment={payment} 
+                payment={{
+                  ...payment,
+                  bank_account_label: bankAccountLabel(findBankAccount(bankAccounts, payment.bank_account_id)),
+                }} 
                 onEdit={handleEdit} 
-                onDelete={handleDelete} 
+                onDelete={handleDelete}
+                onAllocate={handleAllocate}
               />
             ))}
           </div>
@@ -805,6 +1294,7 @@ export default function Payments({ onLogout }) {
             setSelectedPayment(null);
           }}
           customers={customers}
+          bankAccounts={bankAccounts}
           editData={selectedPayment}
           onSuccess={() => {
             invalidatePaymentRelatedQueries();
@@ -812,34 +1302,62 @@ export default function Payments({ onLogout }) {
           }}
         />
 
+        {/* Allocate Payment Modal */}
+        <AllocatePaymentModal
+          isOpen={isAllocateModalOpen}
+          onClose={() => {
+            setIsAllocateModalOpen(false);
+            setPaymentToAllocate(null);
+          }}
+          payment={paymentToAllocate}
+          onSuccess={(res) => {
+            // R19 P2: show the new unapplied amount on the card at once, then refetch.
+            const pid = paymentToAllocate?.id;
+            if (pid && res?.unapplied != null) {
+              const patch = (p) => (p.id === pid ? {
+                ...p,
+                unapplied_amount: res.unapplied,
+                adjustments: [...(p.adjustments || []), ...(res.adjustments || []).map((id) => ({ id, reversed_on: null }))],
+              } : p);
+              queryClient.setQueryData(['payments'], (old) => {
+                if (Array.isArray(old)) return old.map(patch);
+                if (old && Array.isArray(old.results)) return { ...old, results: old.results.map(patch) };
+                return old;
+              });
+            }
+            invalidatePaymentRelatedQueries();
+            setPaymentToAllocate(null);
+          }}
+        />
+
         {/* Delete Confirmation Modal */}
         {isDeleteModalOpen && createPortal(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)} />
-            <div className="relative bg-[#0a0a0a] border border-red-500/20 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)} />
+            <div className="relative bg-[var(--bg-surface)] border border-[var(--status-danger)]/30 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
               <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
-                  <TrashIcon className="w-6 h-6 text-red-500" />
+                <div className="w-12 h-12 rounded-full bg-[var(--status-danger)]/10 flex items-center justify-center mb-4">
+                  <TrashIcon className="w-6 h-6 text-[var(--status-danger)]" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Delete Payment?</h3>
-                <p className="text-sm text-gray-400 mb-6">
-                  Are you sure you want to delete this payment of <span className="text-white font-medium">{getCurrencySymbol()}{paymentToDelete?.amount}</span> from <span className="text-white font-medium">{paymentToDelete?.customer_name}</span>? This action cannot be undone.
+                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Delete Payment?</h3>
+                <p className="text-sm text-[var(--text-secondary)] mb-6">
+                  Are you sure you want to delete this payment of <span className="text-[var(--text-primary)] font-semibold">{getCurrencySymbol()}{paymentToDelete?.amount}</span> from <span className="text-[var(--text-primary)] font-semibold">{paymentToDelete?.customer_name}</span>? This action cannot be undone.
                 </p>
                 <div className="flex w-full gap-3">
                   <button
                     onClick={() => setIsDeleteModalOpen(false)}
-                    className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors font-medium border border-white/10"
+                    className="btn-secondary flex-1 py-2.5 text-sm"
                     disabled={deleteMutation.isPending}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => deleteMutation.mutate(paymentToDelete.id)}
-                    className="flex-1 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl transition-colors font-medium border border-red-500/30 flex justify-center items-center"
+                    className="btn-danger flex-1 py-2.5 text-sm flex justify-center items-center"
                     disabled={deleteMutation.isPending}
                   >
                     {deleteMutation.isPending ? (
-                      <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     ) : (
                       "Delete"
                     )}
@@ -853,14 +1371,14 @@ export default function Payments({ onLogout }) {
         {/* Due Customers Modal */}
         {isDueModalOpen && createPortal(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsDueModalOpen(false)} />
-            <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[80vh] flex flex-col">
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsDueModalOpen(false)} />
+            <div className="relative bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[80vh] flex flex-col">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <UserIcon className="w-6 h-6 text-amber-400" />
+                <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+                  <UserIcon className="w-6 h-6 text-[var(--status-warning)]" />
                   Customers with Due
                 </h2>
-                <button onClick={() => setIsDueModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+                <button onClick={() => setIsDueModalOpen(false)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
                   <XMarkIcon className="w-6 h-6" />
                 </button>
               </div>
@@ -873,20 +1391,20 @@ export default function Payments({ onLogout }) {
                     .map(c => (
                       <div 
                         key={c.id} 
-                        className="p-4 bg-white/5 border border-white/5 rounded-xl flex justify-between items-center hover:bg-white/10 transition-all cursor-default group"
+                        className="p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl flex justify-between items-center hover:border-[var(--accent-primary)]/40 transition-all cursor-default group"
                       >
                         <div>
-                          <div className="text-white font-medium group-hover:text-amber-400 transition-colors">{c.name}</div>
-                          <div className="text-xs text-gray-500">ID: {c.id.slice(0, 8)}</div>
+                          <div className="text-[var(--text-primary)] font-semibold group-hover:text-[var(--status-warning)] transition-colors">{c.name}</div>
+                          <div className="text-xs text-[var(--text-muted)] font-mono">ID: {c.id.slice(0, 8)}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-amber-500">{getCurrencySymbol()}{parseFloat(c.current_balance).toLocaleString()}</div>
+                          <div className="text-lg font-bold text-[var(--status-warning)]">{getCurrencySymbol()}{parseFloat(c.current_balance).toLocaleString()}</div>
                           <button 
                             onClick={() => {
                               setIsDueModalOpen(false);
                               setSearchQuery(c.name);
                             }}
-                            className="text-[10px] text-cyan-400 uppercase tracking-wider font-bold hover:underline"
+                            className="text-xs text-[var(--accent-primary)] uppercase tracking-wider font-bold hover:underline"
                           >
                             View History
                           </button>
@@ -894,14 +1412,14 @@ export default function Payments({ onLogout }) {
                       </div>
                     ))
                 ) : (
-                  <div className="text-center py-10 text-gray-500">No customers have outstanding balances.</div>
+                  <div className="text-center py-10 text-[var(--text-muted)] font-medium">No customers have outstanding balances.</div>
                 )}
               </div>
 
-              <div className="mt-6 pt-4 border-t border-white/5">
+              <div className="mt-6 pt-4 border-t border-[var(--border-subtle)]">
                 <button
                   onClick={() => setIsDueModalOpen(false)}
-                  className="w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors font-medium border border-white/10"
+                  className="btn-secondary w-full py-2.5 text-sm"
                 >
                   Close
                 </button>

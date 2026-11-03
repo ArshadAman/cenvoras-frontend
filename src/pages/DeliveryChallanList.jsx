@@ -1,13 +1,125 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import DeliveryChallanTable from "../components/sales/DeliveryChallanTable";
-import DeliveryChallanForm from "../components/sales/DeliveryChallanForm";
-import { PlusIcon } from '@heroicons/react/24/outline';
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import SalesForm from "../components/sales/SalesForm";
+import SalesDetailsModal from "../components/sales/SalesDetailsModal";
+import { 
+  PlusIcon, 
+  TruckIcon, 
+  ClockIcon, 
+  DocumentCheckIcon, 
+  CurrencyRupeeIcon,
+  DocumentTextIcon
+} from "@heroicons/react/24/outline";
+import { 
+  getDeliveryChallans, 
+  createDeliveryChallan, 
+  updateDeliveryChallan, 
+  getNextDeliveryChallanNumber 
+} from "../api/delivery_challan";
+import { getUserProfile, patchUserProfile } from "../api/users";
+import { getCurrencySymbol } from "../utils/currency";
+
+const DEFAULT_CHALLAN_PREFIX = "DC-";
+
+const normalizePrefix = (value) => {
+  return String(value ?? '').toUpperCase();
+};
 
 export default function DeliveryChallanList() {
+  const location = useLocation();
   const [showForm, setShowForm] = useState(false);
   const [editChallan, setEditChallan] = useState(null);
+  const [showDetails, setShowDetails] = useState(null);
+  const [previewDocType, setPreviewDocType] = useState("delivery_challan");
+  const [challanPrefix, setChallanPrefix] = useState(() => {
+    return localStorage.getItem("delivery_challan_prefix") || DEFAULT_CHALLAN_PREFIX;
+  });
+
+  // Fetch tenant profile for invoice/challan preview branding
+  const { data: userProfile } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: getUserProfile,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const saveChallanPrefixMutation = useMutation({
+    mutationFn: (prefix) => patchUserProfile({ delivery_challan_prefix: prefix }),
+  });
+
+  const billingProfile = userProfile?.billing_profile || userProfile?.profile;
+  const canEditPrefix = Boolean(
+    userProfile?.profile?.id &&
+    billingProfile?.id &&
+    userProfile.profile.id === billingProfile.id
+  );
+
+  useEffect(() => {
+    const dbPrefix = billingProfile?.delivery_challan_prefix;
+    if (dbPrefix !== undefined && dbPrefix !== null && dbPrefix !== "") {
+      const normalized = normalizePrefix(dbPrefix);
+      setChallanPrefix(normalized);
+      localStorage.setItem("delivery_challan_prefix", normalized);
+    }
+  }, [billingProfile?.delivery_challan_prefix]);
+
+  const handlePrefixBlur = () => {
+    const normalized = normalizePrefix(challanPrefix);
+    setChallanPrefix(normalized);
+    localStorage.setItem("delivery_challan_prefix", normalized);
+    if (!canEditPrefix) return;
+    if (normalized !== normalizePrefix(billingProfile?.delivery_challan_prefix || DEFAULT_CHALLAN_PREFIX)) {
+      saveChallanPrefixMutation.mutate(normalized);
+    }
+  };
+
+  const businessInfo = billingProfile
+    ? {
+        business_name: billingProfile.business_name,
+        business_address: billingProfile.business_address,
+        phone: billingProfile.phone,
+        email: billingProfile.email,
+        gstin: billingProfile.gstin,
+        pan_number: billingProfile.pan_number,
+        gem_id: billingProfile.gem_id,
+        dl_number: billingProfile.dl_number,
+        state: billingProfile.state,
+        city: billingProfile.city,
+        country: billingProfile.country,
+        trn: billingProfile.trn,
+        bank_name: billingProfile.bank_name,
+        bank_account_number: billingProfile.bank_account_number,
+        bank_ifsc_code: billingProfile.bank_ifsc_code,
+        bank_branch: billingProfile.bank_branch,
+        bank_upi_id: billingProfile.bank_upi_id,
+        bank_qr_code: billingProfile.bank_qr_code,
+      }
+    : {};
+
+  // Fetch summary stats
+  const { data: challansData } = useQuery({
+    queryKey: ["deliveryChallans"],
+    queryFn: () => getDeliveryChallans({ page_size: 1000 }),
+    staleTime: 60 * 1000,
+  });
+
+  const allChallans = Array.isArray(challansData)
+    ? challansData
+    : challansData?.data || challansData?.results || [];
+
+  const totalCount = allChallans.length;
+  const draftCount = allChallans.filter((c) => c.status === "draft").length;
+  const openCount = allChallans.filter(
+    (c) => (c.status === "open" || c.status === "pending") && !c.is_billed
+  ).length;
+  const invoicedCount = allChallans.filter(
+    (c) => Boolean(c.converted_invoice && (c.is_billed || c.status === "invoiced" || c.status === "billed"))
+  ).length;
+  const totalValue = allChallans.reduce(
+    (sum, c) => sum + Number(c.total_amount || 0),
+    0
+  );
 
   const handleEdit = (challan) => {
     setEditChallan(challan);
@@ -19,47 +131,188 @@ export default function DeliveryChallanList() {
     setEditChallan(null);
   };
 
+  // Handle location state (e.g. view specific challan after conversion)
+  useEffect(() => {
+    if (location.state?.viewChallanId) {
+      setShowDetails({ id: location.state.viewChallanId });
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  // Intercept back button to dismiss overlays
+  useEffect(() => {
+    const isAnyOverlayOpen = showForm || showDetails;
+    if (!isAnyOverlayOpen) return;
+
+    const stateObj = { challanOverlayOpen: true };
+    window.history.pushState(stateObj, "");
+
+    const handlePopState = () => {
+      setShowForm(false);
+      setEditChallan(null);
+      setShowDetails(null);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      if (window.history.state && window.history.state.challanOverlayOpen) {
+        window.history.back();
+      }
+    };
+  }, [showForm, showDetails]);
+
   return (
     <>
-      <div className="p-6 md:p-10 space-y-8 animate-fade-up">
-        
+      <div className="p-2 sm:p-6 md:p-10 space-y-8 animate-fade-up">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2 sm:px-0">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Delivery Challans</h1>
-            <p className="text-gray-400 text-sm">Manage delivery notes and challans.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-3">
+              <TruckIcon className="w-8 h-8 text-[var(--accent-primary)]" />
+              Delivery Challans
+            </h1>
+            <p className="text-[var(--text-secondary)] text-sm">
+              Create and dispatch delivery notes, track transport & vehicles, and convert directly to sales invoices.
+            </p>
           </div>
-          <div className="flex gap-3">
-             <button
-               onClick={() => setShowForm(true)}
-               className="btn-primary text-sm py-2 px-4 shadow-lg shadow-blue-500/20 flex items-center gap-2"
-             >
-               <PlusIcon className="w-4 h-4"/> New Challan
-             </button>
+
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full sm:w-auto">
+            <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 focus-within:border-[var(--accent-primary)] w-full sm:w-auto">
+              <span className="text-xs text-[var(--text-secondary)] font-medium">PREFIX:</span>
+              <input
+                type="text"
+                value={challanPrefix}
+                onChange={(e) => setChallanPrefix(normalizePrefix(e.target.value))}
+                onBlur={handlePrefixBlur}
+                disabled={!canEditPrefix}
+                className="bg-transparent border-none text-[var(--text-primary)] text-sm w-20 outline-none p-0 font-mono focus:ring-0"
+                placeholder="DC"
+                maxLength={8}
+                title={!canEditPrefix ? "Delivery challan prefix is managed by the main account." : ""}
+              />
+            </div>
+
+            <button
+              onClick={() => {
+                setEditChallan(null);
+                setShowForm(true);
+              }}
+              className="btn-primary text-sm py-2 px-4 shadow-sm flex-1 sm:flex-none flex items-center justify-center gap-2 w-full sm:w-auto"
+            >
+              <PlusIcon className="w-4 h-4" /> New Challan
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Summary Metrics */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="bento-card p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Total Challans</span>
+              <TruckIcon className="w-5 h-5 text-[var(--text-muted)]" />
+            </div>
+            <div className="text-2xl font-black text-[var(--text-primary)]">{totalCount}</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Recorded to date</div>
+          </div>
+
+          <div className="bento-card p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--status-warning)]">Drafts</span>
+              <DocumentTextIcon className="w-5 h-5 text-[var(--status-warning)]" />
+            </div>
+            <div className="text-2xl font-black text-[var(--status-warning)]">{draftCount}</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Unconfirmed drafts</div>
+          </div>
+
+          <div className="bento-card p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--status-info)]">Open / Dispatched</span>
+              <ClockIcon className="w-5 h-5 text-[var(--status-info)]" />
+            </div>
+            <div className="text-2xl font-black text-[var(--status-info)]">{openCount}</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Awaiting invoicing</div>
+          </div>
+
+          <div className="bento-card p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--status-success)]">Invoiced</span>
+              <DocumentCheckIcon className="w-5 h-5 text-[var(--status-success)]" />
+            </div>
+            <div className="text-2xl font-black text-[var(--status-success)]">{invoicedCount}</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Billed into Sales Invoice</div>
+          </div>
+
+          <div className="bento-card p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Total Goods Value</span>
+              <CurrencyRupeeIcon className="w-5 h-5 text-[var(--accent-primary)]" />
+            </div>
+            <div className="text-2xl font-black font-mono text-[var(--text-primary)]">
+              {getCurrencySymbol()}
+              {totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Dispatched inventory value</div>
           </div>
         </div>
 
         {/* Challans Table */}
-        <div className="bento-card p-6">
+        <div className="bento-card p-3 sm:p-6">
+          <div className="mb-6 flex items-center justify-between px-1 sm:px-0">
+            <div>
+              <h2 className="text-lg font-bold text-[var(--text-primary)] mb-1">Delivery Challan Records</h2>
+              <p className="text-xs text-[var(--text-secondary)]">
+                Track status, vehicle dispatches, items, and convert directly to sales invoices
+              </p>
+            </div>
+          </div>
+
           <DeliveryChallanTable
             onEdit={handleEdit}
-            onView={(challan) => console.log("View", challan)}
-            onDelete={(challan) => console.log("Delete", challan)} 
+            onView={(challan) => {
+              setPreviewDocType("delivery_challan");
+              setShowDetails(challan);
+            }}
+            onViewInvoice={(invoiceId) => {
+              setPreviewDocType("invoice");
+              setShowDetails({ id: invoiceId });
+            }}
+            onConvertSuccess={(invoice) => {
+              // Could open the new invoice preview if desired
+            }}
           />
         </div>
-
       </div>
 
-      {/* Modals */}
+      {/* SalesForm as full Delivery Challan editor */}
       {showForm && (
-        <DeliveryChallanForm 
-          isOpen={showForm} 
+        <SalesForm
+          isOpen={showForm}
           onClose={handleCloseForm}
           editData={editChallan}
+          invoicePrefix={challanPrefix}
+          documentType="delivery_challan"
+          createDocument={createDeliveryChallan}
+          updateDocument={updateDeliveryChallan}
+          getNextNumber={getNextDeliveryChallanNumber}
+          finalSubmitStatus="open"
         />
       )}
 
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="dark" />
+      {/* SalesDetailsModal as multi-theme preview and pixel-perfect PDF generator */}
+      {showDetails && (
+        <SalesDetailsModal
+          isOpen={!!showDetails}
+          onClose={() => {
+            setShowDetails(null);
+            setPreviewDocType("delivery_challan");
+          }}
+          invoice={showDetails}
+          businessInfo={businessInfo}
+          documentType={previewDocType}
+        />
+      )}
     </>
   );
 }

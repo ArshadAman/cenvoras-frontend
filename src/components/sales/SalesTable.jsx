@@ -1,32 +1,147 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSalesInvoices, deleteSalesInvoice, exportSalesInvoicesCsv, getSalesCsvJobStatus, downloadSalesCsv } from "../../api/sales";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import AdvancedSalesFilters from "./AdvancedSalesFilters";
-import { ArrowDownTrayIcon, EyeIcon, PencilSquareIcon, TrashIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline";
-import { useEffect } from "react";
+import { 
+  ArrowDownTrayIcon, 
+  EyeIcon, 
+  PencilSquareIcon, 
+  TrashIcon, 
+  CurrencyDollarIcon, 
+  BanknotesIcon, 
+  XMarkIcon,
+  AdjustmentsHorizontalIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
+  ExclamationTriangleIcon
+} from "@heroicons/react/24/outline";
 import PaymentForm from "../ledger/PaymentForm";
-import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getCurrencySymbol } from '../../utils/currency';
+import useResizableColumns from "../../hooks/useResizableColumns";
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from "../common/tableHeaderClasses";
+
+const COLUMN_OPTIONS = [
+  { id: "customer", label: "Customer" },
+  { id: "po_number", label: "Purchase Order" },
+  { id: "untaxed_amount", label: "Amount (Before Tax)" },
+  { id: "total_amount", label: "Total Amount" },
+  { id: "status", label: "Status" },
+  { id: "items", label: "Items" },
+];
+
+const DEFAULT_COLUMN_WIDTHS = {
+  checkbox: 44,
+  invoice_number: 125,
+  invoice_date: 105,
+  customer: 190,
+  po_number: 130,
+  untaxed_amount: 130,
+  total_amount: 145,
+  status: 95,
+  items: 75,
+  actions: 145,
+};
 
 export default function SalesTable({
   onEdit,
   onView,
   onDelete,
   initialStatusFilter = "all",
+  statusFilter,
+  onStatusFilterChange,
   hideStatusTabs = false,
   documentType = "invoice",
 }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [ordering, setOrdering] = useState("-invoice_date"); // default: newest first
+  const [ordering, setOrdering] = useState("-invoice_number"); // default: document number desc
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sales_table_page_size");
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if ([10, 20, 25, 50, 100].includes(parsed)) return parsed;
+      }
+    } catch (e) {}
+    return 20;
+  });
+  const [selectAllAcrossPages, setSelectAllAcrossPages] = useState(false);
+  const tableTopRef = useRef(null);
   const [selectedInvoices, setSelectedInvoices] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
-  const [statusFilterTab, setStatusFilterTab] = useState(initialStatusFilter); // "all", "final", "draft"
-  const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
+  const [internalStatusFilter, setInternalStatusFilter] = useState(initialStatusFilter); // "all", "final", "draft"
+  const isStatusControlled = statusFilter !== undefined && statusFilter !== null;
+  const statusFilterTab = isStatusControlled ? statusFilter : internalStatusFilter;
+  const setStatusFilterTab = (tab) => {
+    if (typeof onStatusFilterChange === "function") {
+      onStatusFilterChange(tab);
+    }
+    if (!isStatusControlled) {
+      setInternalStatusFilter(tab);
+    }
+  };
+  const [dateFilter] = useState({ start: "", end: "" });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: "invoice_number", direction: "desc" });
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sales_table_columns");
+      if (saved) {
+        return {
+          customer: true,
+          po_number: true,
+          untaxed_amount: true,
+          total_amount: true,
+          status: true,
+          items: true,
+          ...JSON.parse(saved),
+        };
+      }
+    } catch (e) {
+      console.error("Failed to load saved columns", e);
+    }
+    return {
+      customer: true,
+      po_number: true,
+      untaxed_amount: true,
+      total_amount: true,
+      status: true,
+      items: true,
+    };
+  });
+
+  const toggleColumn = (id) => {
+    setVisibleColumns((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        localStorage.setItem("sales_table_columns", JSON.stringify(next));
+      } catch (e) {
+        console.error("Failed to save columns", e);
+      }
+      return next;
+    });
+  };
+
+  const handleSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const { colWidths, renderResizeHandle } = useResizableColumns(
+    "cenvoras_sales_table_col_widths",
+    DEFAULT_COLUMN_WIDTHS
+  );
+
   const [isExporting, setIsExporting] = useState(false);
   const [paymentInvoice, setPaymentInvoice] = useState(null);
   const [advancedFilters, setAdvancedFilters] = useState({
@@ -38,8 +153,10 @@ export default function SalesTable({
   });
 
   useEffect(() => {
-    setStatusFilterTab(initialStatusFilter);
-  }, [initialStatusFilter]);
+    if (!isStatusControlled) {
+      setInternalStatusFilter(initialStatusFilter);
+    }
+  }, [initialStatusFilter, isStatusControlled]);
 
   const docLabel = documentType === "quotation" ? "quotation" : "invoice";
   const docLabelPlural = documentType === "quotation" ? "quotations" : "invoices";
@@ -68,15 +185,42 @@ export default function SalesTable({
   const closePaymentModal = () => setPaymentInvoice(null);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["salesInvoices", search, ordering, page, statusFilterTab],
-    queryFn: () => getSalesInvoices({ search, ordering, page, status: statusFilterTab }),
+    queryKey: ["salesInvoices", search, ordering, statusFilterTab],
+    queryFn: () => getSalesInvoices({ search, ordering, status: statusFilterTab }),
   });
+
+  const otherTab = statusFilterTab === 'final' ? 'draft' : statusFilterTab === 'draft' ? 'final' : null;
+  const { data: otherData } = useQuery({
+    queryKey: ["salesInvoices", search, ordering, otherTab],
+    queryFn: () => getSalesInvoices({ search, ordering, status: otherTab }),
+    enabled: Boolean(search?.trim() && otherTab),
+  });
+
+  const invoiceMatchesSearch = (invoice, term) => {
+    if (!term || !term.trim()) return true;
+    const s = term.toLowerCase().trim();
+    if (invoice.invoice_number?.toLowerCase().includes(s)) return true;
+    if (invoice.customer_name?.toLowerCase().includes(s)) return true;
+    if (invoice.customer?.name?.toLowerCase().includes(s)) return true;
+    if (invoice.po_number?.toLowerCase().includes(s)) return true;
+    if (invoice.challan_number?.toLowerCase().includes(s)) return true;
+    if (invoice.notes?.toLowerCase().includes(s)) return true;
+    if (Array.isArray(invoice.items)) {
+      return invoice.items.some((it) =>
+        it.description?.toLowerCase().includes(s) ||
+        it.product_detail?.name?.toLowerCase().includes(s) ||
+        it.product_name?.toLowerCase().includes(s) ||
+        (typeof it.product === 'string' && it.product.toLowerCase().includes(s))
+      );
+    }
+    return false;
+  };
 
   if (error) {
     return (
-      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
-        <h3 className="text-lg font-bold text-white mb-1">Error loading {docLabelPlural}</h3>
-        <p className="text-sm text-red-300 mb-4">{error.message}</p>
+      <div className="bg-[var(--status-danger)]/15 border border-[var(--status-danger)]/30 rounded-xl p-6 text-center">
+        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">Error loading {docLabelPlural}</h3>
+        <p className="text-sm text-[var(--status-danger)] mb-4">{error.message}</p>
         <button
           onClick={() => {
             localStorage.clear();
@@ -95,13 +239,20 @@ export default function SalesTable({
     ? data
     : data?.data || data?.results || [];
 
+  const otherInvoicesRaw = Array.isArray(otherData)
+    ? otherData
+    : otherData?.data || otherData?.results || [];
+
+  const otherMatches = useMemo(() => {
+    if (!search?.trim() || !otherTab) return [];
+    return otherInvoicesRaw.filter((inv) => invoiceMatchesSearch(inv, search));
+  }, [otherInvoicesRaw, search, otherTab]);
+
   // Frontend search and filter
   const filteredInvoices = invoicesRaw
     .filter(invoice => {
-      // Search by invoice number or customer (case-insensitive)
-      const searchLower = search.toLowerCase();
-      const matchesSearch = invoice.invoice_number?.toLowerCase().includes(searchLower) ||
-        invoice.customer_name?.toLowerCase().includes(searchLower);
+      // Search across invoice number, customer, PO, challan, notes, and item descriptions
+      const matchesSearch = invoiceMatchesSearch(invoice, search);
       
       // Date range filter (use advanced filters if available, otherwise basic)
       const dateRange = advancedFilters.dateRange.start || advancedFilters.dateRange.end 
@@ -149,21 +300,93 @@ export default function SalesTable({
       return matchesSearch && matchesDate && matchesAmount && matchesCustomer && matchesOverdue;
     })
     .sort((a, b) => {
-      // Frontend ordering
-      if (ordering === "-invoice_date") return new Date(b.invoice_date) - new Date(a.invoice_date);
-      if (ordering === "invoice_date") return new Date(a.invoice_date) - new Date(b.invoice_date);
-      if (ordering === "-total_amount") return Number(b.total_amount) - Number(a.total_amount);
-      if (ordering === "total_amount") return Number(a.total_amount) - Number(b.total_amount);
+      const { key, direction } = sortConfig;
+      const factor = direction === "asc" ? 1 : -1;
+      if (key === "invoice_date") {
+        return factor * (new Date(a.invoice_date || 0) - new Date(b.invoice_date || 0));
+      }
+      if (key === "invoice_number") {
+        return factor * String(a.invoice_number || "").localeCompare(String(b.invoice_number || ""), undefined, { numeric: true });
+      }
+      if (key === "customer_name") {
+        return factor * String(a.customer_name || "").localeCompare(String(b.customer_name || ""));
+      }
+      if (key === "total_amount") {
+        return factor * (Number(a.total_amount || 0) - Number(b.total_amount || 0));
+      }
+      if (key === "untaxed_amount") {
+        const getUntaxed = (inv) => inv.items?.reduce((sum, item) => {
+          const q = parseFloat(item.quantity || 0);
+          const p = parseFloat(item.price || 0);
+          const d = parseFloat(item.discount || 0);
+          const base = q * p;
+          return sum + (base - (base * d) / 100);
+        }, 0) || 0;
+        return factor * (getUntaxed(a) - getUntaxed(b));
+      }
+      if (key === "po_number") {
+        return factor * String(a.po_number || "").localeCompare(String(b.po_number || ""));
+      }
+      if (key === "status") {
+        return factor * String(a.status || "").localeCompare(String(b.status || ""));
+      }
       return 0;
     });
 
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+    setSelectAllAcrossPages(false);
+  }, [search, statusFilterTab, advancedFilters, sortConfig]);
+
+  // Optimized pagination calculations
+  const totalItems = filteredInvoices.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+
+  const paginatedInvoices = useMemo(() => {
+    const startIdx = (safePage - 1) * pageSize;
+    return filteredInvoices.slice(startIdx, startIdx + pageSize);
+  }, [filteredInvoices, safePage, pageSize]);
+
+  const startIndex = totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const endIndex = Math.min(safePage * pageSize, totalItems);
+
+  const isAllCurrentPageSelected = paginatedInvoices.length > 0 && paginatedInvoices.every(inv => selectedInvoices.has(inv.id));
+  const isSomeCurrentPageSelected = paginatedInvoices.some(inv => selectedInvoices.has(inv.id)) && !isAllCurrentPageSelected;
+
   // Bulk operations functions
   const handleSelectAll = (checked) => {
+    setSelectAllAcrossPages(false);
     if (checked) {
-      setSelectedInvoices(new Set(filteredInvoices.map(invoice => invoice.id)));
+      const pageIds = paginatedInvoices.map(invoice => invoice.id);
+      setSelectedInvoices(new Set(pageIds));
     } else {
       setSelectedInvoices(new Set());
     }
+  };
+
+  const handleSelectAllAcrossPages = () => {
+    setSelectAllAcrossPages(true);
+    setSelectedInvoices(new Set(filteredInvoices.map(invoice => invoice.id)));
+  };
+
+  const handlePageChange = (newPage) => {
+    const target = Math.min(Math.max(1, newPage), totalPages);
+    setPage(target);
+    setSelectAllAcrossPages(false);
+    if (tableTopRef.current) {
+      tableTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setPage(1);
+    setSelectAllAcrossPages(false);
+    try {
+      localStorage.setItem("sales_table_page_size", String(newSize));
+    } catch (e) {}
   };
 
   const handleSelectBill = (invoiceId, checked) => {
@@ -190,6 +413,8 @@ export default function SalesTable({
         
         // Invalidate queries to refresh the data
         queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+        queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
+        queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
         
         toast.success(`Successfully deleted ${selectedInvoices.size} sales invoices!`);
         setSelectedInvoices(new Set());
@@ -231,48 +456,120 @@ export default function SalesTable({
       selected_ids: selectedIds.length > 0 ? selectedIds.join(',') : undefined,
     };
 
-    try {
-      setIsExporting(true);
-      const queued = await exportSalesInvoicesCsv(params);
-      const taskId = queued?.task_id;
-      if (!taskId) {
-        throw new Error('Unable to start CSV export.');
-      }
+    setIsExporting(true);
+    let downloaded = false;
 
-      toast.info('Sales CSV export queued. Preparing download...');
-      await waitForSalesCsvJob(taskId);
-      const blob = await downloadSalesCsv(taskId);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sales-invoices-${new Date().toLocaleDateString('sv-SE')}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success('Sales CSV exported successfully.');
-    } catch (error) {
-      console.error('CSV export error:', error);
-      toast.error('Unable to export sales CSV.');
-    } finally {
-      setIsExporting(false);
+    // 1. Try background task
+    try {
+      const queued = await exportSalesInvoicesCsv(params);
+      if (queued instanceof Blob) {
+        const url = window.URL.createObjectURL(queued);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sales-invoices-${new Date().toLocaleDateString('sv-SE')}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        toast.success('Sales CSV exported successfully.');
+        downloaded = true;
+      } else if (queued?.task_id) {
+        toast.info('Sales CSV export queued. Preparing download...');
+        await waitForSalesCsvJob(queued.task_id);
+        const blob = await downloadSalesCsv(queued.task_id);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sales-invoices-${new Date().toLocaleDateString('sv-SE')}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        toast.success('Sales CSV exported successfully.');
+        downloaded = true;
+      }
+    } catch (apiError) {
+      console.warn('Background CSV job failed, attempting direct sync download...', apiError);
     }
+
+    // 2. If not downloaded yet, try direct synchronous export (?direct=1)
+    if (!downloaded) {
+      try {
+        const blob = await exportSalesInvoicesCsv({ ...params, direct: 1 });
+        if (blob instanceof Blob) {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `sales-invoices-${new Date().toLocaleDateString('sv-SE')}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+          toast.success('Sales CSV exported successfully.');
+          downloaded = true;
+        }
+      } catch (directErr) {
+        console.warn('Direct export failed, attempting client-side CSV fallback...', directErr);
+      }
+    }
+
+    // 3. Fallback to client-side CSV generation
+    if (!downloaded) {
+      try {
+        const dataToExport = selectedIds.length > 0
+          ? filteredInvoices.filter(inv => selectedIds.includes(inv.id))
+          : filteredInvoices;
+
+        if (!dataToExport || dataToExport.length === 0) {
+          toast.warn('No invoices to export.');
+          return;
+        }
+
+        const headers = ['Invoice No', 'Date', 'Customer', 'Purchase Order', 'Status', 'Payment Status', 'Subtotal', 'Round Off', 'Total Amount'];
+        const rows = dataToExport.map(inv => [
+          `"${inv.invoice_number || ''}"`,
+          `"${inv.invoice_date || ''}"`,
+          `"${(inv.customer_name || '').replace(/"/g, '""')}"`,
+          `"${inv.po_number || ''}"`,
+          `"${inv.status || ''}"`,
+          `"${inv.payment_status || ''}"`,
+          `"${inv.untaxed_amount || ''}"`,
+          `"${inv.round_off || '0.00'}"`,
+          `"${inv.total_amount || '0.00'}"`
+        ]);
+
+        const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `sales-invoices-${new Date().toLocaleDateString('sv-SE')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success('Sales CSV exported successfully.');
+      } catch (fallbackErr) {
+        console.error('All CSV export attempts failed:', fallbackErr);
+        toast.error('Unable to export sales CSV.');
+      }
+    }
+
+    setIsExporting(false);
   };
 
   // Removed global isLoading return to avoid unmounting search bar
   return (
-    <div className="lg:bg-white/5 lg:backdrop-filter lg:backdrop-blur-20 rounded-lg lg:shadow p-0 lg:p-6 lg:border lg:border-white/10 bg-transparent border-none shadow-none backdrop-blur-none">
+    <div className="rounded-2xl p-0 lg:p-6 bg-transparent border-none shadow-none backdrop-blur-none">
       {/* Status Tabs */}
       {!hideStatusTabs && (
-        <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-xl mb-6 w-fit max-w-full overflow-x-auto no-scrollbar mx-4 lg:mx-0">
+        <div className="flex gap-1 p-1 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl mb-6 w-fit max-w-full overflow-x-auto no-scrollbar mx-4 lg:mx-0">
           {['all', 'final', 'draft'].map((tab) => (
             <button
               key={tab}
               onClick={() => setStatusFilterTab(tab)}
-              className={`px-6 py-2 rounded-lg text-sm font-medium capitalize transition-all whitespace-nowrap ${
+              className={`px-6 py-2 rounded-lg text-sm font-medium capitalize transition-all whitespace-nowrap cursor-pointer ${
                 statusFilterTab === tab 
-                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' 
-                : 'text-gray-400 hover:text-white border border-transparent'
+                ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-semibold shadow-sm' 
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]'
               }`}
             >
               {tab}s
@@ -290,16 +587,16 @@ export default function SalesTable({
               placeholder={`Search ${docLabelPlural}...`}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-white/30 rounded-lg focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300 bg-white/10 backdrop-filter backdrop-blur-10 text-white placeholder-white/70 w-full sm:w-64"
+              className="pl-10 pr-4 py-2 border border-[var(--border-subtle)] rounded-xl focus:border-[var(--accent-primary)] outline-none bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] w-full sm:w-64 text-sm font-medium"
             />
-            <svg className="w-5 h-5 text-white/70 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-[var(--text-muted)] absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
           
           <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className="px-3 py-2 border border-white/30 rounded-lg hover:bg-white/20 bg-white/10 backdrop-filter backdrop-blur-10 text-sm font-medium text-white drop-shadow-lg"
+            className="btn-secondary px-3 py-2 text-sm"
           >
             Filters
           </button>
@@ -309,27 +606,70 @@ export default function SalesTable({
           <button
             onClick={exportToCSV}
             disabled={isExporting}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-emerald-300/40 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-100 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+            className="btn-secondary px-3 py-2 text-sm inline-flex items-center gap-2"
           >
-            <ArrowDownTrayIcon className="w-4 h-4" />
+            <ArrowDownTrayIcon className="w-4 h-4 text-[var(--accent-primary)]" />
             {isExporting ? 'Exporting...' : 'Export CSV'}
           </button>
 
-          <select
-            value={ordering}
-            onChange={(e) => setOrdering(e.target.value)}
-              className="px-3 py-2 border border-white/30 rounded-lg focus:ring-2 focus:ring-cyan-300 bg-[#111] backdrop-filter backdrop-blur-10 text-white text-sm"
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+              className="btn-secondary px-3 py-2 text-sm inline-flex items-center gap-1.5"
+              title="Customize Columns"
+            >
+              <AdjustmentsHorizontalIcon className="w-4 h-4 text-[var(--accent-primary)]" />
+              <span>Columns</span>
+              <ChevronDownIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+            </button>
+            {showColumnDropdown && (
+              <div className="absolute right-0 mt-2 w-52 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl p-3 z-50">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2 px-1">
+                  Visible Columns
+                </div>
+                <div className="space-y-1.5">
+                  {COLUMN_OPTIONS.map((col) => (
+                    <label
+                      key={col.id}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-surface-hover)] cursor-pointer text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] select-none"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={visibleColumns[col.id]}
+                        onChange={() => toggleColumn(col.id)}
+                        className="rounded border-[var(--border-subtle)] bg-[var(--bg-primary)] accent-[var(--accent-primary)] text-[var(--accent-primary)]"
+                      />
+                      <span>{col.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Show overdue Bills only Quick Toggle */}
+          <button
+            type="button"
+            onClick={() => setAdvancedFilters(prev => ({ ...prev, hasOverdue: !prev.hasOverdue }))}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer select-none ${
+              advancedFilters.hasOverdue
+                ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border-[var(--status-danger)]/30'
+                : 'btn-secondary text-[var(--text-secondary)]'
+            }`}
+            title="Filter to show only overdue bills"
           >
-            <option value="-invoice_date" className="bg-[#1a2341] text-white">Newest First</option>
-            <option value="invoice_date" className="bg-[#1a2341] text-white">Oldest First</option>
-            <option value="-total_amount" className="bg-[#1a2341] text-white">Highest Amount</option>
-            <option value="total_amount" className="bg-[#1a2341] text-white">Lowest Amount</option>
-          </select>
+            <ExclamationTriangleIcon className={`w-3.5 h-3.5 ${advancedFilters.hasOverdue ? 'text-[var(--status-danger)]' : 'text-[var(--text-muted)]'}`} />
+            <span>Show overdue Bills only</span>
+            {advancedFilters.hasOverdue && (
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-danger)] animate-pulse"></span>
+            )}
+          </button>
           
           {selectedInvoices.size > 0 && (
             <button
               onClick={() => setShowBulkActions(!showBulkActions)}
-              className="px-3 py-2 bg-blue-500/30 text-white border border-blue-300/50 rounded-lg hover:bg-blue-500/50 backdrop-filter backdrop-blur-10 drop-shadow-lg text-sm"
+              className="btn-primary px-3 py-2 text-sm"
             >
               Actions ({selectedInvoices.size})
             </button>
@@ -348,21 +688,21 @@ export default function SalesTable({
 
       {/* Bulk Actions */}
       {showBulkActions && selectedInvoices.size > 0 && (
-        <div className="mb-4 p-4 bg-blue-500/20 backdrop-filter backdrop-blur-10 rounded-lg border border-blue-300/50">
+        <div className="mb-4 p-4 bg-[var(--accent-primary)]/15 rounded-xl border border-[var(--accent-primary)]/30">
           <div className="flex items-center justify-between">
-            <span className="text-white font-medium drop-shadow-lg">
+            <span className="text-[var(--text-primary)] font-medium">
               {selectedInvoices.size} {docLabelPlural} selected
             </span>
             <div className="flex gap-2">
               <button
                 onClick={exportToCSV}
-                className="px-3 py-1 bg-green-500/30 text-white border border-green-300/50 rounded hover:bg-green-500/50 backdrop-filter backdrop-blur-10 drop-shadow-lg text-sm"
+                className="btn-secondary px-3 py-1 text-sm"
               >
                 Export CSV
               </button>
               <button
                 onClick={handleBulkDelete}
-                className="px-3 py-1 bg-red-500/30 text-white border border-red-300/50 rounded hover:bg-red-500/50 backdrop-filter backdrop-blur-10 drop-shadow-lg text-sm"
+                className="btn-destructive !text-sm !py-1.5 !px-3 !normal-case !tracking-normal !font-semibold"
               >
                 Delete Selected
               </button>
@@ -371,144 +711,355 @@ export default function SalesTable({
         </div>
       )}
 
+      {/* Selection Across Pages Banner */}
+      {isAllCurrentPageSelected && totalPages > 1 && (
+        <div className="bg-[var(--status-info)]/15 border border-[var(--status-info)]/30 rounded-xl px-4 py-2.5 mb-3 text-xs text-[var(--status-info)] flex items-center justify-between">
+          <span>
+            {selectAllAcrossPages
+              ? `All ${totalItems} invoices across all ${totalPages} pages are selected.`
+              : `All ${paginatedInvoices.length} invoices on this page are selected.`}
+          </span>
+          {!selectAllAcrossPages ? (
+            <button
+              type="button"
+              onClick={handleSelectAllAcrossPages}
+              className="font-bold text-[var(--accent-primary)] hover:underline ml-2 transition-colors"
+            >
+              Select all {totalItems} invoices across all pages
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectAllAcrossPages(false);
+                setSelectedInvoices(new Set());
+              }}
+              className="font-bold text-[var(--accent-primary)] hover:underline ml-2 transition-colors"
+            >
+              Clear selection
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Cross-tab search prompt */}
+      {Boolean(search?.trim() && filteredInvoices.length === 0 && otherMatches.length > 0) && (
+        <div className="mx-4 lg:mx-0 mb-4 p-3 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/25 rounded-xl flex items-center justify-between text-xs sm:text-sm text-[var(--text-primary)]">
+          <span>
+            Found <strong>{otherMatches.length}</strong> matching {otherMatches.length === 1 ? 'invoice' : 'invoices'} in <strong>{otherTab === 'draft' ? 'Drafts' : 'Finals'}</strong>.
+          </span>
+          <button
+            type="button"
+            onClick={() => setStatusFilterTab(otherTab)}
+            className="text-[var(--accent-primary)] hover:underline font-bold cursor-pointer ml-3 whitespace-nowrap"
+          >
+            [View {otherTab === 'draft' ? 'Drafts' : 'Finals'}]
+          </button>
+        </div>
+      )}
+
       {/* Table for desktop, Cards for mobile */}
-      <div className="hidden lg:block">
+      <div ref={tableTopRef} className="hidden lg:block">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm border-separate border-spacing-y-2">
-            <thead>
-              <tr className="bg-white/5 border-b border-white/10">
-                <th className="px-6 py-4 text-left rounded-l-lg">
+          <table className="w-full table-fixed text-sm divide-y divide-[var(--border-subtle)]">
+            <colgroup>
+              <col style={{ width: `${colWidths.checkbox}px` }} />
+              <col style={{ width: `${colWidths.invoice_number}px` }} />
+              <col style={{ width: `${colWidths.invoice_date}px` }} />
+              {visibleColumns.customer && <col style={{ width: `${colWidths.customer}px` }} />}
+              {visibleColumns.po_number && <col style={{ width: `${colWidths.po_number}px` }} />}
+              {visibleColumns.untaxed_amount && <col style={{ width: `${colWidths.untaxed_amount}px` }} />}
+              {visibleColumns.total_amount && <col style={{ width: `${colWidths.total_amount}px` }} />}
+              {visibleColumns.status && <col style={{ width: `${colWidths.status}px` }} />}
+              {visibleColumns.items && <col style={{ width: `${colWidths.items}px` }} />}
+              <col style={{ width: `${colWidths.actions}px` }} />
+            </colgroup>
+            <thead className={LIST_THEAD}>
+              <tr className="border-b border-[var(--border-subtle)]">
+                <th className={`${LIST_TH} rounded-l-lg`}>
                   <input
                     type="checkbox"
-                    checked={selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0}
+                    checked={isAllCurrentPageSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isSomeCurrentPageSelected;
+                    }}
                     onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                    className="rounded border-[var(--border-subtle)] bg-[var(--bg-primary)] accent-[var(--accent-primary)]"
                   />
+                  {renderResizeHandle("checkbox")}
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Invoice Details
+                <th 
+                  onClick={() => handleSort("invoice_number")}
+                  className={LIST_TH_SORTABLE}
+                >
+                  <div className={LIST_TH_LABEL}>
+                    <span>Invoice No.</span>
+                    {sortConfig.key === "invoice_number" && (
+                      <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </div>
+                  {renderResizeHandle("invoice_number")}
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Customer
+                <th 
+                  onClick={() => handleSort("invoice_date")}
+                  className={LIST_TH_SORTABLE}
+                >
+                  <div className={LIST_TH_LABEL}>
+                    <span>Date</span>
+                    {sortConfig.key === "invoice_date" && (
+                      <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </div>
+                  {renderResizeHandle("invoice_date")}
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Amount (Before Tax)
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Total Amount (With Tax)
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Items
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider rounded-r-lg">
-                  Actions
+                {visibleColumns.customer && (
+                  <th 
+                    onClick={() => handleSort("customer_name")}
+                    className={LIST_TH_SORTABLE}
+                  >
+                    <div className={LIST_TH_LABEL}>
+                      <span>Customer</span>
+                      {sortConfig.key === "customer_name" && (
+                        <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                    {renderResizeHandle("customer")}
+                  </th>
+                )}
+                {visibleColumns.po_number && (
+                  <th 
+                    onClick={() => handleSort("po_number")}
+                    className={LIST_TH_SORTABLE}
+                  >
+                    <div className={LIST_TH_LABEL}>
+                      <span>Purchase Order</span>
+                      {sortConfig.key === "po_number" && (
+                        <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                    {renderResizeHandle("po_number")}
+                  </th>
+                )}
+                {visibleColumns.untaxed_amount && (
+                  <th 
+                    onClick={() => handleSort("untaxed_amount")}
+                    className={LIST_TH_SORTABLE}
+                  >
+                    <div className={LIST_TH_LABEL}>
+                      <span>Amount (Before Tax)</span>
+                      {sortConfig.key === "untaxed_amount" && (
+                        <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                    {renderResizeHandle("untaxed_amount")}
+                  </th>
+                )}
+                {visibleColumns.total_amount && (
+                  <th 
+                    onClick={() => handleSort("total_amount")}
+                    className={LIST_TH_SORTABLE}
+                  >
+                    <div className={LIST_TH_LABEL}>
+                      <span>Total Amount (With Tax)</span>
+                      {sortConfig.key === "total_amount" && (
+                        <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                    {renderResizeHandle("total_amount")}
+                  </th>
+                )}
+                {visibleColumns.status && (
+                  <th 
+                    onClick={() => handleSort("status")}
+                    className={LIST_TH_SORTABLE}
+                  >
+                    <div className={LIST_TH_LABEL}>
+                      <span>Status</span>
+                      {sortConfig.key === "status" && (
+                        <span className="text-[var(--accent-primary)] font-bold">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </div>
+                    {renderResizeHandle("status")}
+                  </th>
+                )}
+                {visibleColumns.items && (
+                  <th className={LIST_TH}>
+                    <div className="truncate">Items</div>
+                    {renderResizeHandle("items")}
+                  </th>
+                )}
+                <th className={`${LIST_TH} rounded-r-lg`}>
+                  <span>Actions</span>
+                  {renderResizeHandle("actions")}
                 </th>
               </tr>
             </thead>
             <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan="8" className="px-6 py-12 text-center">
+                <td colSpan="10" className="px-6 py-12 text-center">
                   <div className="flex justify-center items-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)]"></div>
                   </div>
                 </td>
               </tr>
             ) : filteredInvoices.length === 0 ? (
               <tr>
-                <td colSpan="8" className="px-6 py-12 text-center text-gray-400">
-                  No invoices found matching your criteria.
+                <td colSpan="10" className="px-6 py-12 text-center text-[var(--text-muted)]">
+                  {search?.trim() && otherMatches.length > 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <p className="text-sm">No {docLabelPlural.toLowerCase()} found matching "{search}" in {statusFilterTab === 'final' ? 'Finals' : statusFilterTab === 'draft' ? 'Drafts' : 'this view'}.</p>
+                      <div className="inline-flex items-center gap-2 px-3.5 py-2 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-xl text-sm font-medium text-[var(--text-primary)]">
+                        <span>Found {otherMatches.length} matching {otherMatches.length === 1 ? 'invoice' : 'invoices'} in {otherTab === 'draft' ? 'Drafts' : 'Finals'}.</span>
+                        <button
+                          type="button"
+                          onClick={() => setStatusFilterTab(otherTab)}
+                          className="text-[var(--accent-primary)] hover:underline font-bold cursor-pointer ml-1"
+                        >
+                          [View {otherTab === 'draft' ? 'Drafts' : 'Finals'}]
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <span>No {docLabelPlural.toLowerCase()} found matching your criteria.</span>
+                  )}
                 </td>
               </tr>
             ) : (
-              filteredInvoices.map((invoice) => (
-              <tr key={invoice.id} className="bg-transparent border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
+              paginatedInvoices.map((invoice) => {
+                return (
+              <tr key={invoice.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)] transition-colors">
+                <td className={LIST_TD}>
                   <input
                     type="checkbox"
                     checked={selectedInvoices.has(invoice.id)}
                     onChange={(e) => handleSelectBill(invoice.id, e.target.checked)}
-                    className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                    className="rounded border-[var(--border-subtle)] bg-[var(--bg-primary)] accent-[var(--accent-primary)] cursor-pointer"
                   />
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-white">
+                <td className={LIST_TD}>
+                  <div className="text-xs font-mono font-semibold text-[var(--text-primary)] tracking-tight truncate" title={`#${invoice.invoice_number}`}>
                     #{invoice.invoice_number}
                   </div>
-                  <div className="text-sm text-gray-400">
-                    {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
+                </td>
+                <td className={LIST_TD}>
+                  <div className="text-xs font-mono text-[var(--text-muted)] truncate">
+                    {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'dd/MM/yyyy') : '-'}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-white">
-                    {invoice.customer_name}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-white">
-                    {getCurrencySymbol()}{(() => {
-                      // Calculate untaxed amount from items
-                      const untaxedAmount = invoice.items?.reduce((sum, item) => {
-                        const quantity = parseFloat(item.quantity || 0);
-                        const price = parseFloat(item.price || 0);
-                        return sum + (quantity * price);
-                      }, 0) || 0;
-                      return Number(untaxedAmount).toLocaleString();
-                    })()}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-bold text-cyan-400">
-                    {getCurrencySymbol()}{(() => {
-                      // Calculate total amount including tax
+                {visibleColumns.customer && (
+                  <td className={LIST_TD}>
+                    <div className="text-sm font-semibold text-[var(--text-primary)] truncate" title={invoice.customer_name}>
+                      {invoice.customer_name}
+                    </div>
+                  </td>
+                )}
+                {visibleColumns.po_number && (
+                  <td className={LIST_TD}>
+                    <div className="text-xs font-mono text-[var(--text-secondary)] truncate" title={invoice.po_number || '-'}>
+                      {invoice.po_number || '-'}
+                    </div>
+                  </td>
+                )}
+                {visibleColumns.untaxed_amount && (
+                  <td className={LIST_TD_AMOUNT}>
+                    <div className="text-xs font-mono font-medium text-[var(--text-primary)] font-tabular truncate">
+                      {getCurrencySymbol()}{(() => {
+                        // Calculate untaxed amount from items factoring in discounts
+                        const untaxedAmount = invoice.items?.reduce((sum, item) => {
+                          const quantity = parseFloat(item.quantity || 0);
+                          const price = parseFloat(item.price || 0);
+                          const discount = parseFloat(item.discount || 0);
+                          const lineBase = quantity * price;
+                          return sum + (lineBase - (lineBase * discount) / 100);
+                        }, 0) || 0;
+                        return Number(untaxedAmount).toLocaleString('en-IN', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        });
+                      })()}
+                    </div>
+                  </td>
+                )}
+                {visibleColumns.total_amount && (
+                  <td className={LIST_TD_AMOUNT}>
+                    {(() => {
+                      const roundOff = parseFloat(invoice.round_off || 0) || 0;
                       const calculations = invoice.items?.reduce((acc, item) => {
                         const quantity = parseFloat(item.quantity || 0);
                         const price = parseFloat(item.price || 0);
+                        const discount = parseFloat(item.discount || 0);
                         const tax = parseFloat(item.tax || 0);
-                        const subtotal = quantity * price;
-                        const taxAmount = (subtotal * tax) / 100;
+                        const lineBase = quantity * price;
+                        const taxable = lineBase - (lineBase * discount) / 100;
+                        const taxAmount = (taxable * tax) / 100;
                         return {
-                          untaxed: acc.untaxed + subtotal,
+                          taxable: acc.taxable + taxable,
                           taxAmount: acc.taxAmount + taxAmount
                         };
-                      }, { untaxed: 0, taxAmount: 0 }) || { untaxed: 0, taxAmount: 0 };
-                      
-                      const totalWithTax = calculations.untaxed + calculations.taxAmount;
-                      return Number(totalWithTax).toLocaleString();
+                      }, { taxable: 0, taxAmount: 0 }) || { taxable: 0, taxAmount: 0 };
+
+                      const computedTotal = calculations.taxable + calculations.taxAmount + roundOff;
+                      const totalAmountWithTax = invoice.total_amount != null
+                        ? parseFloat(invoice.total_amount)
+                        : computedTotal;
+
+                      return (
+                        <div className="truncate">
+                          <div className="text-xs font-mono font-bold text-[var(--text-primary)] font-tabular">
+                            {getCurrencySymbol()}{Number(totalAmountWithTax).toLocaleString('en-IN', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2
+                            })}
+                          </div>
+                          {roundOff !== 0 && (
+                            <div className="text-xs font-mono font-tabular text-[var(--status-warning)] font-medium">
+                              Round off: {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                            </div>
+                          )}
+                        </div>
+                      );
                     })()}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                   <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
-                      invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
-                      invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
-                      'bg-gray-500/20 text-gray-400'
-                   }`}>
-                      {invoice.status || 'final'}
-                   </span>
-                   <div className="mt-2">
-                    <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
-                      invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                      invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                      'bg-red-500/20 text-red-400 border border-red-500/30'
-                    }`}>
-                      {invoice.payment_status || 'pending'}
-                    </span>
-                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                  {invoice.items?.length || 0} items
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex flex-wrap gap-2">
+                  </td>
+                )}
+                {visibleColumns.status && (
+                  <td className={LIST_TD}>
+                    {(() => {
+                      const isDraft = invoice.status === 'draft' || String(invoice.invoice_number || '').startsWith('DFT-') || String(invoice.invoice_number || '').startsWith('D-');
+                      if (isDraft) {
+                        return (
+                          <span className="px-2 py-0.5 rounded text-xs uppercase font-semibold tracking-wider bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] border border-[var(--text-secondary)]/30">
+                            Draft
+                          </span>
+                        );
+                      }
+                      const ps = String(invoice.payment_status || '').toLowerCase();
+                      const isPaid = ps === 'paid';
+                      const isPartial = ps === 'partial_paid';
+                      return (
+                        <span className={`px-2 py-0.5 rounded text-xs uppercase font-semibold tracking-wider ${
+                          isPaid ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : isPartial ? 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30' : 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30'
+                        }`}>
+                          {isPaid ? 'Paid' : isPartial ? 'Partly Paid' : 'Not Paid'}
+                        </span>
+                      );
+                    })()}
+                  </td>
+                )}
+                {visibleColumns.items && (
+                  <td className={`${LIST_TD} text-sm text-[var(--text-muted)] truncate`}>
+                    {invoice.items?.length || 0} items
+                  </td>
+                )}
+                <td className={`${LIST_TD} text-sm font-medium`}>
+                  <div className="flex items-center justify-center gap-1.5">
                     <button
+                      type="button"
                       onClick={() => onView(invoice)}
-                      className="px-3 py-1 bg-white/5 text-gray-300 border border-white/10 rounded hover:bg-white/10 transition-colors"
+                      title={`View ${docLabel}`}
+                      className="p-1.5 bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-default)] rounded-lg hover:text-[var(--text-primary)] transition-all cursor-pointer"
                     >
-                      View
+                      <EyeIcon className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
@@ -520,30 +1071,32 @@ export default function SalesTable({
                       disabled={!canEditInvoice(invoice)}
                       title={editInvoiceTooltip(invoice)}
                       aria-disabled={!canEditInvoice(invoice)}
-                      className={`px-3 py-1 border rounded transition-colors ${
+                      className={`p-1.5 border rounded-lg transition-all ${
                         canEditInvoice(invoice)
-                          ? 'bg-white/5 text-cyan-300 border-white/10 hover:bg-white/10'
-                          : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                          ? 'bg-[var(--bg-primary)] text-[var(--accent-primary)] border-[var(--border-default)] hover:text-[var(--text-primary)] cursor-pointer'
+                          : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)] cursor-not-allowed opacity-40'
                       }`}
                     >
-                      Edit
+                      <PencilSquareIcon className="w-3.5 h-3.5" />
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => openPaymentForInvoice(invoice)}
-                      disabled={!canRecordPayment(invoice)}
-                      title={canRecordPayment(invoice)
-                        ? 'Record payment for this invoice'
-                        : 'Available only for final invoices with pending or partial payment status.'}
-                      aria-disabled={!canRecordPayment(invoice)}
-                      className={`px-3 py-1 border rounded transition-colors ${
-                        canRecordPayment(invoice)
-                          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/20'
-                          : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
-                      }`}
-                    >
-                      Record Payment
-                    </button>
+                    {documentType !== "quotation" && (
+                      <button
+                        type="button"
+                        onClick={() => openPaymentForInvoice(invoice)}
+                        disabled={!canRecordPayment(invoice)}
+                        title={canRecordPayment(invoice)
+                          ? 'Record payment for this invoice'
+                          : 'Available only for final invoices with pending or partial payment status.'}
+                        aria-disabled={!canRecordPayment(invoice)}
+                        className={`p-1.5 border rounded-lg transition-all ${
+                          canRecordPayment(invoice)
+                            ? 'bg-[var(--bg-primary)] text-[var(--status-success)] border-[var(--border-default)] hover:text-[var(--text-primary)] cursor-pointer'
+                            : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)] cursor-not-allowed opacity-40'
+                        }`}
+                      >
+                        <BanknotesIcon className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => {
@@ -554,18 +1107,20 @@ export default function SalesTable({
                       disabled={!canDeleteInvoice(invoice)}
                       title={getDeleteTooltip(invoice)}
                       aria-disabled={!canDeleteInvoice(invoice)}
-                      className={`px-3 py-1 border rounded transition-colors ${
+                      className={`p-1.5 border rounded-lg transition-all ${
                         canDeleteInvoice(invoice)
-                          ? 'bg-red-500/10 text-red-300 border-red-500/20 hover:bg-red-500/20'
-                          : 'bg-white/5 text-gray-500 border-white/10 cursor-not-allowed opacity-70'
+                          ? 'bg-[var(--bg-primary)] text-[var(--status-danger)] border-[var(--border-default)] hover:text-[var(--status-danger-text)] cursor-pointer'
+                          : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)] cursor-not-allowed opacity-40'
                       }`}
                     >
-                      Delete
+                      <TrashIcon className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </td>
               </tr>
-            )))}
+                );
+              })
+            )}
           </tbody>
         </table>
         </div>
@@ -574,16 +1129,32 @@ export default function SalesTable({
       {/* Mobile Card Layout */}
       <div className="lg:hidden space-y-3 px-2">
         {isLoading ? (
-          <div className="flex justify-center items-center py-12 bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+          <div className="flex justify-center items-center py-12 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)]"></div>
           </div>
         ) : filteredInvoices.length === 0 ? (
-          <div className="text-center py-12 text-gray-400 bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10">
-            No invoices found matching your criteria.
+          <div className="text-center py-12 px-4 text-[var(--text-muted)] bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)]">
+            {search?.trim() && otherMatches.length > 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2">
+                <p className="text-sm">No {docLabelPlural.toLowerCase()} found matching "{search}" in {statusFilterTab === 'final' ? 'Finals' : statusFilterTab === 'draft' ? 'Drafts' : 'this view'}.</p>
+                <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-2 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-xl text-sm font-medium text-[var(--text-primary)]">
+                  <span>Found {otherMatches.length} matching {otherMatches.length === 1 ? 'invoice' : 'invoices'} in {otherTab === 'draft' ? 'Drafts' : 'Finals'}.</span>
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilterTab(otherTab)}
+                    className="text-[var(--accent-primary)] hover:underline font-bold cursor-pointer"
+                  >
+                    [View {otherTab === 'draft' ? 'Drafts' : 'Finals'}]
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <span>No {docLabelPlural.toLowerCase()} found matching your criteria.</span>
+            )}
           </div>
         ) : (
-          filteredInvoices.map((invoice) => (
-          <div key={invoice.id} className="bg-white/5 backdrop-filter backdrop-blur-10 rounded-xl border border-white/10 p-3 hover:bg-white/10 transition-all duration-300">
+          paginatedInvoices.map((invoice) => (
+          <div key={invoice.id} className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)] p-3 hover:bg-[var(--bg-surface-hover)] transition-all duration-300 shadow-sm">
             {/* Card Header */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
@@ -591,61 +1162,89 @@ export default function SalesTable({
                   type="checkbox"
                   checked={selectedInvoices.has(invoice.id)}
                   onChange={(e) => handleSelectBill(invoice.id, e.target.checked)}
-                  className="rounded border-white/30 text-cyan-300 focus:ring-cyan-300 bg-white/10"
+                  className="rounded border-[var(--border-subtle)] bg-[var(--bg-primary)] accent-[var(--accent-primary)]"
                 />
                 <div>
-                  <div className="text-base font-bold text-white">
+                  <div className="text-base font-bold text-[var(--text-primary)]">
                     #{invoice.invoice_number}
                   </div>
-                  <div className="text-[10px] text-white/50 uppercase tracking-widest font-black">
-                    {format(new Date(invoice.invoice_date), 'dd MMM, yyyy')}
+                  <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                    {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'dd/MM/yyyy') : '-'}
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-black text-cyan-400">
-                  {getCurrencySymbol()}{(() => {
-                    const calculations = invoice.items?.reduce((acc, item) => {
-                      const quantity = parseFloat(item.quantity || 0);
-                      const price = parseFloat(item.price || 0);
-                      const tax = parseFloat(item.tax || 0);
-                      const subtotal = quantity * price;
-                      const taxAmount = (subtotal * tax) / 100;
-                      return {
-                        untaxed: acc.untaxed + subtotal,
-                        taxAmount: acc.taxAmount + taxAmount
-                      };
-                    }, { untaxed: 0, taxAmount: 0 }) || { untaxed: 0, taxAmount: 0 };
-                    
-                    const totalWithTax = calculations.untaxed + calculations.taxAmount;
-                    return Number(totalWithTax).toLocaleString();
-                  })()}
-                </div>
-                <div className={`mt-1 inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black tracking-tighter ${
-                  invoice.payment_status === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                  invoice.payment_status === 'partial_paid' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                  'bg-red-500/20 text-red-400 border border-red-500/30'
-                }`}>
-                  {invoice.payment_status || 'pending'}
-                </div>
+                {(() => {
+                  const roundOff = parseFloat(invoice.round_off || 0) || 0;
+                  const calculations = invoice.items?.reduce((acc, item) => {
+                    const quantity = parseFloat(item.quantity || 0);
+                    const price = parseFloat(item.price || 0);
+                    const discount = parseFloat(item.discount || 0);
+                    const tax = parseFloat(item.tax || 0);
+                    const lineBase = quantity * price;
+                    const taxable = lineBase - (lineBase * discount) / 100;
+                    const taxAmount = (taxable * tax) / 100;
+                    return {
+                      taxable: acc.taxable + taxable,
+                      taxAmount: acc.taxAmount + taxAmount
+                    };
+                  }, { taxable: 0, taxAmount: 0 }) || { taxable: 0, taxAmount: 0 };
+
+                  const computedTotal = calculations.taxable + calculations.taxAmount + roundOff;
+                  const totalAmountWithTax = invoice.total_amount != null
+                    ? parseFloat(invoice.total_amount)
+                    : computedTotal;
+
+                  return (
+                    <div>
+                      <div className="text-lg font-bold text-[var(--text-primary)] font-mono">
+                        {getCurrencySymbol()}{Number(totalAmountWithTax).toLocaleString('en-IN', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
+                      </div>
+                      {roundOff !== 0 && (
+                        <div className="text-xs text-[var(--status-warning)] font-semibold text-right">
+                          Round off: {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
             {/* Card Content Grid */}
-            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/5 mb-4">
+            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-[var(--border-subtle)] mb-4">
                <div>
-                  <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Customer</div>
-                  <div className="text-xs font-bold text-white truncate">{invoice.customer_name}</div>
+                  <div className="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-wider mb-1">Customer</div>
+                  <div className="text-sm font-semibold text-[var(--text-primary)] truncate">{invoice.customer_name}</div>
+                  {invoice.po_number && (
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5">PO: {invoice.po_number}</div>
+                  )}
                </div>
                <div className="text-right">
-                  <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Status</div>
-                  <div className={`inline-block px-1.5 py-0.5 rounded text-[8px] uppercase font-black ${
-                      invoice.status === 'final' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
-                      invoice.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
-                      'bg-gray-500/20 text-gray-400'
-                   }`}>
-                      {invoice.status || 'final'}
-                  </div>
+                  <div className="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-wider mb-1">Status</div>
+                  {(() => {
+                    const isDraft = invoice.status === 'draft' || String(invoice.invoice_number || '').startsWith('DFT-') || String(invoice.invoice_number || '').startsWith('D-');
+                    if (isDraft) {
+                      return (
+                        <div className="inline-block px-2 py-0.5 rounded text-xs uppercase font-semibold bg-[var(--text-secondary)]/15 text-[var(--text-secondary)] border border-[var(--text-secondary)]/30">
+                          Draft
+                        </div>
+                      );
+                    }
+                    const ps = String(invoice.payment_status || '').toLowerCase();
+                      const isPaid = ps === 'paid';
+                      const isPartial = ps === 'partial_paid';
+                    return (
+                      <div className={`inline-block px-2 py-0.5 rounded text-xs uppercase font-semibold ${
+                        isPaid ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : isPartial ? 'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30' : 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30'
+                      }`}>
+                        {isPaid ? 'Paid' : isPartial ? 'Partly Paid' : 'Not Paid'}
+                      </div>
+                    );
+                  })()}
                </div>
             </div>
 
@@ -653,7 +1252,7 @@ export default function SalesTable({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => onView(invoice)}
-                className="flex-1 min-w-[70px] px-3 py-2.5 bg-white/5 text-white border border-white/10 rounded-xl hover:bg-white/10 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95"
+                className="btn-secondary flex-1 min-w-[70px] px-3 py-2 text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <EyeIcon className="w-3.5 h-3.5" />
                 View
@@ -663,7 +1262,7 @@ export default function SalesTable({
                 <button
                   type="button"
                   onClick={() => openPaymentForInvoice(invoice)}
-                  className="flex-1 min-w-[70px] px-3 py-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:scale-95"
+                  className="flex-1 min-w-[70px] px-3 py-2 bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30 rounded-xl hover:bg-[var(--status-success)]/25 transition-all text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                 >
                   <CurrencyDollarIcon className="w-3.5 h-3.5" />
                   Pay
@@ -678,10 +1277,10 @@ export default function SalesTable({
                   }
                 }}
                 disabled={!canEditInvoice(invoice)}
-                className={`flex-none p-2.5 rounded-xl transition-all border active:scale-95 ${
+                className={`btn-secondary flex-none p-2 rounded-xl transition-all ${
                   canEditInvoice(invoice)
-                    ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:bg-cyan-500/20'
-                    : 'bg-white/5 text-gray-500 border-white/10 opacity-50'
+                    ? 'text-[var(--accent-primary)] hover:bg-[var(--bg-surface-hover)]'
+                    : 'text-[var(--text-muted)] cursor-not-allowed opacity-40'
                 }`}
               >
                 <PencilSquareIcon className="w-4 h-4" />
@@ -695,10 +1294,10 @@ export default function SalesTable({
                   }
                 }}
                 disabled={!canDeleteInvoice(invoice)}
-                className={`flex-none p-2.5 rounded-xl transition-all border active:scale-95 ${
+                className={`flex-none p-2 rounded-xl transition-all border ${
                   canDeleteInvoice(invoice)
-                    ? 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
-                    : 'bg-white/5 text-gray-500 border-white/10 opacity-50'
+                    ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border-[var(--status-danger)]/30 hover:bg-[var(--status-danger)]/25'
+                    : 'btn-secondary text-[var(--text-muted)] cursor-not-allowed opacity-40'
                 }`}
               >
                 <TrashIcon className="w-4 h-4" />
@@ -708,10 +1307,139 @@ export default function SalesTable({
         )))}
       </div>
 
+      {/* Optimized Pagination Bar */}
+      {totalItems > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-[var(--border-subtle)] px-2 sm:px-1">
+          {/* Left: Showing range and rows-per-page selector */}
+          <div className="flex items-center gap-4 flex-wrap text-xs text-[var(--text-muted)]">
+            <span>
+              Showing <span className="font-semibold text-[var(--text-primary)] font-mono">{startIndex}</span>–<span className="font-semibold text-[var(--text-primary)] font-mono">{endIndex}</span> of <span className="font-semibold text-[var(--text-primary)] font-mono">{totalItems}</span> {totalItems === 1 ? 'invoice' : 'invoices'}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[var(--text-muted)]">Rows per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-2.5 py-1 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] cursor-pointer"
+              >
+                <option value={10} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">10</option>
+                <option value={20} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">20</option>
+                <option value={25} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">25</option>
+                <option value={50} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">50</option>
+                <option value={100} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">100</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Right: Page Navigation Buttons */}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1 sm:gap-1.5 select-none">
+              {/* First Page */}
+              <button
+                type="button"
+                onClick={() => handlePageChange(1)}
+                disabled={safePage <= 1}
+                className="p-1.5 sm:px-2 sm:py-1.5 rounded-lg text-xs font-medium border border-[var(--border-subtle)] transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                title="First page"
+              >
+                <ChevronDoubleLeftIcon className="w-4 h-4" />
+              </button>
+
+              {/* Prev Page */}
+              <button
+                type="button"
+                onClick={() => handlePageChange(safePage - 1)}
+                disabled={safePage <= 1}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border-subtle)] transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1"
+              >
+                <ChevronLeftIcon className="w-3.5 h-3.5" /> Prev
+              </button>
+
+              {/* Numbered Page Buttons with dynamic window */}
+              {(() => {
+                const maxButtons = 5;
+                let startP = Math.max(1, safePage - Math.floor(maxButtons / 2));
+                let endP = Math.min(totalPages, startP + maxButtons - 1);
+                if (endP - startP + 1 < maxButtons) {
+                  startP = Math.max(1, endP - maxButtons + 1);
+                }
+                const pageNumbers = [];
+                for (let p = startP; p <= endP; p++) {
+                  pageNumbers.push(p);
+                }
+                return (
+                  <>
+                    {startP > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handlePageChange(1)}
+                          className="w-8 h-8 rounded-lg text-xs font-semibold border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all"
+                        >
+                          1
+                        </button>
+                        {startP > 2 && <span className="px-1 text-[var(--text-muted)]">…</span>}
+                      </>
+                    )}
+                    {pageNumbers.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => handlePageChange(p)}
+                        className={`w-8 h-8 rounded-lg text-xs font-semibold border transition-all ${
+                          p === safePage
+                            ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] border-[var(--accent-primary)] shadow-sm font-bold'
+                            : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    {endP < totalPages && (
+                      <>
+                        {endP < totalPages - 1 && <span className="px-1 text-[var(--text-muted)]">…</span>}
+                        <button
+                          type="button"
+                          onClick={() => handlePageChange(totalPages)}
+                          className="w-8 h-8 rounded-lg text-xs font-semibold border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-all"
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
+
+              {/* Next Page */}
+              <button
+                type="button"
+                onClick={() => handlePageChange(safePage + 1)}
+                disabled={safePage >= totalPages}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border-subtle)] transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1"
+              >
+                Next <ChevronRightIcon className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Last Page */}
+              <button
+                type="button"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={safePage >= totalPages}
+                className="p-1.5 sm:px-2 sm:py-1.5 rounded-lg text-xs font-medium border border-[var(--border-subtle)] transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                title="Last page"
+              >
+                <ChevronDoubleRightIcon className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {filteredInvoices.length === 0 && (
         <div className="text-center py-12">
           <svg
-            className="mx-auto h-12 w-12 text-white/60 drop-shadow-md"
+            className="mx-auto h-12 w-12 text-[var(--text-muted)]"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -723,8 +1451,8 @@ export default function SalesTable({
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-white drop-shadow-lg">No sales bills</h3>
-          <p className="mt-1 text-sm text-white/70 drop-shadow-md">
+          <h3 className="mt-2 text-sm font-medium text-[var(--text-primary)]">No sales bills</h3>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Get started by creating a new sales bill.
           </p>
         </div>
@@ -732,17 +1460,18 @@ export default function SalesTable({
 
       {paymentInvoice && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={closePaymentModal} />
-          <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="flex justify-between items-center mb-4">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={closePaymentModal} />
+          <div className="relative bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center mb-5">
               <div>
-                <h2 className="text-xl font-bold text-white">Record Payment</h2>
-                <p className="text-xs text-gray-400 mt-1">Invoice #{paymentInvoice.invoice_number}</p>
+                <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+                  <BanknotesIcon className="w-6 h-6 text-[var(--status-success)]" />
+                  Record Payment
+                </h2>
+                <p className="text-xs text-[var(--text-muted)] mt-1">Invoice #{paymentInvoice.invoice_number}</p>
               </div>
-              <button onClick={closePaymentModal} className="text-gray-400 hover:text-white transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button onClick={closePaymentModal} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1.5 rounded-lg hover:bg-[var(--bg-surface-hover)]">
+                <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
             <PaymentForm

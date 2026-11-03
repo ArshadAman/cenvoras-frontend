@@ -19,10 +19,23 @@ export const hrApi = {
   getEmployees: (params) => api.get('/hr/employees/', { params }),
   getEmployee: (id) => api.get(`/hr/employees/${id}/`),
   createEmployee: (data) => api.post('/hr/employees/', data),
-  updateEmployee: (id, data) => api.put(`/hr/employees/${id}/`, data),
+  updateEmployee: (id, data) => api.patch(`/hr/employees/${id}/`, data),
   deleteEmployee: (id) => api.delete(`/hr/employees/${id}/`),
   incrementSalary: (id, data) => api.post(`/hr/employees/${id}/increment_salary/`, data),
   getEmployeeSalaryHistory: (id) => api.get(`/hr/employees/${id}/salary_history/`),
+  calculateSalaryBreakdown: (data) => api.post('/hr/employees/calculate_salary_breakdown/', data),
+  sendEmployeeOfferLetter: (id) => api.post(`/hr/employees/${id}/send_offer_letter/`),
+  // UAT #10 (backend #205): admin-only date-of-joining correction. GET previews, POST applies.
+  previewDojCorrection: (id, newDoj) => api.get(`/hr/employees/${id}/doj-correction/`, { params: { new_doj: newDoj } }),
+  applyDojCorrection: (id, data) => api.post(`/hr/employees/${id}/doj-correction/`, data),
+  listDojCorrections: (id) => api.get(`/hr/employees/${id}/doj-corrections/`),
+  adjustDojCorrection: (id, corrId, data) => api.post(`/hr/employees/${id}/doj-corrections/${corrId}/adjust/`, data),
+
+  // Tax Declarations
+  getTaxDeclarations: (params) => api.get('/hr/tax-declarations/', { params }),
+  createTaxDeclaration: (data) => api.post('/hr/tax-declarations/', data),
+  updateTaxDeclaration: (id, data) => api.put(`/hr/tax-declarations/${id}/`, data),
+  deleteTaxDeclaration: (id) => api.delete(`/hr/tax-declarations/${id}/`),
 
   // Attendance
   getAttendance: (params) => api.get('/hr/attendance/', { params }),
@@ -30,6 +43,15 @@ export const hrApi = {
   updateAttendance: (id, data) => api.put(`/hr/attendance/${id}/`, data),
   deleteAttendance: (id) => api.delete(`/hr/attendance/${id}/`),
   bulkAttendance: (data) => api.post('/hr/attendance/bulk/', data),
+  exportAttendance: (params) => api.get('/hr/attendance/export/', { params, responseType: 'blob' }),
+  getEmployeeAttendanceSummary: (employeeIdOrParams, params = {}) => {
+    if (typeof employeeIdOrParams === 'object') {
+      return api.get('/hr/attendance/employee_summary/', { params: employeeIdOrParams });
+    }
+    return api.get('/hr/attendance/employee_summary/', {
+      params: { employee_id: employeeIdOrParams, ...params },
+    });
+  },
 
   // Leave Types
   getLeaveTypes: (params) => api.get('/hr/leave-types/', { params }),
@@ -70,6 +92,7 @@ export const hrApi = {
   createPayrollRun: (data) => api.post('/hr/payroll-runs/', data),
   runPayroll: (id) => api.post(`/hr/payroll-runs/${id}/run/`),
   finalisePayroll: (id) => api.post(`/hr/payroll-runs/${id}/finalise/`),
+  downloadBankExport: (id) => api.get(`/hr/payroll-runs/${id}/bank_export/`, { responseType: 'blob' }),
 
   // Payslips
   getPayslips: (params) => api.get('/hr/payslips/', { params }),
@@ -96,7 +119,11 @@ export const hrApi = {
   deleteNotification: (id) => api.delete(`/hr/notifications/${id}/`),
 
   // Payroll Lifecycle & Exceptions
+  getPfWageComponents: () => api.get('/hr/pf-wage-components/'),
+  pfWageComponentsAction: (data) => api.post('/hr/pf-wage-components/', data),
   calculatePayroll: (id) => api.post(`/hr/payroll-runs/${id}/calculate/`),
+  previewPayrollRecalculation: (id) => api.post(`/hr/payroll-runs/${id}/recalculate-preview/`),
+  confirmCtcScaling: (id, data) => api.post(`/hr/payroll-runs/${id}/confirm-ctc-scaling/`, data),
   getPayrollExceptions: (id) => api.get(`/hr/payroll-runs/${id}/exceptions/`),
   approvePayroll: (id) => api.post(`/hr/payroll-runs/${id}/approve/`),
   payPayroll: (id, data) => api.post(`/hr/payroll-runs/${id}/pay/`, data),
@@ -120,13 +147,25 @@ export const hrApi = {
   closeAdvanceLoan: (id) => api.post(`/hr/advances-loans/${id}/close/`),
   deleteAdvanceLoan: (id) => api.delete(`/hr/advances-loans/${id}/`),
 
+  // Allowances & Bonuses
+  getAllowancesBonuses: (params) => api.get('/hr/allowances-bonuses/', { params }),
+  createAllowanceBonus: (data) => api.post('/hr/allowances-bonuses/', data),
+  updateAllowanceBonus: (id, data) => api.put(`/hr/allowances-bonuses/${id}/`, data),
+  deleteAllowanceBonus: (id) => api.delete(`/hr/allowances-bonuses/${id}/`),
+  approveAllowanceBonus: (id) => api.post(`/hr/allowances-bonuses/${id}/approve/`),
+
   // Exceptions
   getExceptions: (params) => api.get('/hr/exceptions/', { params }),
   resolveException: (id) => api.post(`/hr/exceptions/${id}/resolve/`),
 
   // Documents
   getDocuments: (params) => api.get('/hr/documents/', { params }),
-  createDocument: (data) => api.post('/hr/documents/', data),
+  createDocument: (data) => {
+    // Do NOT set Content-Type manually — axios must attach the multipart boundary.
+    const isForm = typeof FormData !== 'undefined' && data instanceof FormData;
+    return api.post('/hr/documents/', data, isForm ? { headers: { 'Content-Type': undefined } } : undefined);
+  },
+  downloadDocument: (id) => api.get(`/hr/documents/${id}/download/`, { responseType: 'blob' }),
   deleteDocument: (id) => api.delete(`/hr/documents/${id}/`),
 
   // HRMS Settings

@@ -1,512 +1,762 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { PopupModal } from 'react-calendly';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ChartBarIcon, 
-  BoltIcon, 
-  ShieldCheckIcon, 
-  UserGroupIcon, 
-  ArrowRightIcon, 
-  CheckCircleIcon,
-  DevicePhoneMobileIcon,
-  GlobeAltIcon,
-  HomeIcon,
-  ShoppingCartIcon,
-  CubeIcon
+  CheckIcon,
+  ArrowRightIcon,
+  BoltIcon,
+  ArchiveBoxIcon,
+  DocumentChartBarIcon,
+  ShieldCheckIcon,
+  QrCodeIcon,
+  BanknotesIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import PublicNavbar from '../components/PublicNavbar';
 import Seo from '../components/Seo';
 import DetailedFeatures from '../components/DetailedFeatures';
-import { formatCurrency } from '../utils/currency';
+import BrandLogo from '../components/common/BrandLogo';
 
-// Hook for scroll animations
-const useScrollAnimation = () => {
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate-fade-up');
-          entry.target.classList.remove('opacity-0', 'translate-y-8');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1 });
+const HeroPrismCanvas = React.lazy(() => import('../components/3d/HeroPrismCanvas'));
 
-    document.querySelectorAll('.scroll-animate').forEach((el) => {
-      el.classList.add('opacity-0', 'translate-y-8'); // Start hidden
-      observer.observe(el);
-    });
+// Framer Motion reveal wrapper
+const Reveal = ({ children, delay = 0, className = '' }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 24 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, amount: 0.15 }}
+    transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
+    className={className}
+  >
+    {children}
+  </motion.div>
+);
 
-    return () => observer.disconnect();
-  }, []);
-};
-
-// Screenshot Showcase Component
-const ScreenshotShowcase = () => {
-  const [activeTab, setActiveTab] = useState('demo');
-  
-  const tabs = [
-    { id: 'demo', label: 'Billing Demo', icon: BoltIcon, image: '/billcreationdemo.gif' },
-    { id: 'dashboard', label: 'Dashboard', icon: HomeIcon, image: '/dashboard.png' },
-    { id: 'sales', label: 'Sales Invoicing', icon: ShoppingCartIcon, image: '/sales.png' },
-    { id: 'inventory', label: 'Inventory', icon: CubeIcon, image: '/inventory.png' },
+// Trust Marquee Strip
+const TrustMarquee = () => {
+  const items = [
+    'GST Suvidha Provider (GSP) Gateway Ready',
+    'NIC E-Way Bill & E-Invoice Standard',
+    'ISO/IEC 27001 Security Standard Ready',
+    '100% Indian Data Center Sovereignty',
+    'Unlimited Staff Logins & Zero Per-User Fees',
+    'Perpetual License · Full Database Ownership',
   ];
-
+  const doubled = [...items, ...items];
   return (
-    <div className="mt-16 md:mt-24 opacity-0 animate-fade-up delay-300 relative">
-      {/* Tab Navigation */}
-      <div className="flex items-center overflow-x-auto md:justify-center gap-2 mb-8 px-4 pb-3 -mx-4 md:mx-0 whitespace-nowrap snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 shrink-0 snap-center ${
-              activeTab === tab.id
-                ? 'bg-white text-black shadow-lg shadow-white/20'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
+    <div className="relative z-10 overflow-hidden border-y border-[var(--border-subtle)] py-4 bg-[var(--bg-surface)]/90 backdrop-blur-md">
+      <div className="flex gap-10 animate-marquee whitespace-nowrap">
+        {doubled.map((item, i) => (
+          <span key={i} className="flex items-center gap-2 text-xs font-mono font-medium text-[var(--text-muted)] tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] shrink-0" />
+            {item}
+          </span>
         ))}
-      </div>
-
-      {/* Screenshot Container */}
-      <div className="relative group perspective-[2000px]">
-        {/* Behind Glow */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-blue-600 rounded-[2rem] blur-3xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-        
-        {/* Main Container */}
-        <div className="relative mx-auto rounded-2xl overflow-hidden shadow-2xl border border-white/10 max-w-6xl bg-[#0a0a0a] transform group-hover:translate-y-[-4px] transition-transform duration-700 ease-out">
-          <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-transparent pointer-events-none z-10 mix-blend-overlay"></div>
-          
-          {/* Screenshots with transitions */}
-          {tabs.map((tab) => (
-            <img 
-              key={tab.id}
-              src={tab.image} 
-              alt={`Cenvora ${tab.label} Interface`} 
-              loading="lazy"
-              className={`w-full h-auto object-cover transition-opacity duration-500 ${
-                activeTab === tab.id ? 'opacity-100' : 'opacity-0 absolute inset-0'
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Feature Pills */}
-      <div className="flex flex-wrap justify-center gap-3 mt-8">
-        {activeTab === 'dashboard' && (
-          <>
-            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">Real-time Analytics</span>
-            <span className="px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full text-xs font-medium">Live Charts</span>
-            <span className="px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full text-xs font-medium">Quick Actions</span>
-          </>
-        )}
-        {activeTab === 'sales' && (
-          <>
-            <span className="px-4 py-1.5 bg-green-500/10 border border-green-500/20 text-green-400 rounded-full text-xs font-medium">One-Click Invoicing</span>
-            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">GST Compliant</span>
-            <span className="px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full text-xs font-medium">PDF Export</span>
-          </>
-        )}
-        {activeTab === 'inventory' && (
-          <>
-            <span className="px-4 py-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-full text-xs font-medium">Batch Tracking</span>
-            <span className="px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 rounded-full text-xs font-medium">Low Stock Alerts</span>
-            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-medium">Multi-Warehouse</span>
-          </>
-        )}
       </div>
     </div>
   );
 };
 
-const BILLING_CYCLES = [
-  { code: 'monthly', label: 'Monthly', multiplier: 1, discount: 0, duration: 'month', badge: 'Pay monthly' },
-  { code: 'quarterly', label: 'Quarterly', multiplier: 3, discount: 0.15, duration: '3 months', badge: '15% off' },
-  { code: 'yearly', label: 'Yearly', multiplier: 12, discount: 0.30, duration: 'year', badge: '30% off' },
-];
+// Product Showcase with animated tab indicator
+const ProductShowcase = () => {
+  const [activeTab, setActiveTab] = useState('demo');
 
-const formatINR = (value) => {
-  const amount = Number(value || 0);
-  return amount.toLocaleString('en-IN', {
-    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
-    maximumFractionDigits: 2,
-  });
+  const tabs = [
+    { id: 'demo', label: 'Billing Demo', icon: BoltIcon, image: '/billcreationdemo.gif' },
+    { id: 'dashboard', label: 'Dashboard', icon: DocumentChartBarIcon, image: '/dashboard.png' },
+    { id: 'sales', label: 'Sales Invoices', icon: BanknotesIcon, image: '/sales.png' },
+    { id: 'inventory', label: 'Stock Valuation', icon: ArchiveBoxIcon, image: '/inventory.png' },
+  ];
+
+  return (
+    <Reveal className="mt-16 sm:mt-20 w-full max-w-5xl mx-auto">
+      {/* Tab Buttons */}
+      <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors duration-200 ${
+                isActive
+                  ? 'text-[var(--bg-primary)] font-bold'
+                  : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)]'
+              }`}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="activeTabBg"
+                  className="absolute inset-0 bg-[var(--text-primary)] rounded-xl shadow-lg"
+                  transition={{ type: 'spring', stiffness: 380, damping: 35 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-2">
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[var(--bg-primary)]' : 'text-[var(--text-muted)]'}`} />
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Browser Frame */}
+      <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-xl overflow-hidden shadow-2xl">
+        <div className="flex items-center px-4 py-3 bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-xs text-[var(--text-muted)]">
+          <div className="flex items-center gap-1.5 mr-4">
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-40" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-60" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-80" />
+          </div>
+          <div className="flex items-center gap-2 bg-[var(--bg-surface)] px-3 py-1 rounded-md border border-[var(--border-subtle)] font-mono text-xs text-[var(--text-muted)]">
+            <ShieldCheckIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+            <span>https://app.cenvora.com</span>
+          </div>
+        </div>
+
+        <div className="relative min-h-[300px] sm:min-h-[500px] bg-[var(--bg-primary)] flex items-center justify-center">
+          {tabs.map((tab) => (
+            <img 
+              key={tab.id}
+              src={tab.image} 
+              alt={`Cenvora ${tab.label}`} 
+              loading="lazy"
+              className={`w-full h-auto object-cover transition-opacity duration-300 ${
+                activeTab === tab.id ? 'opacity-100' : 'opacity-0 absolute inset-0 pointer-events-none'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </Reveal>
+  );
 };
 
-const getCyclePrice = (monthlyPrice, cycle) => monthlyPrice * cycle.multiplier * (1 - cycle.discount);
-const getOriginalCyclePrice = (originalMonthlyPrice, cycle) => originalMonthlyPrice * cycle.multiplier;
+// Rent vs Own Calculator
+const RentVsOwnCalculator = () => {
+  const [users, setUsers] = useState(6);
 
+  const saasMonthlyPerUser = 1500;
+  const saas3YearCost = users * saasMonthlyPerUser * 12 * 3;
+  const cenvora3YearCost = 100000 + (18000 * 3);
+  const savings = Math.max(0, saas3YearCost - cenvora3YearCost);
+
+  const formatINR = (val) => '₹' + Math.round(val).toLocaleString('en-IN');
+
+  return (
+    <div className="w-full max-w-4xl mx-auto bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
+      <div className="max-w-2xl mb-8">
+        <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
+          Why rent your business software when you can own it?
+        </h3>
+        <p className="text-[var(--text-muted)] text-sm sm:text-base mt-3 leading-relaxed font-body">
+          Monthly subscription ERPs charge per employee. When your team grows, your costs skyrocket. With Cenvora, you pay once and add unlimited team members at zero extra cost.
+        </p>
+      </div>
+
+      {/* Slider */}
+      <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl p-5 mb-8">
+        <div className="flex justify-between items-center mb-3">
+          <label className="text-sm font-medium text-[var(--text-primary)] font-body">
+            How many people need access?
+          </label>
+          <span className="text-base font-bold text-[var(--text-primary)] bg-[var(--bg-surface)] px-3.5 py-1 rounded-xl border border-[var(--border-subtle)] font-mono font-tabular">
+            {users} Users
+          </span>
+        </div>
+        <input 
+          type="range" 
+          min="2" 
+          max="30" 
+          value={users} 
+          onChange={(e) => setUsers(Number(e.target.value))}
+          className="w-full h-2 bg-[var(--bg-surface)] rounded-lg appearance-none cursor-pointer accent-[var(--accent-primary)]"
+        />
+        <div className="flex justify-between text-xs text-[var(--text-muted)] mt-2 font-mono font-medium">
+          <span>2 users</span>
+          <span>15 users</span>
+          <span>30 users</span>
+        </div>
+      </div>
+
+      {/* Comparison */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="p-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]">
+          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Monthly Subscription ERP</div>
+          <div className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mt-2 font-mono font-tabular">{formatINR(saas3YearCost)}</div>
+          <p className="text-xs text-[var(--text-muted)] mt-1.5">Total cost over 3 years (at ~₹1,500/user/month).</p>
+          <ul className="mt-5 space-y-2.5 text-xs text-[var(--text-muted)] border-t border-[var(--border-subtle)] pt-4">
+            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Recurring fees that never stop</li>
+            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Price hikes every time you hire</li>
+            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Lose your database if you stop paying</li>
+          </ul>
+        </div>
+
+        <div className="p-6 rounded-2xl border-2 border-[var(--accent-primary)] bg-[var(--bg-surface)] shadow-xl">
+          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--accent-primary)]">Cenvora (Buy Once, Own Forever)</div>
+          <div className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mt-2 font-mono font-tabular">{formatINR(cenvora3YearCost)}</div>
+          <p className="text-xs text-[var(--text-muted)] mt-1.5">Total cost over 3 years (One-time license + ₹18k/yr hosting & AMC).</p>
+          <ul className="mt-5 space-y-2.5 text-xs text-[var(--text-primary)] border-t border-[var(--border-subtle)] pt-4">
+            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> One-time license with unlimited users</li>
+            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Flat ₹12,000/year base maintenance</li>
+            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Your database is 100% yours forever</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Savings */}
+      <div className="p-6 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <div className="text-xs text-[var(--text-muted)] font-medium">Estimated 3-Year Savings</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-[var(--accent-primary)] mt-0.5 font-mono font-tabular">Save {formatINR(savings)}</div>
+        </div>
+        <a
+          href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20checked%20the%20pricing%20calculator%20and%20want%20to%20know%20more%20about%20the%20perpetual%20license."
+          target="_blank"
+          rel="noreferrer"
+          className="btn-primary !text-sm !py-3 !px-6 whitespace-nowrap shadow-md"
+        >
+          Talk to Us on WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+};
+
+// Animated FAQ Accordion
+const FAQ_ITEMS = [
+  {
+    q: 'Can I import my existing products and customers from Excel?',
+    a: 'Yes. We provide simple Excel and CSV import templates for your item catalog, starting stock counts, customer directory, and opening balances. Our team can also help you import your data during setup.',
+  },
+  {
+    q: 'How many devices and team members can use Cenvora?',
+    a: 'Unlimited. You can create logins for cashiers, stock managers, sales staff, and your accountant. Cenvora does not charge per user.',
+  },
+  {
+    q: 'What happens if I stop paying the ₹12,000 annual maintenance fee?',
+    a: 'You never lose access to your software or your data. The license is perpetual. You can continue using your installed version and access all historical records. The maintenance fee is only needed if you want ongoing software updates, new GST features, and WhatsApp technical support.',
+  },
+  {
+    q: 'Where is our data stored? Is it private?',
+    a: 'Your data is stored in dedicated, encrypted databases located in Indian data centers. We never sell or share your business data, and your records are completely isolated from other businesses.',
+  },
+];
+
+const FaqAccordion = () => {
+  const [openIdx, setOpenIdx] = useState(null);
+  return (
+    <div className="space-y-3 text-left">
+      {FAQ_ITEMS.map((item, idx) => {
+        const isOpen = openIdx === idx;
+        return (
+          <div key={idx} className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md overflow-hidden">
+            <button
+              onClick={() => setOpenIdx(isOpen ? null : idx)}
+              className="w-full flex items-center justify-between p-6 text-left cursor-pointer group"
+            >
+              <h3 className="text-sm font-bold text-[var(--text-primary)] pr-4 group-hover:text-[var(--accent-primary)] transition-colors">{item.q}</h3>
+              <ChevronDownIcon className={`w-5 h-5 text-[var(--text-muted)] shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden"
+                >
+                  <p className="px-6 pb-6 text-xs text-[var(--text-muted)] leading-relaxed font-body">{item.a}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ======= Main Landing Page =======
 export default function LandingPage() {
-  useScrollAnimation();
   const [isCalendlyOpen, setIsCalendlyOpen] = useState(false);
-  const [billingCycle, setBillingCycle] = useState('monthly');
-  const selectedCycle = BILLING_CYCLES.find((cycle) => cycle.code === billingCycle) || BILLING_CYCLES[0];
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
   const structuredData = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Organization',
-      name: 'Cenvora',
-      url: siteUrl,
-      logo: `${siteUrl}/cenvora-logo-backgrond-removed.png`,
-      description: 'Billing and inventory software for businesses in India & UAE.',
-    },
     {
       '@context': 'https://schema.org',
       '@type': 'SoftwareApplication',
       name: 'Cenvora',
       applicationCategory: 'BusinessApplication',
-      operatingSystem: 'Web',
+      operatingSystem: 'Web, Android, iOS, Windows, Mac',
       url: siteUrl,
-      description: 'Billing and inventory software for businesses with localized sales, stock, customers, and reporting.',
+      description: 'GST billing and stock management software for Indian businesses. One-time perpetual license, unlimited users.',
+      offers: {
+        '@type': 'Offer',
+        price: '100000',
+        priceCurrency: 'INR',
+      },
     },
     {
       '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: 'Cenvora',
-      url: siteUrl,
-    },
-  ];
-
-  const planCards = [
-    {
-      code: 'starter',
-      name: 'Starter',
-      monthlyPrice: 0,
-      originalMonthlyPrice: 0,
-      cta: 'Get Started Free',
-      ctaStyle: 'block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8',
-      description: 'For small teams getting started with billing and customer work',
-      billingText: 'Free forever',
-      features: [
-        'Sales invoices',
-        'Customer management',
-        'Payments tracking',
-        'Profile and setup tools',
-      ],
-    },
-    {
-      code: 'pro',
-      name: 'Pro',
-      monthlyPrice: 399,
-      originalMonthlyPrice: 1599,
-      trialDays: 14,
-      cta: 'Start 14-Day Trial',
-      ctaStyle: 'block w-full py-3 rounded-xl bg-white text-black text-center font-bold hover:bg-gray-200 transition-colors mb-8 shadow-lg shadow-white/10',
-      description: 'For growing shops that need more control',
-      highlight: 'Early Bird Plan',
-      features: [
-        'Everything in Starter',
-        'Inventory module',
-        'Dashboard analytics',
-        'Integrations and advanced reports',
-      ],
-    },
-    {
-      code: 'business',
-      name: 'Business',
-      monthlyPrice: 499,
-      originalMonthlyPrice: 1999,
-      trialDays: 14,
-      cta: 'Start 14-Day Trial',
-      ctaStyle: 'block w-full py-3 rounded-xl border border-gray-700 text-white text-center font-medium hover:bg-white hover:text-black transition-colors mb-8',
-      description: 'For larger teams and multi-location operations',
-      highlight: 'Early Bird Plan',
-      features: [
-        'Everything in Pro',
-        'Warehouses and multi-location inventory',
-        'ML forecasts and restock predictions',
-        'Gemini AI business assistant + priority support',
-      ],
+      '@type': 'FAQPage',
+      mainEntity: FAQ_ITEMS.map(item => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
     },
   ];
 
   return (
-    <div className="font-sans text-white overflow-x-hidden bg-black selection:bg-purple-500/30">
+    <div className="font-body text-[var(--text-primary)] bg-[var(--bg-primary)] min-h-screen">
       <Seo
-        title="Billing & Inventory Software for India & UAE"
-        description="Cenvora helps businesses manage billing, inventory, customers, localized taxes, and reporting in one platform."
+        title="Cenvora — GST Billing & Stock Software for India"
+        description="Cenvora is a one-time GST billing and stock management software for Indian businesses. Create invoices, track inventory, and manage customer ledgers — no monthly fees."
         canonicalPath="/"
         structuredData={structuredData}
       />
-      
-      {/* Background Texture Grid */}
-      <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
 
-      {/* 1. Floating Pill Navbar */}
+      {/* Ambient Lighting Mesh */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-[var(--accent-primary)]/10 via-[var(--accent-primary)]/5 to-transparent blur-3xl opacity-30 dark:opacity-50" />
+        <div className="absolute top-[40%] right-[-100px] w-[500px] h-[500px] bg-gradient-to-b from-[var(--accent-primary)]/10 to-transparent blur-3xl opacity-30 dark:opacity-40" />
+        <div className="absolute top-[75%] left-[-100px] w-[500px] h-[500px] bg-gradient-to-b from-[var(--accent-primary)]/10 to-transparent blur-3xl opacity-20 dark:opacity-30" />
+      </div>
+
       <PublicNavbar
         links={[
           { label: 'Features', href: '#features' },
           { label: 'Pricing', href: '#pricing' },
-          { label: 'HSN Code', href: '/gst-hsn-guide' },
+          { label: 'Why Own?', href: '#why-own' },
+          { label: 'HSN Lookup', href: '/gst-hsn-guide' },
           { label: 'Contact', href: '/contact' },
         ]}
       />
 
-      {/* 2. Hero Section */}
-      <section className="pt-20 md:pt-40 pb-12 md:pb-20 text-center relative overflow-hidden z-10">
-        {/* Background Ambient Glow */}
-        <div className="absolute top-0 inset-x-0 h-[800px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-transparent -z-10"></div>
-        
-        <div className="max-w-5xl mx-auto px-6 relative">
-          <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-semibold mb-6 md:mb-8 opacity-0 animate-fade-up tracking-wide">
-             <span className="animate-pulse mr-2">●</span> Built for businesses in India & UAE
-          </div>
-          
-          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 md:mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-400 opacity-0 animate-fade-up delay-100 drop-shadow-2xl leading-tight">
-            Finally, billing software built for business owners, not accountants.
-          </h1>
-          <p className="text-sm sm:text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mb-10 opacity-0 animate-fade-up delay-200 leading-relaxed font-light">
-            Ditch Tally's complex menus and billing errors. Cenvora is the ultra-simple GST billing and stock manager built for India & UAE. Create invoices, manage warehouses, and track profits from your phone or PC. Zero training required.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 opacity-0 animate-fade-up delay-300">
-            <a 
-              href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20want%20to%20see%20a%20demo%20and%20start%20my%20free%20trial." 
-              target="_blank" 
-              rel="noreferrer" 
-              className="w-full sm:w-auto justify-center flex items-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-[#128C7E] to-[#25D366] shadow-[0_0_30px_rgba(37,211,102,0.25)] hover:shadow-[0_0_45px_rgba(37,211,102,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+      {/* ─── 1. HERO — Split Layout (Left text / Right 3D) ─── */}
+      <section className="relative z-10 pt-28 sm:pt-36 pb-12 sm:pb-20 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+          {/* Left Column — Copy */}
+          <div className="flex-1 max-w-xl lg:max-w-none">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[var(--text-primary)] leading-[1.08]"
             >
-              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.488 1.459 5.407 1.46h.007c5.632 0 10.21-4.58 10.213-10.21.002-2.729-1.051-5.293-2.964-7.208C17.399 1.282 14.836.22 12.012.22 6.38 0 1.797 4.582 1.795 10.21a10.16 10.16 0 0 0 1.522 5.3l.18.286-1.002 3.661 3.746-.982.278.165zm11.905-7.616c-.3-.149-1.772-.874-2.047-.975-.276-.102-.476-.15-.676.15-.199.3-.775 1.009-.95 1.21-.175.199-.35.224-.65.075-1.127-.565-1.954-1.049-2.748-2.408-.21-.359-.01-.176.185-.548.148-.3.074-.562-.038-.711-.112-.149-.9-.2.9-2.179-.868-.21-.43-.099-.583-.075-.413.074-.112.199-.19.325-.3.125-.109.199-.199.3-.35.099-.15.05-.299-.025-.448-.075-.15-.675-1.623-.925-2.223-.244-.589-.496-.51-.678-.51-.175-.008-.375-.01-.576-.01-.2 0-.525.075-.799.375-.274.3-1.05 1.03-1.05 2.516s1.075 2.916 1.225 3.116c.15.199 2.115 3.227 5.125 4.527.715.31 1.273.495 1.708.635.718.228 1.37.195 1.887.118.577-.089 1.772-.724 2.022-1.424.25-.699.25-1.3.175-1.424-.075-.124-.275-.199-.575-.349z"/>
-              </svg>
-              <span>Get WhatsApp Demo</span>
-            </a>
-            <Link to="/signup" className="w-full sm:w-auto justify-center flex items-center px-6 py-3.5 rounded-xl font-bold text-gray-300 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all duration-300 active:scale-95">
-              Start Free Trial
-            </Link>
+              Own your billing software.{' '}
+              <span className="text-[var(--accent-primary)]">Forever.</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-5 text-base sm:text-lg text-[var(--text-muted)] max-w-lg leading-relaxed"
+            >
+              GST invoices, live stock, customer ledgers. One price. No monthly traps.
+            </motion.p>
+
+            {/* CTAs — 1 primary + 1 ghost */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-8 flex flex-col sm:flex-row items-start gap-3"
+            >
+              <button
+                onClick={() => setIsCalendlyOpen(true)}
+                className="btn-primary !text-sm !py-3.5 !px-7 cursor-pointer"
+              >
+                Book a Free Demo
+              </button>
+
+              <a
+                href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20would%20like%20to%20see%20a%20quick%20demo%20of%20the%20billing%20software."
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary !text-sm !py-3.5 !px-6 flex items-center gap-2 cursor-pointer"
+              >
+                WhatsApp Us
+                <ArrowRightIcon className="w-4 h-4" />
+              </a>
+            </motion.div>
+
+            {/* Trust micro-strip */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--text-muted)] font-medium"
+            >
+              <span className="flex items-center gap-1.5 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
+                50+ businesses live
+              </span>
+              <span className="flex items-center gap-1.5 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
+                No monthly fees
+              </span>
+              <span className="flex items-center gap-1.5 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
+                India-hosted data
+              </span>
+            </motion.div>
           </div>
 
-          {/* Hero Screenshot Showcase */}
-          <ScreenshotShowcase />
+          {/* Right Column — 3D Canvas */}
+          <div className="flex-1 w-full lg:w-auto">
+            <Suspense fallback={<div className="h-[420px] animate-pulse bg-[var(--bg-surface)] rounded-3xl" />}>
+              <HeroPrismCanvas />
+            </Suspense>
+          </div>
         </div>
       </section>
 
-      {/* 3. Bento Grid Section */}
-      <section id="features" className="py-32 relative z-10">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <div className="text-center mb-24 scroll-animate">
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 text-white tracking-tight">Clear tools for daily business work.<br/> No complicated setup.</h2>
-            <p className="text-2xl text-gray-500 font-light max-w-2xl mx-auto">Handle billing, stock, and reports without needing a tech expert.</p>
-          </div>
+      {/* ─── Trust Marquee Strip ─── */}
+      <TrustMarquee />
 
-          {/* Bento Grid layout */}
-          <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 h-auto md:h-[650px]">
-             
-             {/* Card 1: Inventory (Gradient) */}
-             <div className="bento-card col-span-1 md:col-span-2 row-span-2 scroll-animate flex flex-col justify-between group !p-0 bg-gradient-to-br from-[#101010] to-black overflow-hidden relative">
-                <div className="p-10 z-20 relative">
-                   <div className="flex items-center gap-2 mb-4 text-cyan-400 font-bold text-xs tracking-widest uppercase">
-                     <ChartBarIcon className="w-5 h-5" /> Inventory
-                   </div>
-                   <h3 className="text-4xl font-bold mb-4 text-white">Know what is in stock.</h3>
-                   <p className="text-gray-400 max-w-md text-lg leading-relaxed">See stock, batches, and warehouse movement clearly so you know what is available before you sell.</p>
-                </div>
-                
-                {/* Visual decoration */}
-                <div className="relative w-full h-80 mt-auto">
-                   <div className="absolute inset-x-12 -bottom-12 bg-[#0a0a0a] rounded-t-2xl border border-white/10 shadow-2xl h-full p-6 transform translate-y-8 group-hover:translate-y-4 transition-transform duration-700 ease-out">
-                      {/* Abstract UI Lines */}
-                      <div className="space-y-4 opacity-50 group-hover:opacity-100 transition-opacity duration-700">
-                         <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                            <div className="h-3 w-32 bg-gray-800 rounded-full"></div>
-                            <div className="h-3 w-12 bg-green-500/20 rounded-full"></div>
-                         </div>
-                         {[1,2,3].map(i => (
-                             <div key={i} className="h-10 w-full bg-white/5 rounded-xl border border-white/5 flex items-center px-4">
-                                <div className="h-2 w-full bg-gray-800/50 rounded-full"></div>
-                             </div>
-                         ))}
-                      </div>
-                   </div>
-                   {/* Glow effect */}
-                   <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-cyan-900/20 to-transparent pointer-events-none"></div>
-                </div>
-             </div>
-
-             {/* Card 2: Security */}
-             <div className="bento-card bg-[#0a0a0a] scroll-animate group border-green-900/20 hover:border-green-500/30 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-32 bg-green-500/5 blur-[80px] rounded-full pointer-events-none"></div>
-                <div className="flex flex-col h-full justify-between relative z-10">
-                   <div className="w-14 h-14 bg-green-900/10 rounded-2xl flex items-center justify-center mb-6 text-green-500 group-hover:scale-110 transition-transform duration-300">
-                      <ShieldCheckIcon className="w-7 h-7" />
-                   </div>
-                   <div>
-                     <h3 className="text-2xl font-bold text-white mb-2">Safe access for your team.</h3>
-                     <p className="text-gray-500 text-sm leading-relaxed">Give staff only the access they need, and keep your business data backed up and protected.</p>
-                   </div>
-                </div>
-             </div>
-
-             {/* Card 3: Mobile */}
-             <div className="bento-card bg-[#0a0a0a] scroll-animate group hover:border-blue-500/30 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-blue-900/5 group-hover:to-blue-900/10 transition-colors"></div>
-                <div className="flex flex-col h-full justify-center items-center text-center relative z-10">
-                   <div className="relative mb-8">
-                      <div className="absolute inset-0 bg-blue-500/30 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                      <DevicePhoneMobileIcon className="relative w-16 h-16 text-blue-400 group-hover:-translate-y-2 transition-transform duration-300" />
-                   </div>
-                   <h3 className="text-xl font-bold mb-2 text-white">Use it on phone or computer.</h3>
-                   <p className="text-gray-500 text-sm px-4">Check sales, stock, and customers from anywhere, on any device.</p>
-                </div>
-             </div>
-
-          </div>
-          
-          {/* Second Row of Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div className="bento-card bg-[#0a0a0a] scroll-animate flex items-center p-0 overflow-hidden relative group">
-                  <div className="p-10 w-2/3 relative z-10">
-                    <h3 className="text-3xl font-bold mb-3 text-white">Fast billing.</h3>
-                    <p className="text-gray-500 text-lg">Create bills quickly without extra clicks or confusing steps.</p>
-                  </div>
-                  <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-purple-900/20 to-transparent"></div>
-                  <BoltIcon className="absolute -right-8 -bottom-8 w-48 h-48 text-purple-600/10 rotate-12 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500" />
-              </div>
-              <div className="bento-card bg-[#0a0a0a] scroll-animate p-10 flex items-center justify-between group hover:bg-[#0f0f0f]">
-                  <div>
-                    <h3 className="text-3xl font-bold mb-3 text-white">GST ready.</h3>
-                    <p className="text-gray-500 text-lg">GST reports, tax registers, and PDF export are built in.</p>
-                  </div>
-                  <GlobeAltIcon className="w-20 h-20 text-gray-800 group-hover:text-gray-600 transition-colors duration-300" />
-              </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Everything You Need Section */}
-      <section id="detailed-features" className="py-24 relative z-10 bg-[#050505]">
-        <div className="max-w-[1200px] mx-auto px-6">
-          <div className="text-center mb-16 scroll-animate">
-            <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-semibold mb-6 tracking-wide">
-              Comprehensive Suite
+      {/* ─── 2. CORE PILLARS — Asymmetric Bento Grid ─── */}
+      <section id="features" className="relative z-10 py-24 px-6 bg-[var(--bg-primary)]">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <div className="max-w-2xl mb-14">
+              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
+                Everything your business runs on
+              </h2>
+              <p className="mt-3 text-[var(--text-muted)] text-sm sm:text-base font-body">
+                Made for shop owners and distributors — not accountants.
+              </p>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white tracking-tight">Everything your business needs.</h2>
-            <p className="text-xl text-gray-500 font-light max-w-2xl mx-auto">From quick sales to complete HR management, explore all the tools packed into Cenvora.</p>
+          </Reveal>
+
+          {/* Bento: 1 large left + 2 stacked right */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
+            {/* Large cell */}
+            <Reveal className="md:col-span-3 p-8 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md hover:border-[var(--accent-primary)] transition-all duration-300 shadow-xl group">
+              <div className="w-14 h-14 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-6 group-hover:scale-105 transition-transform">
+                <BoltIcon className="w-7 h-7" />
+              </div>
+              <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mb-2">10-Second GST Invoicing</h3>
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-md font-body">
+                Create clean GST tax bills with auto-calculated CGST, SGST, and IGST. Auto-fills customer details and prints formal A4 or A5 invoices with your branding.
+              </p>
+            </Reveal>
+
+            {/* 2 stacked right */}
+            <div className="md:col-span-2 flex flex-col gap-5">
+              <Reveal delay={0.1} className="flex-1 p-7 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md hover:border-[var(--accent-primary)] transition-all duration-300 shadow-xl group">
+                <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-4 group-hover:scale-105 transition-transform">
+                  <ArchiveBoxIcon className="w-6 h-6" />
+                </div>
+                <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Real-Time Stock Updates</h3>
+                <p className="text-sm text-[var(--text-muted)] leading-relaxed font-body">
+                  Stock deducts as invoices are generated. Low-stock alerts keep you ahead.
+                </p>
+              </Reveal>
+
+              <Reveal delay={0.2} className="flex-1 p-7 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md hover:border-[var(--accent-primary)] transition-all duration-300 shadow-xl group">
+                <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-4 group-hover:scale-105 transition-transform">
+                  <DocumentChartBarIcon className="w-6 h-6" />
+                </div>
+                <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Ledgers & Tax Reports</h3>
+                <p className="text-sm text-[var(--text-muted)] leading-relaxed font-body">
+                  Track customer balances, record settlements, and export GSTR-1 and GSTR-3B summaries.
+                </p>
+              </Reveal>
+            </div>
           </div>
-          
+        </div>
+      </section>
+
+      {/* ─── 3. PRODUCT SHOWCASE (Tabs) ─── */}
+      <section className="relative z-10 py-24 px-6 bg-[var(--bg-primary)]">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <div className="max-w-2xl mx-auto text-center mb-4">
+              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
+                See the whole system
+              </h2>
+              <p className="mt-3 text-[var(--text-muted)] text-sm sm:text-base font-body">
+                From billing to staff permissions — every module included in your perpetual license.
+              </p>
+            </div>
+          </Reveal>
+          <ProductShowcase />
+        </div>
+      </section>
+
+      {/* ─── 4. DETAILED FEATURES EXPLORER ─── */}
+      <section className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-surface)]/40">
+        <div className="max-w-5xl mx-auto">
           <DetailedFeatures />
         </div>
       </section>
 
-      {/* 4. Pricing (Clean Dark) */}
-      <section id="pricing" className="py-32 relative z-10">
-        <div className="max-w-[980px] mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold mb-4 scroll-animate text-white">Simple pricing.</h2>
-          <p className="text-gray-500 mb-16 scroll-animate">Choose the plan that fits your business.</p>
-
-          <div className="mb-10 grid gap-3 text-left sm:grid-cols-3">
-            {BILLING_CYCLES.map((cycle) => {
-              const isActive = selectedCycle.code === cycle.code;
-              return (
-                <button
-                  key={cycle.code}
-                  type="button"
-                  onClick={() => setBillingCycle(cycle.code)}
-                  className={`rounded-2xl border p-4 transition-colors ${
-                    isActive
-                      ? 'border-cyan-400/50 bg-cyan-400/10 text-white'
-                      : 'border-white/10 bg-white/[0.03] text-gray-400 hover:border-white/25 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold">{cycle.label}</span>
-                    <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${isActive ? 'bg-cyan-400 text-black' : 'bg-white/10 text-gray-300'}`}>
-                      {cycle.badge}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    {cycle.code === 'monthly' ? '30-day billing' : `${cycle.duration} billing`}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-6 text-left">
-             {planCards.map((plan) => {
-               const isFree = plan.monthlyPrice === 0;
-               const amount = isFree ? 0 : getCyclePrice(plan.monthlyPrice, selectedCycle);
-               const originalAmount = isFree ? 0 : getOriginalCyclePrice(plan.originalMonthlyPrice, selectedCycle);
-               const showOriginal = originalAmount > amount;
-               const totalDiscountPercent = isFree ? 0 : Math.round((1 - amount / originalAmount) * 100);
-
-               return (
-               <div
-                 key={plan.code}
-                 className={`p-8 bg-[#0a0a0a] rounded-3xl border scroll-animate transition-colors ${plan.code === 'pro' ? 'border-purple-500/30 shadow-2xl shadow-purple-900/20 relative overflow-hidden transform md:-translate-y-4 scale-105 z-10' : 'border-[#222] hover:border-gray-600'}`}
-               >
-                 {plan.highlight ? (
-                   <>
-                     <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-cyan-400 to-purple-500"></div>
-                     <div className="mb-4 mt-1">
-                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-widest uppercase bg-gradient-to-r from-cyan-500/25 to-purple-500/25 border border-cyan-400/40 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.25)] select-none">
-                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-                         {plan.highlight}
-                       </span>
-                     </div>
-                   </>
-                 ) : null}
-                 <h3 className="text-xl font-semibold mb-2 text-white">{plan.name}</h3>
-                 <p className="text-sm text-gray-500 mb-4">{plan.description}</p>
-                 <div className="mb-2 flex items-end gap-2">
-                   <p className="text-3xl font-bold text-white">{formatCurrency(amount)}</p>
-                   <span className="pb-1 text-base font-normal text-gray-500">/{isFree ? 'forever' : selectedCycle.duration}</span>
-                 </div>
-                 {showOriginal ? (
-                   <p className="mb-2 text-sm text-gray-500">
-                     <span className="line-through">{formatCurrency(originalAmount)}</span>
-                     <span className="ml-2 text-emerald-300">{totalDiscountPercent}% off</span>
-                   </p>
-                 ) : null}
-                 <p className="mb-6 text-xs uppercase tracking-wider text-gray-500">{plan.billingText || `Trial: ${plan.trialDays} days`}</p>
-                 <Link to="/signup" className={plan.ctaStyle}>
-                     {plan.cta}
-                 </Link>
-                 <ul className="space-y-4 text-sm text-gray-400">
-                     {plan.features.map((feature) => (
-                       <li key={feature} className="flex gap-3"><CheckCircleIcon className="w-5 h-5 text-gray-200" /> {feature}</li>
-                     ))}
-                 </ul>
-             </div>
-             )})}
-          </div>
-
+      {/* ─── 5. WHY OWN / RENT VS OWN CALCULATOR ─── */}
+      <section id="why-own" className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-primary)]">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <RentVsOwnCalculator />
+          </Reveal>
         </div>
       </section>
 
-      {/* 5. Clean Footer */}
-      <footer className="bg-black py-16 border-t border-white/5 relative z-10">
-        <div className="max-w-[980px] mx-auto px-6">
-           <div className="flex flex-col md:flex-row justify-between items-center mb-12">
-              <Link to="/" className="flex items-center mb-4 md:mb-0 hover:opacity-80 transition-opacity">
-                  <img src="/cenvora-logo-backgrond-removed.png" alt="Cenvora Logo" className="h-10 w-auto object-contain" />
+      {/* ─── 6. PRICING ─── */}
+      <section id="pricing" className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-primary)]">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <div className="max-w-2xl mx-auto text-center mb-16">
+              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
+                One price. Yours forever.
+              </h2>
+              <p className="mt-3 text-[var(--text-muted)] text-sm sm:text-base font-body">
+                Buy the software once. No recurring per-user subscription fees.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Tier 1 */}
+            <Reveal delay={0}>
+              <div className="h-full p-7 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md flex flex-col justify-between hover:border-[var(--accent-primary)] transition-all">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] font-mono">Tier 1</div>
+                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">Hosted Standard</h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed font-body">
+                    Best for single-business shops and distributors wanting zero setup headaches.
+                  </p>
+
+                  <div className="mt-6 pb-6 border-b border-[var(--border-subtle)]">
+                    <div className="text-3xl font-extrabold text-[var(--text-primary)] font-mono font-tabular">₹1,00,000</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">One-time software license</div>
+                    <div className="mt-4 p-3.5 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1.5 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
+                      <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-[var(--text-primary)] font-medium">₹12,000/yr</span></div>
+                      <div className="flex justify-between"><span>Cloud Server Hosting:</span><span>~₹6,000/yr</span></div>
+                      <div className="flex justify-between pt-1.5 border-t border-[var(--border-subtle)] text-[var(--text-primary)] font-semibold"><span>Total Ongoing:</span><span>₹18,000/yr</span></div>
+                    </div>
+                  </div>
+
+                  <ul className="mt-6 space-y-2.5 text-xs text-[var(--text-muted)]">
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Unlimited staff logins and devices</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Full GST billing & stock management</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Automated daily cloud backups</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> GST statutory updates & WhatsApp support</li>
+                  </ul>
+                </div>
+
+                <div className="mt-8 pt-4">
+                  <a
+                    href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20am%20interested%20in%20the%20Hosted%20Standard%20plan%20(Rs%201%2C00%2C000)."
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-secondary !text-xs !py-3 w-full text-center block"
+                  >
+                    Inquire on WhatsApp
+                  </a>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Tier 2: Popular */}
+            <Reveal delay={0.1}>
+              <div className="h-full p-7 rounded-3xl border-2 border-[var(--accent-primary)] bg-[var(--bg-surface)] flex flex-col justify-between relative shadow-2xl">
+                <div className="absolute -top-3.5 left-6 px-3 py-0.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] text-xs font-black uppercase rounded-full shadow-md">
+                  Most Popular
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[var(--accent-primary)] font-mono">Tier 2</div>
+                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">White-Label Custom Domain</h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed font-body">
+                    Your own website domain (erp.yourbrand.com) with your logo and dedicated server.
+                  </p>
+
+                  <div className="mt-6 pb-6 border-b border-[var(--border-subtle)]">
+                    <div className="text-3xl font-extrabold text-[var(--text-primary)] font-mono font-tabular">₹1,50,000</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">One-time software license</div>
+                    <div className="mt-4 p-3.5 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1.5 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
+                      <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-[var(--text-primary)] font-medium">₹12,000/yr</span></div>
+                      <div className="flex justify-between"><span>Dedicated Server Container:</span><span>~₹12,000/yr</span></div>
+                      <div className="flex justify-between pt-1.5 border-t border-[var(--border-subtle)] text-[var(--text-primary)] font-semibold"><span>Total Ongoing:</span><span>₹24,000/yr</span></div>
+                    </div>
+                  </div>
+
+                  <ul className="mt-6 space-y-2.5 text-xs text-[var(--text-muted)]">
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Your custom domain (erp.yourcompany.com)</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Your logo on invoice PDFs & customer portal</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Dedicated, isolated server container</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Priority engineer support on WhatsApp</li>
+                  </ul>
+                </div>
+
+                <div className="mt-8 pt-4">
+                  <a
+                    href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20am%20interested%20in%20the%20White-Label%20Custom%20Domain%20plan%20(Rs%201%2C50%2C000)."
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-primary !text-xs !py-3 w-full text-center block"
+                  >
+                    Deploy on Your Domain
+                  </a>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Tier 3 */}
+            <Reveal delay={0.2}>
+              <div className="h-full p-7 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md flex flex-col justify-between hover:border-[var(--accent-primary)] transition-all">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] font-mono">Tier 3</div>
+                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">Enterprise / Self-Hosted</h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed font-body">
+                    For businesses that want the software on their own private cloud or local server.
+                  </p>
+
+                  <div className="mt-6 pb-6 border-b border-[var(--border-subtle)]">
+                    <div className="text-3xl font-extrabold text-[var(--text-primary)] font-mono font-tabular">₹2,00,000+</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">One-time software license</div>
+                    <div className="mt-4 p-3.5 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1.5 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
+                      <div className="flex justify-between"><span>Base Maintenance (AMC):</span><span className="text-[var(--text-primary)] font-medium">₹12,000/yr</span></div>
+                      <div className="flex justify-between"><span>Server Hosting:</span><span className="text-[var(--accent-primary)]">₹0 to Cenvora</span></div>
+                      <div className="flex justify-between pt-1.5 border-t border-[var(--border-subtle)] text-[var(--text-primary)] font-semibold"><span>Hosting Paid:</span><span>Direct to your cloud (AWS/DigitalOcean)</span></div>
+                    </div>
+                  </div>
+
+                  <ul className="mt-6 space-y-2.5 text-xs text-[var(--text-muted)]">
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Installed on your own AWS or private server</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Assistance with data migration from Excel</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Custom integration options available</li>
+                  </ul>
+                </div>
+
+                <div className="mt-8 pt-4">
+                  <button
+                    onClick={() => setIsCalendlyOpen(true)}
+                    className="btn-secondary !text-xs !py-3 w-full text-center block cursor-pointer"
+                  >
+                    Schedule Consultation
+                  </button>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* AMC Note */}
+          <Reveal className="mt-12 p-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md text-xs text-[var(--text-muted)] leading-relaxed max-w-3xl mx-auto font-body">
+            <strong className="text-[var(--text-primary)] block mb-1 text-sm font-display">What does the ₹12,000/year maintenance fee cover?</strong>
+            It covers software updates, statutory GST tax calculation adjustments when government rates change, automated backups, and priority support over WhatsApp. Even if you choose not to renew the maintenance fee, your software license and your historical database remain 100% yours forever.
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ─── 7. FAQ ─── */}
+      <section className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-primary)]">
+        <div className="max-w-3xl mx-auto">
+          <Reveal>
+            <div className="text-center mb-14">
+              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
+                Frequently Asked Questions
+              </h2>
+            </div>
+          </Reveal>
+          <FaqAccordion />
+        </div>
+      </section>
+
+      {/* ─── 8. FINAL CTA ─── */}
+      <section className="relative z-10 py-20 border-t border-[var(--border-subtle)] px-6 text-center bg-[var(--bg-surface)]">
+        <Reveal>
+          <div className="max-w-2xl mx-auto">
+            <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
+              See it live in 20 minutes.
+            </h2>
+            <p className="mt-3 text-[var(--text-muted)] text-sm font-body">
+              Book a screen walkthrough or chat with our team on WhatsApp.
+            </p>
+
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => setIsCalendlyOpen(true)}
+                className="w-full sm:w-auto px-7 py-3.5 btn-primary !text-sm cursor-pointer"
+              >
+                Book a Free Demo
+              </button>
+              <a
+                href="https://wa.me/917205289643"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full sm:w-auto px-7 py-3.5 btn-secondary !text-sm flex items-center justify-center gap-2 cursor-pointer"
+              >
+                Chat on WhatsApp
+              </a>
+            </div>
+
+            {/* Trial link — moved from hero to here */}
+            <div className="mt-5">
+              <Link
+                to="/signup"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs font-medium transition-colors inline-flex items-center gap-1.5"
+              >
+                Or start a 14-day free trial <ArrowRightIcon className="w-3.5 h-3.5" />
               </Link>
-                <div className="flex gap-8 text-sm text-gray-400">
-                  <a href="https://www.instagram.com/cenvora.app/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">Instagram</a>
-                  <a href="https://www.facebook.com/cenvora.app/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">Facebook</a>
-              </div>
-           </div>
-           
-           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between text-xs text-gray-600 gap-4">
-              <p>&copy; {new Date().getFullYear()} Cenvora Inc. All rights reserved.</p>
-              <div className="flex gap-6">
-                <Link to="/gst-hsn-guide" className="hover:text-gray-400">HSN Code</Link>
-                <Link to="/contact" className="hover:text-gray-400">Contact</Link>
-                 <Link to="/privacy" className="hover:text-gray-400">Privacy</Link>
-                 <Link to="/terms" className="hover:text-gray-400">Terms</Link>
-                 <Link to="/sitemap" className="hover:text-gray-400">Sitemap</Link>
-              </div>
-           </div>
-         </div>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ─── 9. FOOTER — 3-Column ─── */}
+      <footer className="relative z-10 py-14 border-t border-[var(--border-subtle)] px-6 text-xs text-[var(--text-muted)] bg-[var(--bg-primary)]">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-8">
+          {/* Col 1: Brand */}
+          <div>
+            <div className="flex items-center gap-2.5 mb-3">
+              <BrandLogo className="h-9 sm:h-10 w-auto" />
+            </div>
+            <p className="text-[var(--text-muted)] leading-relaxed">
+              Simple business software. GST billing, inventory, and customer management for Indian businesses.
+            </p>
+            <p className="mt-4 text-[var(--text-muted)] font-mono">&copy; {new Date().getFullYear()} Cenvora.</p>
+          </div>
+
+          {/* Col 2: Product */}
+          <div>
+            <h4 className="text-[var(--text-primary)] font-semibold mb-3 font-display text-sm">Product</h4>
+            <ul className="space-y-2">
+              <li><Link to="/#features" className="hover:text-[var(--text-primary)] transition-colors">Features</Link></li>
+              <li><Link to="/#pricing" className="hover:text-[var(--text-primary)] transition-colors">Pricing</Link></li>
+              <li><Link to="/gst-hsn-guide" className="hover:text-[var(--text-primary)] transition-colors">HSN Lookup</Link></li>
+              <li><Link to="/sitemap" className="hover:text-[var(--text-primary)] transition-colors">Sitemap</Link></li>
+            </ul>
+          </div>
+
+          {/* Col 3: Company */}
+          <div>
+            <h4 className="text-[var(--text-primary)] font-semibold mb-3 font-display text-sm">Company</h4>
+            <ul className="space-y-2">
+              <li><Link to="/contact" className="hover:text-[var(--text-primary)] transition-colors">Contact</Link></li>
+              <li><Link to="/privacy" className="hover:text-[var(--text-primary)] transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-[var(--text-primary)] transition-colors">Terms of Service</Link></li>
+              <li>
+                <a
+                  href="https://wa.me/917205289643"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-[var(--text-primary)] transition-colors inline-flex items-center gap-1.5"
+                >
+                  WhatsApp (+91 7205289643)
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
       </footer>
 
+      {/* Calendly Modal */}
       <PopupModal
         url="https://calendly.com/cenvora"
         onModalClose={() => setIsCalendlyOpen(false)}
