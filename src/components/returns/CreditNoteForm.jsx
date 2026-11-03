@@ -80,7 +80,6 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   }, [selectedInvoice, invoiceRemaining, remainingReady]);
 
   const lastPayloadRef = useRef(null);
-  const wholeUnits = reason === 'return' || reason === 'defective';
   const createMutation = useMutation({
     mutationFn: createCreditNote,
     onSuccess: (data) => {
@@ -161,7 +160,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   }, [dateError]);
 
   // UAT P1 item 5: precision by UQC; typed quantities are kept as typed, never rounded.
-  const qtyErrorFor = (it) => quantityError(it.return_qty, it.unit || it.product_detail?.unit, { stockReturn: wholeUnits });
+  const qtyErrorFor = (it) => quantityError(it.return_qty, it.unit || it.product_detail?.unit);
   const firstQtyError = returnItems.map(qtyErrorFor).find(Boolean) || '';
   const fractionalReturn = Boolean(firstQtyError);
   const WHOLE_UNITS_MSG = firstQtyError;

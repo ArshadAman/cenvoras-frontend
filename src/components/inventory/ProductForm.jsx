@@ -400,7 +400,7 @@ export default function ProductForm({ product, onClose }) {
       conversion_factor: values.conversion_factor ? parseInt(values.conversion_factor) : 1,
       cost_price: values.cost_price,
       sale_price: values.sale_price,
-      stock: values.stock === "" || values.stock == null ? 0 : parseInt(values.stock, 10),
+      stock: values.stock === "" || values.stock == null ? 0 : Number(values.stock),
       low_stock_alert: parseInt(values.low_stock_alert) || 0,
       meta: metaData,
     };

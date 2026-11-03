@@ -10,7 +10,7 @@ import { getWarehouses } from "../../api/inventory";
 import { toast } from "react-toastify";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
-import { getAllUnits, saveCustomUnit } from '../../utils/units';
+import { getAllUnits, saveCustomUnit, unitOptionsWith } from '../../utils/units';
 import { DocumentTextIcon } from "@heroicons/react/24/outline";
 import Button from "../common/Button";
 import DateInputField from "../common/DateInputField";
@@ -1276,7 +1276,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
              <label className="block text-xs font-black text-[var(--text-muted)] md:hidden uppercase tracking-widest">Qty</label>
              <Field
                  name={`items.${idx}.quantity`}
-                 type="number"
+                 type="number" step="any"
                  min="1"
                  className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-1 py-3 text-center text-[var(--text-primary)] font-black focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none text-xs tabular-nums"
              />
@@ -1310,7 +1310,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
                 }}
                 className="w-full h-[42px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-1 text-[var(--text-primary)] font-bold focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none text-xs uppercase text-center"
               >
-                {units.map(u => <option key={u} value={u}>{u}</option>)}
+                {unitOptionsWith(units, item.unit).map(u => <option key={u} value={u}>{u}</option>)}
                 <option value="__custom__" className="text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
               </select>
           </div>

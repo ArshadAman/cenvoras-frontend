@@ -17,7 +17,7 @@ export const createProduct = (data) => {
     description: data.description || null,
     manufacturer: data.manufacturer || null,
     tax: data.tax ? parseFloat(data.tax) : 0,
-    stock: parseInt(data.stock ?? data.current_stock ?? 0),
+    stock: Number(data.stock ?? data.current_stock ?? 0) || 0,
     unit: data.unit,
     secondary_unit: data.secondary_unit || null,
     conversion_factor: parseInt(data.conversion_factor || 1),
@@ -45,7 +45,7 @@ export const patchProduct = (id, data) => {
   if (data.description !== undefined) payload.description = data.description;
   if (data.manufacturer !== undefined) payload.manufacturer = data.manufacturer;
   if (data.unit !== undefined) payload.unit = data.unit;
-  if (data.stock !== undefined) payload.stock = parseInt(data.stock) || 0;
+  if (data.stock !== undefined) payload.stock = Number(data.stock) || 0;
   if (data.is_active !== undefined) payload.is_active = Boolean(data.is_active);
   return api.patch(`/inventory/products/${id}/`, payload).then(res => res.data);
 };
@@ -64,7 +64,7 @@ export const updateProduct = (id, data) => {
     description: data.description || null,
     manufacturer: data.manufacturer || null,
     tax: data.tax ? parseFloat(data.tax) : 0,
-    stock: parseInt(data.stock ?? data.current_stock ?? 0),
+    stock: Number(data.stock ?? data.current_stock ?? 0) || 0,
     unit: data.unit,
     secondary_unit: data.secondary_unit || null,
     conversion_factor: parseInt(data.conversion_factor || 1),
