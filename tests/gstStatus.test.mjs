@@ -31,3 +31,10 @@ test('other documents keep their titles', () => {
   assert.equal(documentTitle('PROFORMA INVOICE', { ...p, gst_status: 'composition' }), 'PROFORMA INVOICE');
   assert.equal(documentTitle('Tax Invoice / Original', p), 'INVOICE');
 });
+
+import { needsGstStatusConfirmation } from '../src/utils/gstStatus.js';
+test('confirm banner flag', () => {
+  assert.equal(needsGstStatusConfirmation({ gst_status_needs_confirmation: true }), true);
+  assert.equal(needsGstStatusConfirmation({ gst_status_needs_confirmation: false }), false);
+  assert.equal(needsGstStatusConfirmation(undefined), false);
+});

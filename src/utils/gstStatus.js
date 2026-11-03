@@ -47,3 +47,8 @@ export function gstReturnsAvailable(profile) {
 export function isGstReturnLink(link) {
   return /gstr-3b|tab=gstr1|^\/reports\/tax-register$/.test(String(link || ''));
 }
+
+// Rudra (#216): admin banner until the status is confirmed (null, or filled by the migration).
+export function needsGstStatusConfirmation(profile) {
+  return !!(profile && profile.gst_status_needs_confirmation);
+}
