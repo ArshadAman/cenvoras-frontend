@@ -25,6 +25,9 @@ export const hrApi = {
   getEmployeeSalaryHistory: (id) => api.get(`/hr/employees/${id}/salary_history/`),
   calculateSalaryBreakdown: (data) => api.post('/hr/employees/calculate_salary_breakdown/', data),
   sendEmployeeOfferLetter: (id) => api.post(`/hr/employees/${id}/send_offer_letter/`),
+  // UAT #10 (backend #205): admin-only date-of-joining correction. GET previews, POST applies.
+  previewDojCorrection: (id, newDoj) => api.get(`/hr/employees/${id}/doj-correction/`, { params: { new_doj: newDoj } }),
+  applyDojCorrection: (id, data) => api.post(`/hr/employees/${id}/doj-correction/`, data),
 
   // Tax Declarations
   getTaxDeclarations: (params) => api.get('/hr/tax-declarations/', { params }),

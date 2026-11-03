@@ -3,10 +3,12 @@ import { hrApi } from "../../api/hr";
 import {
   UserGroupIcon, PlusIcon, PencilIcon, TrashIcon,
   CurrencyRupeeIcon, ClockIcon, XMarkIcon, ArrowTrendingUpIcon,
-  EyeIcon, InformationCircleIcon, CalculatorIcon
+  EyeIcon, InformationCircleIcon, CalculatorIcon, CalendarDaysIcon
 } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import EmployeeFormModal from "./EmployeeFormModal";
+import DojCorrectionModal from "../../components/hr/DojCorrectionModal";
+import { getUserRole } from "../../utils/auth";
 import SalaryBreakdownCalculator from "../../components/hr/SalaryBreakdownCalculator";
 import { getTodayKolkata } from "../../utils/date";
 
@@ -523,6 +525,8 @@ export default function Employees() {
   const [incrementEmp, setIncrementEmp] = useState(null);
   const [historyEmp, setHistoryEmp] = useState(null);
   const [breakdownEmp, setBreakdownEmp] = useState(null);
+  const [dojEmp, setDojEmp] = useState(null);
+  const isAdmin = getUserRole() === 'admin';
 
   const fetchEmployees = async () => {
     try {
@@ -674,6 +678,16 @@ export default function Employees() {
                         >
                           <ClockIcon className="w-4 h-4" />
                         </button>
+                        {isAdmin && (
+                          <button
+                            title="Correct joining date"
+                            aria-label="Correct joining date"
+                            onClick={() => setDojEmp(emp)}
+                            className="p-1.5 rounded-lg bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)] transition inline-flex items-center"
+                          >
+                            <CalendarDaysIcon className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           title="Edit Profile"
                           onClick={() => { setSelectedEmployee(emp); setIsModalOpen(true); }}
@@ -714,6 +728,13 @@ export default function Employees() {
         onClose={() => setIsModalOpen(false)} 
         employee={selectedEmployee} 
         onSuccess={fetchEmployees} 
+      />
+
+      <DojCorrectionModal
+        isOpen={!!dojEmp}
+        onClose={() => setDojEmp(null)}
+        employee={dojEmp}
+        onSuccess={fetchEmployees}
       />
 
       <SalaryIncrementModal
