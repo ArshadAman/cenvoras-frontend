@@ -3,7 +3,7 @@ import { Dialog, Transition } from "@headlessui/react"; // Assuming headlessui i
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCustomers, getSalesInvoices } from "../../api/sales";
 import { createCreditNote, getInvoiceReturnRemaining } from "../../api/gst";
-import { extractServerMessage, exceedsRemainingQty, lineProductId, remainingQtyFor } from "../../utils/fieldErrors";
+import { extractServerMessage, extractFieldErrors, exceedsRemainingQty, lineProductId, remainingQtyFor } from "../../utils/fieldErrors";
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
@@ -20,6 +20,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
   const [noteDate, setNoteDate] = useState(getTodayKolkata());
   const [dismissedDateError, setDismissedDateError] = useState(false);
   const [returnItems, setReturnItems] = useState([]);
+  const [serverError, setServerError] = useState("");
 
   // Fetch Customers
   const { data: customers } = useQuery({
@@ -99,6 +100,9 @@ export default function CreditNoteForm({ isOpen, onClose }) {
       handleClose();
     },
     onError: (err) => {
+      // Show the backend's field message inline too (e.g. invoice still a draft), not only a toast.
+      const fe = extractFieldErrors(err);
+      setServerError(fe.original_invoice || Object.values(fe)[0] || '');
       // Rudra CA s.34(2): past the deadline the API refuses a GST credit note and offers a commercial one.
       const body = err?.response?.data;
       const raw = JSON.stringify(body || {});
@@ -293,7 +297,12 @@ export default function CreditNoteForm({ isOpen, onClose }) {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={(e) => { setServerError(""); handleSubmit(e); }} className="space-y-6">
+              {serverError && (
+                <div role="alert" className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                  {serverError}
+                </div>
+              )}
               {/* Step 1: Customer & Invoice Selection */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

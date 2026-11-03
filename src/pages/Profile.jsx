@@ -372,6 +372,7 @@ const Profile = ({ onLogout }) => {
     business_address: '',
     gstin: '',
     gst_status: '',
+    auto_round_off: true,
     business_type: '',
     pan_number: '',
     trn: '',
@@ -454,6 +455,7 @@ const Profile = ({ onLogout }) => {
         business_address: profile.business_address || '',
         gstin: profile.gstin || '',
         gst_status: profile.gst_status || '',
+        auto_round_off: profile.auto_round_off !== false,
         business_type: profile.business_type || '',
         pan_number: profile.pan_number || '',
         trn: profile.trn || '',
@@ -775,6 +777,7 @@ const Profile = ({ onLogout }) => {
       country: formData.country,
       gstin: formData.gstin,
       ...(formData.country === 'IN' && formData.gst_status ? { gst_status: formData.gst_status } : {}),
+      auto_round_off: formData.auto_round_off !== false,
       business_type: formData.business_type || null,
       pan_number: formData.pan_number,
       trn: formData.trn,
@@ -815,6 +818,7 @@ const Profile = ({ onLogout }) => {
         country: p.country || 'IN',
         gstin: p.gstin || '',
         gst_status: p.gst_status || '',
+        auto_round_off: p.auto_round_off !== false,
         pan_number: p.pan_number || '',
         trn: p.trn || '',
         gem_id: p.gem_id || '',
@@ -1461,6 +1465,21 @@ const Profile = ({ onLogout }) => {
                           />
                         </div>
 
+                        {/* Company-wide round-off (users.auto_round_off, #333/#335) */}
+                        <label className="flex items-start gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-sm text-[var(--text-primary)]">
+                          <input
+                            type="checkbox"
+                            name="auto_round_off"
+                            checked={formData.auto_round_off !== false}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, auto_round_off: e.target.checked }))}
+                            disabled={!isEditing || updateProfileMutation.isPending}
+                            className="mt-0.5 h-4 w-4"
+                          />
+                          <span>
+                            <span className="font-medium">Round off invoice totals to the nearest rupee</span>
+                            <span className="block text-xs text-[var(--text-muted)]">Applies to new invoices by default. You can still revert round off on a single invoice.</span>
+                          </span>
+                        </label>
                         {formData.country === 'IN' && (
                           <>
                             {/* UAT P1 #13 rework (Rudra CA): company GST status */}

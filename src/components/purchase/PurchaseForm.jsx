@@ -5,7 +5,7 @@ import { createPurchaseBill, updatePurchaseBill, getProducts } from "../../api/p
 import { getVendors, createVendor } from "../../api/vendors";
 import { getCustomers, ensureCustomerVendor } from "../../api/customers";
 import { formatErrorMessage } from "../../utils/toastUtils";
-import { initialReceiptDate, initialReceiptTouched, receiptDateAfterBillDateChange, receiptDatePayload, receiptDateError } from "../../utils/rcmReceiptDate";
+import { initialReceiptDate, initialReceiptTouched, receiptDateAfterBillDateChange, receiptDatePayload, receiptDateError, hasReverseCharge } from "../../utils/rcmReceiptDate";
 import { createPortal } from "react-dom";
 import { getWarehouses } from "../../api/inventory";
 import { toast } from "react-toastify";
@@ -697,6 +697,8 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
               tax_rate: item.tax_rate || 0,
               low_stock_alert: item.low_stock_alert || 10,
               amount: item.amount || 0,
+              is_rcm: !!item.is_rcm,
+              itc_blocked: !!item.itc_blocked,
               isExistingProduct: !!(item.product_detail?.id || item.product_id || (typeof item.product === 'object' ? item.product?.id : (typeof item.product === 'string' && item.product.length >= 32))),
             })) || [{
               product_name: "",
@@ -706,6 +708,8 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
               product_description: "",
               quantity: 1,
               free_quantity: 0,
+              is_rcm: false,
+              itc_blocked: false,
               unit: "pcs",
               batch_number: "",
               expiry_date: "",
@@ -769,6 +773,8 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                   amount: Number(calculatedAmount.toFixed(2)),
                   discount,
                   tax,
+                  is_rcm: !!item.is_rcm,
+                  itc_blocked: !!item.itc_blocked,
                 };
               });
               
@@ -1001,7 +1007,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                              <Field type="checkbox" name="is_reverse_charge" className="rounded border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--accent-primary)]" />
                              Reverse charge (RCM)
                            </label>
-                           {values.is_reverse_charge && (
+                           {hasReverseCharge(values) && (
                              <div>
                                <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest">
                                  Date of receipt of goods/services
@@ -1120,6 +1126,8 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                                   product_description: "",
                                   quantity: 1,
                                   free_quantity: 0,
+                                  is_rcm: false,
+                                  itc_blocked: false,
                                   unit: "pcs",
                                   batch_number: "",
                                   expiry_date: "",
@@ -1339,7 +1347,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
                     setFieldValue(`items.${idx}.unit`, val);
                   }
                 }}
-                className="w-full h-[42px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-1 text-[var(--text-primary)] font-bold focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none text-xs uppercase text-center"
+                className="w-full h-[42px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl pl-1 pr-5 min-w-[68px] text-[var(--text-primary)] font-bold focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none text-xs uppercase text-center"
               >
                 {unitOptionsWith(units, item.unit).map(u => <option key={u} value={u}>{u}</option>)}
                 <option value="__custom__" className="text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
@@ -1381,6 +1389,8 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
                       product_description: "",
                       quantity: 1,
                       free_quantity: 0,
+                      is_rcm: false,
+                      itc_blocked: false,
                       unit: "pcs",
                       batch_number: "",
                       expiry_date: "",
@@ -1412,6 +1422,17 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
               <div className="font-black text-[var(--text-primary)] text-base tabular-nums tracking-tighter">
                   {getCurrencySymbol()}{calculatedAmount.toFixed(2)}
               </div>
+          </div>
+          {/* Per-line GST flags (#214): PurchaseBillItem.is_rcm / itc_blocked */}
+          <div className="flex flex-col items-end gap-1 text-[11px] text-[var(--text-secondary)]">
+              <label className="inline-flex items-center gap-1.5 whitespace-nowrap" title="Reverse charge applies to this line: you pay the GST, not the supplier">
+                  <Field type="checkbox" name={`items.${idx}.is_rcm`} className="rounded border-[var(--border-subtle)]" />
+                  Reverse charge
+              </label>
+              <label className="inline-flex items-center gap-1.5 whitespace-nowrap" title="Input tax credit is blocked under section 17(5): the tax is added to cost">
+                  <Field type="checkbox" name={`items.${idx}.itc_blocked`} className="rounded border-[var(--border-subtle)]" />
+                  ITC blocked u/s 17(5)
+              </label>
           </div>
           <button
               type="button"
