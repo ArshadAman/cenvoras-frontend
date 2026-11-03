@@ -1347,7 +1347,7 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
                     setFieldValue(`items.${idx}.unit`, val);
                   }
                 }}
-                className="w-full h-[42px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl pl-1 pr-5 min-w-[68px] text-[var(--text-primary)] font-bold focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none text-xs uppercase text-center"
+                className="w-full h-[42px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] appearance-none cursor-pointer rounded-xl px-1 min-w-[7ch] text-[var(--text-primary)] font-bold focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)] outline-none text-xs uppercase text-center"
               >
                 {unitOptionsWith(units, item.unit).map(u => <option key={u} value={u}>{u}</option>)}
                 <option value="__custom__" className="text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>

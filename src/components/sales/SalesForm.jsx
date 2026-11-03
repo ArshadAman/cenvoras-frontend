@@ -2830,7 +2830,7 @@ export default function SalesForm({
                               { key: "batch", label: "Batch", show: itemSettings.show_item_batch, width: "140px", minWidth: 140 },
                               { key: "quantity", label: "Quantity", show: true, width: "80px", minWidth: 80 },
                               { key: "free", label: "Free", show: itemSettings.show_item_free_quantity, width: "70px", minWidth: 70 },
-                              { key: "unit", label: "Unit", show: true, width: "84px", minWidth: 84 },
+                              { key: "unit", label: "Unit", show: true, width: "minmax(84px, 9ch)", minWidth: 84 },
                               { key: "purchase_price", label: "Pur. Price", show: itemSettings.show_item_purchase_price, width: "100px", minWidth: 100 },
                               { key: "price", label: "Price", show: true, width: "110px", minWidth: 110 },
                               { key: "discount", label: "Disc.%", show: itemSettings.show_item_discount, width: "80px", minWidth: 80 },
@@ -3186,7 +3186,7 @@ export default function SalesForm({
                                                       setFieldValue(`items.${index}.unit`, val);
                                                     }
                                                   }}
-                                                  className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded pl-1 pr-5 py-1.5 min-w-[72px] text-xs min-h-[32px] text-center text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
+                                                  className={`w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] appearance-none rounded px-1 py-1.5 min-w-[7ch] cursor-pointer text-xs min-h-[32px] text-center text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                 >
                                                   {unitOptionsWith(availableUnits, item.unit).map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
                                                   <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
