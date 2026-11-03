@@ -14,6 +14,8 @@ describe('GSTR-3B table 4 rows', () => {
     const v = Object.fromEntries(rows.map((r) => [r.key, r.v?.iamt || 0]));
     expect(v.A3).toBe(360); expect(v.A5).toBe(180); expect(v.B1).toBe(180);
     expect(v.C).toBe(v.A1 + v.A2 + v.A3 + v.A4 + v.A5 - v.B1 - v.B2);
+    expect(rows.filter((r) => r.key.startsWith('D')).every((r) => r.note === 'for information; not part of net ITC')).toBe(true);
+    expect(v.A1).toBe(0); expect(v.A2).toBe(0); expect(v.A4).toBe(0);
     expect(table4Rows(t4).some((r) => /17\(5\)/.test(r.label) && r.key.startsWith('D'))).toBe(false);
   });
 });

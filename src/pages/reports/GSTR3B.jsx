@@ -504,7 +504,7 @@ export default function GSTR3B() {
                       </tr>
                     ) : (
                       <tr key={r.key} className={r.total ? 'bg-[var(--status-success)]/10 font-bold' : 'hover:bg-[var(--bg-primary)]/50 transition-colors'}>
-                        <td className={r.total ? 'py-3 px-4 text-[var(--status-success)]' : 'py-2.5 px-4 pl-8 text-[var(--text-secondary)]'}>{r.label}</td>
+                        <td className={r.total ? 'py-3 px-4 text-[var(--status-success)]' : 'py-2.5 px-4 pl-8 text-[var(--text-secondary)]'}>{r.label}{r.note && <span className="block text-[11px] italic text-[var(--text-muted)]">{r.note}</span>}</td>
                         {['iamt', 'camt', 'samt', 'csamt'].map((k) => (
                           <td key={k} className={`py-2.5 px-4 text-right font-mono ${k === 'csamt' ? 'text-[var(--text-muted)]' : r.tone}`}>
                             {getCurrencySymbol()}{fmt(r.v?.[k])}

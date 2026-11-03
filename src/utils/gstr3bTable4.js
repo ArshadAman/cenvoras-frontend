@@ -19,8 +19,8 @@ export function table4Rows(t4 = {}) {
     { key: 'B1', label: '(1) As per rules 38, 42 & 43 of CGST Rules and section 17(5)', v: b.as_per_rules, tone: RED },
     { key: 'B2', label: '(2) Others', v: b.others, tone: RED },
     { key: 'C', total: true, label: '(C) Net ITC Available (A) – (B)', v: t4.net_itc_available, tone: 'text-[var(--status-success)] text-sm' },
-    { key: 'D', header: true, label: '(D) Other Details' },
-    { key: 'D1', label: '(1) ITC reclaimed which was reversed under Table 4(B)(2) in earlier tax period', v: d.itc_reclaimed, tone: MUTED },
-    { key: 'D2', label: '(2) Ineligible ITC under section 16(4) & ITC restricted due to PoS rules', v: d.others, tone: MUTED },
+    { key: 'D', header: true, label: '(D) Other Details (for information; not part of net ITC)' },
+    { key: 'D1', label: '(1) ITC reclaimed which was reversed under Table 4(B)(2) in earlier tax period', note: 'for information; not part of net ITC', v: d.itc_reclaimed, tone: MUTED },
+    { key: 'D2', label: '(2) Ineligible ITC under section 16(4) & ITC restricted due to PoS rules', note: 'for information; not part of net ITC', v: d.others, tone: MUTED },
   ];
 }
