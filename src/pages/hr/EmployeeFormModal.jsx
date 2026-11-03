@@ -6,7 +6,7 @@ import { getWarehouses } from '../../api/inventory';
 import { getUserProfile } from '../../api/users';
 import { toast } from 'react-toastify';
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
-import SalaryBreakdownCalculator from '../../components/hr/SalaryBreakdownCalculator';
+import SalaryBreakdownCalculator, { INDIAN_STATES } from '../../components/hr/SalaryBreakdownCalculator';
 import { indianStates, getGSTStateCode } from '../../utils/indiaData';
 import useEscKey from '../../hooks/useEscStack';
 import { resolveCompanyWorkStateFromProfile } from '../../utils/companyState';
@@ -650,7 +650,13 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
 
               <div>
                 <label className={labelCls}>Work State *</label>
-                <input type="text" name="work_state" value={formData.work_state} onChange={handleChange} className={inputCls} placeholder={companyWorkState ? `Default: ${companyWorkState} (company state)` : 'Defaults to company state'} />
+                <select name="work_state" value={INDIAN_STATES.find((st) => st.toLowerCase() === String(formData.work_state || '').trim().toLowerCase()) || formData.work_state || ''} onChange={handleChange} className={inputCls}>
+                  <option value="">{companyWorkState ? `Default: ${companyWorkState} (company state)` : 'Defaults to company state'}</option>
+                  {formData.work_state && !INDIAN_STATES.some((st) => st.toLowerCase() === String(formData.work_state).toLowerCase()) && (
+                    <option value={formData.work_state} disabled>{formData.work_state} (invalid: choose a state)</option>
+                  )}
+                  {INDIAN_STATES.map((st) => <option key={st} value={st}>{st}</option>)}
+                </select>
               </div>
             </div>
           )}
@@ -688,7 +694,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                 </div>
                 <div>
                   <label className={labelCls}>ESI IP Number</label>
-                  <input type="text" name="esi_number" value={formData.esi_number} onChange={handleChange} className={inputCls} placeholder="17 digits" maxLength={17} />
+                  <input type="text" name="esi_number" value={formData.esi_number} onChange={handleChange} className={inputCls} placeholder="10-digit ESI IP number" maxLength={10} inputMode="numeric" />
                 </div>
               </div>
             </div>
