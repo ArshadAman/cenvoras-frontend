@@ -4,6 +4,7 @@ import ErrorBoundary from './ErrorBoundary'
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
 import { getUserProfile } from '../api/users';
+import GstStatusConfirmBanner from './GstStatusConfirmBanner';
 import { getSubscriptionEntitlements } from '../api/subscription';
 import UpgradePromptModal from './subscription/UpgradePromptModal';
 import { getCountryCode } from '../utils/currency';
@@ -1028,7 +1029,10 @@ export default function Layout({ children, onLogout }) {
               </div>
             </div>
           ) : (
-            children
+            <>
+              <GstStatusConfirmBanner profileData={profileData} isAdmin={role === 'admin'} />
+              {children}
+            </>
           )}
           </main>
         </ErrorBoundary>

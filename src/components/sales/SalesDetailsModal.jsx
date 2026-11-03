@@ -1,3 +1,4 @@
+import { documentTitle } from '../../utils/gstStatus';
 import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -181,6 +182,10 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
   };
 
   const effectiveBusinessInfo = {
+    // UAT P1 #13 rework: GST status drives the document title (see utils/gstStatus.js)
+    gst_status: billingProfile.gst_status,
+    gst_status_set: billingProfile.gst_status_set,
+    document_declaration: billingProfile.document_declaration,
     business_name: billingProfile.business_name,
     business_address: billingProfile.business_address,
     phone: billingProfile.phone,
@@ -369,7 +374,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
   // Forced document footer: always show Made with Cenvora branding regardless of plan/settings
   effectiveBusinessInfo.show_cenvora_footer = true;
 
-  const baseTitle = isQuotation ? "QUOTATION" : isDeliveryChallan ? "DELIVERY CHALLAN" : isSalesOrder ? "PROFORMA INVOICE" : (template?.content?.invoiceTitle || "TAX INVOICE");
+  const baseTitle = isQuotation ? "QUOTATION" : isDeliveryChallan ? "DELIVERY CHALLAN" : isSalesOrder ? "PROFORMA INVOICE" : documentTitle(template?.content?.invoiceTitle, effectiveBusinessInfo);
   const previewTemplate = {
     ...template,
     content: {
@@ -677,7 +682,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         ? 'Quotation'
         : isSalesOrder
         ? 'Proforma Invoice'
-        : 'Tax Invoice';
+        : (documentTitle('', effectiveBusinessInfo) === 'TAX INVOICE' ? 'Tax Invoice'
+          : documentTitle('', effectiveBusinessInfo) === 'BILL OF SUPPLY' ? 'Bill of Supply' : 'Invoice');
       const fileNum =
         enrichedInvoice.invoice_number ||
         invoiceDetails.order_number ||

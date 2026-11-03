@@ -1,3 +1,4 @@
+import { taxLocked, documentTitle } from '../../utils/gstStatus';
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -1221,6 +1222,18 @@ export default function SalesForm({
     setRoundOffApplied(companyAutoRoundOff);
   }, [isOpen, editData?.id, companyAutoRoundOff]);
 
+  // UAT P1 #13 rework (Rudra CA): Composition / Not registered companies can't charge GST
+  // (s.10 / s.32). Lock line tax at 0; the server enforces the same.
+  const companyProfile = userProfileData?.billing_profile || userProfileData?.profile || userProfileData || {};
+  const gstTaxLocked = taxLocked(companyProfile);
+  useEffect(() => {
+    if (!isOpen || !gstTaxLocked || !formikRef.current) return;
+    const items = formikRef.current.values?.items || [];
+    items.forEach((it, i) => {
+      if (Number(it?.tax) !== 0) formikRef.current.setFieldValue(`items.${i}.tax`, 0);
+    });
+  });
+
   const itemSettings = {
     ...DEFAULT_ITEM_SETTINGS,
     ...(invoiceSettings || {}),
@@ -1742,7 +1755,7 @@ export default function SalesForm({
           unit: isNote ? "" : (item.unit || "pcs"),
           hsn_sac_code: isNote ? "" : (item.hsn_sac_code || item.hsn_code || ""),
           discount: isNote ? 0 : (Number(item.discount) || 0),
-          tax: isNote ? 0 : (Number(item.tax) || 0),
+          tax: (isNote || gstTaxLocked) ? 0 : (Number(item.tax) || 0),
           manufacturer: isNote ? "" : (item.manufacturer || item.product_detail?.manufacturer || ""),
           internal_reference: isNote ? "" : (item.internal_reference || item.product_detail?.internal_reference || ""),
           storage_condition: isNote ? "" : (item.storage_condition || item.product_detail?.storage_condition || ""),
@@ -3244,6 +3257,8 @@ export default function SalesForm({
                                                 <Field
                                                   name={`items.${index}.tax`}
                                                   type="number"
+                                                  disabled={gstTaxLocked}
+                                                  title={gstTaxLocked ? documentTitle('', companyProfile) === 'BILL OF SUPPLY' ? 'Composition: no GST can be charged' : 'Not registered: no GST can be charged (s.32)' : undefined}
                                                   step="1"
                                                   className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
                                                   onKeyDown={(e) => {
@@ -3600,7 +3615,7 @@ export default function SalesForm({
                                             {itemSettings.show_item_tax && (
                                                 <div>
                                                     <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Tax %</label>
-                                                    <Field name={`items.${index}.tax`} type="number" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none" />
+                                                    <Field name={`items.${index}.tax`} type="number" disabled={gstTaxLocked} className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none" />
                                                 </div>
                                             )}
                                           </div>

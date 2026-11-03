@@ -1,3 +1,4 @@
+import { documentTitle, documentDeclaration } from '../../../utils/gstStatus';
 import React, { forwardRef } from 'react';
 import PlaceOfSupplyLine from './PlaceOfSupplyLine';
 import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
@@ -338,8 +339,9 @@ const InvoicePreview = forwardRef(({
             letterSpacing: '1px',
           }}
         >
-          {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : (content.invoiceTitle || 'TAX INVOICE')}
+          {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : documentTitle(content.invoiceTitle, businessInfo)}
         </h2>
+{!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
         {content.invoiceSubtitle && (
           <p className="mt-1" style={{ color: colors.lightText, fontSize: `${type.bodySize}px` }}>
             {content.invoiceSubtitle}

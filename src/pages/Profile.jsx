@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { GST_STATUS_OPTIONS } from '../utils/gstStatus';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import Loader from '../components/Loader';
@@ -370,6 +371,7 @@ const Profile = ({ onLogout }) => {
     business_name: '',
     business_address: '',
     gstin: '',
+    gst_status: '',
     business_type: '',
     pan_number: '',
     trn: '',
@@ -451,6 +453,7 @@ const Profile = ({ onLogout }) => {
         business_name: profile.business_name || '',
         business_address: profile.business_address || '',
         gstin: profile.gstin || '',
+        gst_status: profile.gst_status || '',
         business_type: profile.business_type || '',
         pan_number: profile.pan_number || '',
         trn: profile.trn || '',
@@ -771,6 +774,7 @@ const Profile = ({ onLogout }) => {
       business_address: formData.business_address,
       country: formData.country,
       gstin: formData.gstin,
+      ...(formData.country === 'IN' && formData.gst_status ? { gst_status: formData.gst_status } : {}),
       business_type: formData.business_type || null,
       pan_number: formData.pan_number,
       trn: formData.trn,
@@ -810,6 +814,7 @@ const Profile = ({ onLogout }) => {
         business_address: p.business_address || '',
         country: p.country || 'IN',
         gstin: p.gstin || '',
+        gst_status: p.gst_status || '',
         pan_number: p.pan_number || '',
         trn: p.trn || '',
         gem_id: p.gem_id || '',
@@ -1458,6 +1463,26 @@ const Profile = ({ onLogout }) => {
 
                         {formData.country === 'IN' && (
                           <>
+                            {/* UAT P1 #13 rework (Rudra CA): company GST status */}
+                            <select
+                              name="gst_status"
+                              value={formData.gst_status || ''}
+                              onChange={handleInputChange}
+                              disabled={!isEditing || updateProfileMutation.isPending}
+                              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-3 text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none disabled:opacity-60"
+                              aria-label="GST status"
+                            >
+                              <option value="" disabled>GST status</option>
+                              {GST_STATUS_OPTIONS.map((o) => (
+                                <option key={o.value} value={o.value}>{`GST status: ${o.label}`}</option>
+                              ))}
+                            </select>
+                            {formData.gst_status === 'unregistered' && (
+                              <p className="text-xs text-[var(--text-muted)]">Not registered: no GSTIN, documents are titled "Invoice" and no GST is charged.</p>
+                            )}
+                            {formData.gst_status === 'composition' && (
+                              <p className="text-xs text-[var(--text-muted)]">Composition: documents are a "Bill of Supply" and no GST is charged.</p>
+                            )}
                             <input
                               type="text"
                               name="gstin"
