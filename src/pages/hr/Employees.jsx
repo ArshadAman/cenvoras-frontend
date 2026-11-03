@@ -528,21 +528,31 @@ export default function Employees() {
   const [dojEmp, setDojEmp] = useState(null);
   const isAdmin = getUserRole() === 'admin';
 
-  const fetchEmployees = async () => {
+  // Ignore out-of-order responses so an older (pre-save) list can't overwrite a newer one.
+  const fetchSeq = React.useRef(0);
+  const fetchEmployees = async ({ soft = false } = {}) => {
+    const seq = ++fetchSeq.current;
     try {
-      setLoading(true);
-      const res = await hrApi.getEmployees();
-      setEmployees(res.data?.results || res.data);
+      if (!soft) setLoading(true);
+      // Cache-buster: after a salary/CTC save the list must come straight from the server.
+      const res = await hrApi.getEmployees({ _ts: Date.now() });
+      if (seq === fetchSeq.current) setEmployees(res.data?.results || res.data);
     } catch (error) {
-      toast.error("Failed to load employees");
+      if (seq === fetchSeq.current) toast.error("Failed to load employees");
     } finally {
-      setLoading(false);
+      if (seq === fetchSeq.current && !soft) setLoading(false);
     }
   };
+  const refreshAfterSave = () => fetchEmployees({ soft: true });
 
   useEffect(() => {
     fetchEmployees();
-  }, []);
+    // Salary can also change on other screens (Salary Assignments): refresh when the tab regains focus.
+    const onFocus = () => { if (document.visibilityState === 'visible') fetchEmployees({ soft: true }); };
+    document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener('focus', onFocus);
+    return () => { document.removeEventListener('visibilitychange', onFocus); window.removeEventListener('focus', onFocus); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -727,21 +737,21 @@ export default function Employees() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         employee={selectedEmployee} 
-        onSuccess={fetchEmployees} 
+        onSuccess={refreshAfterSave} 
       />
 
       <DojCorrectionModal
         isOpen={!!dojEmp}
         onClose={() => setDojEmp(null)}
         employee={dojEmp}
-        onSuccess={fetchEmployees}
+        onSuccess={refreshAfterSave}
       />
 
       <SalaryIncrementModal
         isOpen={!!incrementEmp}
         onClose={() => setIncrementEmp(null)}
         employee={incrementEmp}
-        onSuccess={fetchEmployees}
+        onSuccess={refreshAfterSave}
       />
 
       <SalaryHistoryModal
