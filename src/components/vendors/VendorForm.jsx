@@ -100,6 +100,7 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
     pan: editData?.pan || (editData?.gstin && editData.gstin.length >= 12 ? editData.gstin.substring(2, 12) : ""),
     state: editData?.state || "",
     address: editData?.address || "",
+    country: editData?.country || "India",
     meta: {
       party_category: editData?.meta?.party_category || "consumer",
       gst_type: editData?.meta?.gst_type || "unregistered",
@@ -271,7 +272,14 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
                     <option value="unregistered">Unregistered</option>
                     <option value="registered">Registered</option>
                     <option value="composite">Composite</option>
+                    <option value="overseas">Overseas (outside India)</option>
                   </Field>
+                </div>
+
+                {/* Country (import of services / goods) */}
+                <div>
+                  <label htmlFor="country" className={labelClass}>Country</label>
+                  <Field id="country" name="country" className={inputClass} placeholder="India" />
                 </div>
 
                 {/* Party Category */}

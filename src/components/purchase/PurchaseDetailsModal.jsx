@@ -544,12 +544,21 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                     </div>
                   )}
 
+                  {parseFloat(bill.rcm_tax_payable?.total || 0) > 0 && (
+                    <div className="rounded-lg border border-[var(--status-warning)]/40 bg-[var(--status-warning)]/10 p-2 text-xs flex justify-between" data-testid="rcm-tax-payable">
+                      <span>Reverse-charge tax payable by us{bill.is_interstate ? ' (IGST)' : ''} — not paid to the vendor</span>
+                      <span className="font-mono">{getCurrencySymbol()}{parseFloat(bill.rcm_tax_payable.total).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {(bill.warnings || []).map((w) => (
+                    <div key={w} role="alert" className="rounded-lg border border-[var(--status-danger)]/40 bg-[var(--status-danger)]/10 p-2 text-xs">{w}</div>
+                  ))}
                   <div className="pt-3 border-t border-[var(--border-subtle)] flex justify-between items-baseline">
                     <div>
                       <span className="text-sm font-bold text-[var(--text-primary)] block">
-                        Net Total
+                        {parseFloat(bill.rcm_tax_payable?.total || 0) > 0 ? 'Payable to vendor' : 'Net Total'}
                       </span>
-                      <span className="text-xs text-[var(--text-muted)]">Tax Inclusive</span>
+                      <span className="text-xs text-[var(--text-muted)]">{parseFloat(bill.rcm_tax_payable?.total || 0) > 0 ? 'Excludes reverse-charge tax' : 'Tax Inclusive'}</span>
                     </div>
                     <span className="text-2xl font-bold font-mono text-[var(--text-primary)]">
                       {getCurrencySymbol()}
