@@ -879,6 +879,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     setSalaryConfig((prev) => (prev ? { ...prev, work_state: ws } : prev));
                   }}
                   initialPfWageComponents={employee?.salary_details?.pf_wage_components || []}
+                  structureComponents={employee?.salary_details?.structure_components || null}
                   initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
                   initialBasicPct={
                     salaryConfig?.basic_pct ??

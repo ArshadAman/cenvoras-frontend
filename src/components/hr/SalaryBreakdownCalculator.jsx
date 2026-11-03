@@ -59,6 +59,7 @@ export default function SalaryBreakdownCalculator({
   initialComponents = null,
   initialBasicPct = null,
   initialPfWageComponents = null,
+  structureComponents = null,
   initialHraPct = null,
   initialTaxDeclarations = null,
   dateOfJoining = null,
@@ -311,7 +312,8 @@ export default function SalaryBreakdownCalculator({
           },
           ad_hoc_earnings: adHocEarnings,
           // Custom allowances ticked 'Counts as PF wages (DA / retaining allowance)'.
-          pf_wage_components: customAllowances.filter((ca) => ca.pfWages && ca.name && Number(ca.amount) > 0).map((ca) => ca.name),
+          pf_wage_components: customAllowances.filter((ca) => ca.pfWages && ca.name && Number(ca.amount) > 0
+            && !(structureComponents || []).some((c) => String(c.name) === ca.name.trim())).map((ca) => ca.name),
           breakdown: res.data,
         });
       }
@@ -323,7 +325,7 @@ export default function SalaryBreakdownCalculator({
     }
   }, [
     monthlyCtc, annualCtc, taxRegime, workState, basicPct, hraPctOfBasic,
-    conveyance, medical, customAllowances, adHocAdditions,
+    conveyance, medical, customAllowances, adHocAdditions, structureComponents,
     sec80c, sec80d, sec24b, dateOfJoining, onChange
   ]);
 
@@ -683,14 +685,22 @@ export default function SalaryBreakdownCalculator({
                             placeholder="Amount"
                           />
                         </div>
-                        <label className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] whitespace-nowrap" title="Counts as PF wages (DA / retaining allowance): added to Basic for PF, capped at the PF wage ceiling">
-                          <input
-                            type="checkbox"
-                            checked={!!ca.pfWages}
-                            onChange={(e) => updateCustomAllowance(ca.id, 'pfWages', e.target.checked)}
-                          />
-                          Counts as PF wages (DA / retaining allowance)
-                        </label>
+                        {(() => {
+                          // Rudra: a row named like a salary-structure component takes that component's PF flag.
+                          const sc = (structureComponents || []).find(
+                            (c) => String(c.name) === String(ca.name || '').trim());
+                          return (
+                            <label className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] whitespace-nowrap" title="Counts as PF wages (DA / retaining allowance): added to Basic for PF, capped at the PF wage ceiling">
+                              <input
+                                type="checkbox"
+                                disabled={!!sc}
+                                checked={sc ? !!sc.counts_as_pf_wages : !!ca.pfWages}
+                                onChange={(e) => updateCustomAllowance(ca.id, 'pfWages', e.target.checked)}
+                              />
+                              {sc ? `PF treatment comes from the salary structure component ${sc.name}` : 'Counts as PF wages (DA / retaining allowance)'}
+                            </label>
+                          );
+                        })()}
                         <button
                           type="button"
                           aria-label={`Remove ${ca.name}`}
