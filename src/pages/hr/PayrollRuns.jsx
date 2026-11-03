@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { hrApi } from "../../api/hr";
+import PfWagesBanner from "../../components/hr/PfWagesBanner";
 import { getAccounts } from "../../api/ledger";
 import {
   CalculatorIcon, PlayIcon, CheckBadgeIcon, XMarkIcon,
@@ -89,7 +90,7 @@ function RecalcPreviewModal({ run, onClose, onConfirm }) {
           <table className="w-full text-xs" data-testid="recalc-diff">
             <thead><tr className="text-[var(--text-muted)] text-left">
               <th>Employee</th><th className="text-right">Old gross</th><th className="text-right">New gross</th>
-              <th className="text-right">ESI (old → new)</th><th className="text-right">PT (old → new)</th><th>Notes</th>
+              <th className="text-right">ESI (old → new)</th><th className="text-right">PT (old → new)</th><th className="text-right">PF wage (old → new)</th><th>Notes</th>
             </tr></thead>
             <tbody>
               {rows.map((r) => (
@@ -99,8 +100,9 @@ function RecalcPreviewModal({ run, onClose, onConfirm }) {
                   <td className="text-right font-semibold">{inrFmt(r.new_gross)}</td>
                   <td className="text-right">{inrFmt(r.old_employee_esi)} → {inrFmt(r.new_employee_esi)}</td>
                   <td className="text-right">{inrFmt(r.old_pt)} → {inrFmt(r.new_pt)}</td>
+                  <td className="text-right">{inrFmt(r.old_pf_wage)} → {inrFmt(r.new_pf_wage)}</td>
                   <td className="text-[var(--status-warning)]">
-                    {[r.esi_change, r.pt_changed ? 'PT slab changed' : null,
+                    {[r.esi_change, r.pt_changed ? 'PT slab changed' : null, r.pf_wage_changed ? 'PF wage (Basic + DA/RA) changed' : null,
                       r.verify_salary_structure ? 'VERIFY salary structure: components exceed CTC' : null].filter(Boolean).join('; ')}
                   </td>
                 </tr>
@@ -1242,6 +1244,7 @@ export default function PayrollRuns() {
   return (
     <>
       <div className="relative p-6 md:p-10 space-y-8 animate-fade-up">
+        <PfWagesBanner />
         {/* Header */}
         <section className="relative rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">

@@ -147,6 +147,10 @@ export default function SalaryStructureModal({ isOpen, onClose, onSuccess, initi
                       <input type="checkbox" checked={comp.is_basic} onChange={(e) => handleComponentChange(index, 'is_basic', e.target.checked)} className="rounded border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/20" />
                       <span className="text-xs text-[var(--text-secondary)]">Is Basic?</span>
                     </label>
+                    <label className="flex items-center gap-2 cursor-pointer" title="EPF Act s.6: DA and retaining allowance are PF wages with Basic, capped at the PF wage ceiling. Also used for DOJ-correction PF arrears.">
+                      <input type="checkbox" checked={!!comp.counts_as_pf_wages} disabled={comp.is_basic} onChange={(e) => handleComponentChange(index, 'counts_as_pf_wages', e.target.checked)} className="rounded border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]/20" />
+                      <span className="text-xs text-[var(--text-secondary)]">Counts as PF wages (DA / retaining allowance)</span>
+                    </label>
                     <button type="button" onClick={() => removeComponent(index)} className="p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 transition cursor-pointer" title="Remove Component">
                       <TrashIcon className="w-4 h-4" />
                     </button>
