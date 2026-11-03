@@ -58,6 +58,8 @@ export default function SalaryBreakdownCalculator({
   onWorkStateChange = null,
   initialComponents = null,
   initialBasicPct = null,
+  initialPfWageComponents = null,
+  structureComponents = null,
   initialHraPct = null,
   initialTaxDeclarations = null,
   dateOfJoining = null,
@@ -105,7 +107,8 @@ export default function SalaryBreakdownCalculator({
       if (name.startsWith('_') || core.has(norm) || !(amt > 0)) return;
       if (norm === 'conveyance allowance') conv = amt;
       else if (norm === 'medical allowance') med = amt;
-      else list.push({ id: `saved-${i}-${name}`, name, amount: amt });
+      else list.push({ id: `saved-${i}-${name}`, name, amount: amt,
+        pfWages: Array.isArray(initialPfWageComponents) && initialPfWageComponents.includes(name) });
     });
     allowancesPreloaded.current = true;
     if (conv) setConveyance(conv);
@@ -192,7 +195,7 @@ export default function SalaryBreakdownCalculator({
   const addCustomAllowance = () => {
     setCustomAllowances(prev => [
       ...prev,
-      { id: Date.now().toString(), name: 'Special Benefit', amount: 1000 }
+      { id: Date.now().toString(), name: 'Special Benefit', amount: 1000, pfWages: false }
     ]);
   };
 
@@ -308,6 +311,9 @@ export default function SalaryBreakdownCalculator({
             ),
           },
           ad_hoc_earnings: adHocEarnings,
+          // Custom allowances ticked 'Counts as PF wages (DA / retaining allowance)'.
+          pf_wage_components: customAllowances.filter((ca) => ca.pfWages && ca.name && Number(ca.amount) > 0
+            && !(structureComponents || []).some((c) => String(c.name) === ca.name.trim())).map((ca) => ca.name),
           breakdown: res.data,
         });
       }
@@ -319,7 +325,7 @@ export default function SalaryBreakdownCalculator({
     }
   }, [
     monthlyCtc, annualCtc, taxRegime, workState, basicPct, hraPctOfBasic,
-    conveyance, medical, customAllowances, adHocAdditions,
+    conveyance, medical, customAllowances, adHocAdditions, structureComponents,
     sec80c, sec80d, sec24b, dateOfJoining, onChange
   ]);
 
@@ -679,8 +685,25 @@ export default function SalaryBreakdownCalculator({
                             placeholder="Amount"
                           />
                         </div>
+                        {(() => {
+                          // Rudra: a row named like a salary-structure component takes that component's PF flag.
+                          const sc = (structureComponents || []).find(
+                            (c) => String(c.name) === String(ca.name || '').trim());
+                          return (
+                            <label className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] whitespace-nowrap" title="Counts as PF wages (DA / retaining allowance): added to Basic for PF, capped at the PF wage ceiling">
+                              <input
+                                type="checkbox"
+                                disabled={!!sc}
+                                checked={sc ? !!sc.counts_as_pf_wages : !!ca.pfWages}
+                                onChange={(e) => updateCustomAllowance(ca.id, 'pfWages', e.target.checked)}
+                              />
+                              {sc ? `PF treatment comes from the salary structure component ${sc.name}` : 'Counts as PF wages (DA / retaining allowance)'}
+                            </label>
+                          );
+                        })()}
                         <button
                           type="button"
+                          aria-label={`Remove ${ca.name}`}
                           onClick={() => removeCustomAllowance(ca.id)}
                           className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition"
                         >

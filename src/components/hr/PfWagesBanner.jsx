@@ -21,7 +21,9 @@ export default function PfWagesBanner() {
   const flag = async (m) => {
     setBusy(m.id);
     try {
-      await hrApi.pfWageComponentsAction({ action: 'flag', component_id: m.id });
+      await hrApi.pfWageComponentsAction(m.kind === 'custom'
+        ? { action: 'flag', assignment_id: m.assignment_id, name: m.name }
+        : { action: 'flag', component_id: m.id });
       showSuccessToast(`${m.name} now counts as PF wages`);
       await load();
     } catch (err) { showErrorToast(err, 'Could not flag the component'); } finally { setBusy(''); }
@@ -37,12 +39,12 @@ export default function PfWagesBanner() {
       <p className="font-semibold text-[var(--text-primary)]">Check PF wages: DA / retaining allowance</p>
       <p className="text-xs text-[var(--text-secondary)]">
         Under the EPF Act, DA and retaining allowance are PF wages with Basic (capped at the PF wage ceiling).
-        These components look like DA or retaining allowance but aren't flagged. Flagging also changes PF on DOJ-correction arrears.
+        These salary components and employee custom allowances look like DA or retaining allowance but aren't flagged. Flagging also changes PF on DOJ-correction arrears.
       </p>
       <ul className="space-y-1">
         {items.map((m) => (
           <li key={m.id} className="flex items-center justify-between gap-3">
-            <span className="text-[var(--text-primary)]">{m.name} <span className="text-xs text-[var(--text-muted)]">({m.salary_structure})</span></span>
+            <span className="text-[var(--text-primary)]">{m.name} <span className="text-xs text-[var(--text-muted)]">({m.kind === 'custom' ? `custom allowance, ${m.employee}` : m.salary_structure})</span></span>
             <button type="button" disabled={!!busy} onClick={() => flag(m)}
               className="px-3 py-1 text-xs font-semibold rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] disabled:opacity-50">
               {busy === m.id ? 'Saving…' : 'Flag as PF wages'}
