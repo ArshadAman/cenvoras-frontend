@@ -91,6 +91,28 @@ export default function SalaryBreakdownCalculator({
   const [conveyance, setConveyance] = useState(0);
   const [medical, setMedical] = useState(0);
   const [customAllowances, setCustomAllowances] = useState([]);
+  // Preload saved fixed allowances once, so saving the form can also remove one (UAT round: had to save ₹0).
+  const allowancesPreloaded = useRef(false);
+  useEffect(() => {
+    if (allowancesPreloaded.current || !initialComponents || typeof initialComponents !== 'object') return;
+    const core = new Set(['basic', 'hra', 'special allowance']);
+    const list = [];
+    let conv = 0;
+    let med = 0;
+    Object.entries(initialComponents).forEach(([name, val], i) => {
+      const amt = Number(val);
+      const norm = String(name).trim().toLowerCase().replace(/_/g, ' ');
+      if (name.startsWith('_') || core.has(norm) || !(amt > 0)) return;
+      if (norm === 'conveyance allowance') conv = amt;
+      else if (norm === 'medical allowance') med = amt;
+      else list.push({ id: `saved-${i}-${name}`, name, amount: amt });
+    });
+    allowancesPreloaded.current = true;
+    if (conv) setConveyance(conv);
+    if (med) setMedical(med);
+    if (list.length) setCustomAllowances(list);
+    if (conv || med || list.length) setShowAllowancesSection(true);
+  }, [initialComponents]);
 
   // Ad-hoc / Variable Additions Section (Outside Contracted Fixed CTC: Spot Bonus, Overtime)
   const [showAdHocSection, setShowAdHocSection] = useState(false);
