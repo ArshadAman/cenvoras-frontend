@@ -10,7 +10,7 @@ import {
   UserGroupIcon, MagnifyingGlassIcon, ArrowDownTrayIcon, InformationCircleIcon,
   ExclamationTriangleIcon, ClockIcon, ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
-import { showErrorToast, showSuccessToast } from "../../utils/toastUtils";
+import { showErrorToast, showSuccessToast, formatErrorMessage } from "../../utils/toastUtils";
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -20,6 +20,107 @@ const MONTHS = [
 const STAGES = ['draft', 'calculating', 'calculated', 'review', 'approved', 'paid', 'locked'];
 
 // ─── Unified Cycle Details & Audit Hub ─────────────────────────────────────────
+// ─── CTC scaling confirm (Rudra CA: components exceed monthly CTC) ─────────────
+function CtcScalingConfirm({ runId, employeeId, onDone }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)}
+        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-subtle)] whitespace-nowrap">
+        Confirm scaled amounts
+      </button>
+    );
+  }
+  const submit = async () => {
+    if (!reason.trim()) { setError('Reason is required'); return; }
+    setBusy(true); setError('');
+    try {
+      await hrApi.confirmCtcScaling(runId, { employee_id: employeeId, reason: reason.trim() });
+      showSuccessToast('Scaled amounts confirmed; payroll recalculated');
+      setOpen(false);
+      if (onDone) onDone();
+    } catch (err) { setError(formatErrorMessage(err, 'Could not confirm')); } finally { setBusy(false); }
+  };
+  return (
+    <div className="flex flex-col gap-1 min-w-[220px]">
+      <input value={reason} onChange={(e) => { setReason(e.target.value); setError(''); }}
+        placeholder="Reason (logged, admin only)" aria-label="Reason for confirming scaled amounts"
+        className="px-2 py-1 text-xs rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)]" />
+      {error && <span className="text-xs text-[var(--status-danger)]">{error}</span>}
+      <div className="flex gap-2 justify-end">
+        <button type="button" onClick={() => setOpen(false)} className="text-xs text-[var(--text-muted)]">Cancel</button>
+        <button type="button" disabled={busy || !reason.trim()} onClick={submit}
+          className="px-2 py-1 text-xs font-semibold rounded-lg bg-[var(--status-warning-fill)] text-[var(--status-warning-on-fill)] disabled:opacity-50">
+          {busy ? 'Saving…' : 'Confirm'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const inrFmt = (v) => (v == null ? '—' : `₹${Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`);
+
+// ─── Recalculation preview (old vs new gross, ESI, PT) ────────────────────────
+function RecalcPreviewModal({ run, onClose, onConfirm }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!run) return;
+    setData(null); setError('');
+    hrApi.previewPayrollRecalculation(run.id)
+      .then((r) => setData(r.data))
+      .catch((err) => setError(formatErrorMessage(err, 'Could not preview the recalculation')));
+  }, [run]);
+  if (!run) return null;
+  const rows = data?.changes || [];
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70" role="dialog" aria-label="Recalculation preview">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto p-5 space-y-3">
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Recalculate {run.month}/{run.year}: review changes</h2>
+        <p className="text-xs text-[var(--text-muted)]">Nothing is saved until you confirm.</p>
+        {error && <div role="alert" className="text-sm text-[var(--status-danger)]">{error}</div>}
+        {!data && !error && <p className="text-sm text-[var(--text-muted)]">Working out the changes…</p>}
+        {data && rows.length === 0 && <p className="text-sm text-[var(--text-primary)]">No employee's gross, ESI or PT changes.</p>}
+        {rows.length > 0 && (
+          <table className="w-full text-xs" data-testid="recalc-diff">
+            <thead><tr className="text-[var(--text-muted)] text-left">
+              <th>Employee</th><th className="text-right">Old gross</th><th className="text-right">New gross</th>
+              <th className="text-right">ESI (old → new)</th><th className="text-right">PT (old → new)</th><th>Notes</th>
+            </tr></thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.employee_id} className="border-t border-[var(--border-subtle)] text-[var(--text-primary)]">
+                  <td>{r.name} ({r.employee_code})</td>
+                  <td className="text-right">{inrFmt(r.old_gross)}</td>
+                  <td className="text-right font-semibold">{inrFmt(r.new_gross)}</td>
+                  <td className="text-right">{inrFmt(r.old_employee_esi)} → {inrFmt(r.new_employee_esi)}</td>
+                  <td className="text-right">{inrFmt(r.old_pt)} → {inrFmt(r.new_pt)}</td>
+                  <td className="text-[var(--status-warning)]">
+                    {[r.esi_change, r.pt_changed ? 'PT slab changed' : null,
+                      r.verify_salary_structure ? 'VERIFY salary structure: components exceed CTC' : null].filter(Boolean).join('; ')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm rounded-xl border border-[var(--border-subtle)] text-[var(--text-muted)]">Cancel</button>
+          <button type="button" disabled={!data || busy} onClick={async () => { setBusy(true); try { await onConfirm(); } finally { setBusy(false); } }}
+            className="px-5 py-2 text-sm font-semibold rounded-xl bg-[var(--accent-primary)] text-white disabled:opacity-50">
+            {busy ? 'Saving…' : 'Confirm and save'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh }) {
   const [activeTab, setActiveTab] = useState('audit'); // 'audit', 'employees', 'exceptions'
   const [payslips, setPayslips] = useState([]);
@@ -618,7 +719,9 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                       <p className="text-xs text-[var(--text-muted)] mt-1 italic">Resolution: {exc.resolution_note}</p>
                     )}
                   </div>
-                  {!exc.is_resolved ? (
+                  {!exc.is_resolved && exc.code === 'SALARY_EXCEEDS_CTC' ? (
+                    <CtcScalingConfirm runId={payrollRun.id} employeeId={exc.employee} onDone={() => { if (onActionRefresh) onActionRefresh(); }} />
+                  ) : !exc.is_resolved ? (
                     <button
                       onClick={() => handleResolveException(exc.id)}
                       className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] whitespace-nowrap transition"
@@ -708,7 +811,9 @@ function ExceptionsModal({ isOpen, onClose, payrollRunId, onResolved }) {
                   </div>
                   <p className="text-xs text-[var(--text-secondary)] mt-1">{exc.message}</p>
                 </div>
-                {!exc.is_resolved ? (
+                {!exc.is_resolved && exc.code === 'SALARY_EXCEEDS_CTC' ? (
+                  <CtcScalingConfirm runId={payrollRunId} employeeId={exc.employee} onDone={() => { if (onResolved) onResolved(); onClose(); }} />
+                ) : !exc.is_resolved ? (
                   <button
                     onClick={() => handleResolve(exc.id)}
                     className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] whitespace-nowrap transition"
@@ -1060,6 +1165,8 @@ export default function PayrollRuns() {
     fetchRuns();
   }, []);
 
+  const [recalcPreviewRun, setRecalcPreviewRun] = useState(null);
+
   const handleCalculate = async (id) => {
     try {
       const res = await hrApi.calculatePayroll(id);
@@ -1206,7 +1313,8 @@ export default function PayrollRuns() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleCalculate(run.id);
+                              if (run.status === 'draft') handleCalculate(run.id);
+                              else setRecalcPreviewRun(run);
                             }}
                             className="px-3 py-1 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/25 border border-[var(--accent-primary)]/30 text-xs font-semibold transition"
                           >
@@ -1340,6 +1448,11 @@ export default function PayrollRuns() {
         onSuccess={fetchRuns}
       />
 
+      <RecalcPreviewModal
+        run={recalcPreviewRun}
+        onClose={() => setRecalcPreviewRun(null)}
+        onConfirm={async () => { const id = recalcPreviewRun.id; await handleCalculate(id); setRecalcPreviewRun(null); }}
+      />
       <ReopenModal
         isOpen={!!selectedReopenRun}
         onClose={() => setSelectedReopenRun(null)}
