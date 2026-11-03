@@ -1,4 +1,6 @@
 import React from "react";
+import { getUserProfile } from '../../api/users';
+import { gstReturnsAvailable, isGstReturnLink } from '../../utils/gstStatus';
 import { Link } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -16,6 +18,9 @@ import { getSubscriptionEntitlements } from '../../api/subscription';
 import UpgradePromptModal from '../../components/subscription/UpgradePromptModal';
 
 export default function ReportsDashboard() {
+  // UAT P1 #13 rework (Rudra CA): GST returns hidden for Composition / Not registered.
+  const { data: gstProfileData } = useQuery({ queryKey: ['userProfile'], queryFn: getUserProfile, staleTime: 10 * 60 * 1000 });
+  const gstReturnsOk = gstReturnsAvailable(gstProfileData?.billing_profile || gstProfileData?.profile || {});
   const { data: subscriptionData } = useQuery({
     queryKey: ['subscription-entitlements'],
     queryFn: getSubscriptionEntitlements,
@@ -144,7 +149,7 @@ export default function ReportsDashboard() {
         <p className="text-[var(--text-secondary)] mb-8">Gain insights into your business performance and inventory health.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {reports.map((report, index) => (
+          {reports.filter((r) => gstReturnsOk || !isGstReturnLink(r.link)).map((report, index) => (
             isLocked(report) ? (
               <button
                 key={index}

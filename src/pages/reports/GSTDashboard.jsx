@@ -1,4 +1,7 @@
 import React from "react";
+import { useQuery } from '@tanstack/react-query';
+import { getUserProfile } from '../../api/users';
+import { gstReturnsAvailable, isGstReturnLink } from '../../utils/gstStatus';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { Link } from "react-router-dom";
 import {
@@ -13,6 +16,9 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function GSTDashboard() {
+  // UAT P1 #13 rework (Rudra CA): GST returns hidden for Composition / Not registered.
+  const { data: gstProfileData } = useQuery({ queryKey: ['userProfile'], queryFn: getUserProfile, staleTime: 10 * 60 * 1000 });
+  const gstReturnsOk = gstReturnsAvailable(gstProfileData?.billing_profile || gstProfileData?.profile || {});
   const features = [
     {
       title: "GST Shield & 2B Reconciliation",
@@ -83,7 +89,7 @@ export default function GSTDashboard() {
         <p className="text-[var(--text-secondary)] mb-8">Manage GST returns, tax registers, e-invoicing, and e-way bills.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => {
+          {features.filter((r) => gstReturnsOk || !isGstReturnLink(r.link)).map((feature, index) => {
             const isComingSoon = ['E-Invoice (IRN)', 'E-Way Bill'].includes(feature.title);
             return (
               <Link

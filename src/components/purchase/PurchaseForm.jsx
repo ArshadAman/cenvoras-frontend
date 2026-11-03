@@ -5,6 +5,7 @@ import { createPurchaseBill, updatePurchaseBill, getProducts } from "../../api/p
 import { getVendors, createVendor } from "../../api/vendors";
 import { getCustomers, ensureCustomerVendor } from "../../api/customers";
 import { formatErrorMessage } from "../../utils/toastUtils";
+import { initialReceiptDate, initialReceiptTouched, receiptDateAfterBillDateChange, receiptDatePayload, receiptDateError } from "../../utils/rcmReceiptDate";
 import { createPortal } from "react-dom";
 import { getWarehouses } from "../../api/inventory";
 import { toast } from "react-toastify";
@@ -566,6 +567,9 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
   ).trim();
 
   const formikRef = useRef(null);
+  // Rudra (#219): receipt date follows the bill date until the user edits it.
+  const receiptTouchedRef = useRef(initialReceiptTouched(bill));
+  useEffect(() => { receiptTouchedRef.current = initialReceiptTouched(bill); }, [bill?.id]);
 
   const handleBeforeClose = async () => {
     if (formikRef.current) {
@@ -672,6 +676,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
             vendor_gstin: bill?.vendor_gstin || "",
             gst_treatment: bill?.gst_treatment || "registered",
             is_reverse_charge: !!bill?.is_reverse_charge,
+            rcm_receipt_date: initialReceiptDate(bill, bill?.bill_date || getTodayKolkata()),
             journal: bill?.journal || "Purchase",
             total_amount: bill?.total_amount || "0.00",
             items: bill?.items?.map(item => ({
@@ -788,6 +793,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                 vendor_gstin: values.vendor_gstin || null,
                 gst_treatment: values.gst_treatment || null,
                 is_reverse_charge: !!values.is_reverse_charge,
+                rcm_receipt_date: receiptDatePayload(values),
                 journal: values.journal,
                 total_amount: Number(Number(totalAmount).toFixed(2)),
                 notes: values.notes || "",
@@ -809,6 +815,8 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
               onClose();
             } catch (error) {
               console.error('Error saving purchase bill:', error);
+              const receiptErr = receiptDateError(error?.details);
+              if (receiptErr) setFieldError('rcm_receipt_date', receiptErr);
               const parsedError = parseErrorDetails(error?.details);
               if (parsedError) {
                 toast.error(`Error saving purchase bill: ${parsedError}`);
@@ -883,7 +891,11 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                       <DateInputField
                         name="bill_date"
                         value={values.bill_date}
-                        onChange={(e) => setFieldValue('bill_date', e.target.value)}
+                        onChange={(e) => {
+                          setFieldValue('bill_date', e.target.value);
+                          setFieldValue('rcm_receipt_date',
+                            receiptDateAfterBillDateChange(e.target.value, values.rcm_receipt_date, receiptTouchedRef.current));
+                        }}
                         placeholder="DD/MM/YYYY"
                         className="!bg-[var(--bg-surface)] !py-3 !text-[var(--text-primary)]"
                       />
@@ -989,6 +1001,25 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                              <Field type="checkbox" name="is_reverse_charge" className="rounded border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--accent-primary)]" />
                              Reverse charge (RCM)
                            </label>
+                           {values.is_reverse_charge && (
+                             <div>
+                               <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest">
+                                 Date of receipt of goods/services
+                               </label>
+                               <DateInputField
+                                 name="rcm_receipt_date"
+                                 value={values.rcm_receipt_date}
+                                 onChange={(e) => {
+                                   receiptTouchedRef.current = true;
+                                   setFieldValue('rcm_receipt_date', e.target.value);
+                                 }}
+                                 placeholder="DD/MM/YYYY"
+                                 className="!bg-[var(--bg-surface)] !py-3 !text-[var(--text-primary)]"
+                               />
+                               <ErrorMessage name="rcm_receipt_date" component="div" className="text-[var(--status-danger)] text-xs mt-1.5 ml-1 font-medium" />
+                               <p className="text-[10px] text-[var(--text-muted)] mt-1">Self-invoice due within 30 days of this date (Rule 47A).</p>
+                             </div>
+                           )}
                            <div className="p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs text-[var(--text-muted)] leading-relaxed italic">
                              Address and GSTIN will be used to automatically calculate Intra-state (CGST/SGST) or Inter-state (IGST) taxes.
                            </div>
