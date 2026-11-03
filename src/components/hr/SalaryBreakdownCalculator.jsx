@@ -64,6 +64,7 @@ export default function SalaryBreakdownCalculator({
   initialTaxDeclarations = null,
   dateOfJoining = null,
   onChange = null,
+  onBusyChange = null,
   readOnly = false,
 }) {
   const startCtc = Number(initialMonthlyCtc) || 50000;
@@ -234,15 +235,16 @@ export default function SalaryBreakdownCalculator({
   };
 
   const calcRequestIdRef = useRef(0);
+  const abortRef = useRef(null);
 
   // Report the current split to the parent IMMEDIATELY on every edit (no wait for the debounced
   // breakdown API). Before, a remove followed quickly by Save (or a failed breakdown call) saved the
   // previous components, so a removed custom allowance came back on reopen.
   const onChangeRef = useRef(onChange);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
-  const mountedOnce = useRef(false);
   useEffect(() => {
-    if (!mountedOnce.current) { mountedOnce.current = true; return; }  // not an edit yet
+    // Any edit invalidates a breakdown request already in flight (its response must not be applied).
+    calcRequestIdRef.current += 1;
     if (!onChangeRef.current || !monthlyCtc || monthlyCtc <= 0) return;
     const basicVal = Math.round(monthlyCtc * (basicPct / 100) * 100) / 100;
     const hraVal = Math.round(basicVal * (hraPctOfBasic / 100) * 100) / 100;
@@ -273,6 +275,9 @@ export default function SalaryBreakdownCalculator({
     }
 
     const requestId = ++calcRequestIdRef.current;
+    if (abortRef.current) abortRef.current.abort();  // keep only the latest request
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
     try {
       const basicVal = Math.round(monthlyCtc * (basicPct / 100) * 100) / 100;
@@ -325,35 +330,13 @@ export default function SalaryBreakdownCalculator({
         };
       }
 
-      const res = await hrApi.calculateSalaryBreakdown(payload);
+      const res = await hrApi.calculateSalaryBreakdown(payload, { signal: controller.signal });
       // Ignore stale responses from an earlier calc / unmounted session
       if (requestId !== calcRequestIdRef.current) return;
       setBreakdown(res.data);
 
-      if (onChange) {
-        // Prefer absolute amounts computed from current sliders (stable keys)
-        // so save always persists the split the user sees.
-        onChange({
-          monthly_ctc: monthlyCtc,
-          annual_ctc: annualCtc,
-          tax_regime: taxRegime,
-          work_state: workState,
-          basic_pct: basicPct,
-          hra_pct: hraPctOfBasic,
-          components: {
-            Basic: basicVal,
-            HRA: hraVal,
-            ...Object.fromEntries(
-              Object.entries(components).filter(([k]) => !['Basic', 'HRA'].includes(k))
-            ),
-          },
-          ad_hoc_earnings: adHocEarnings,
-          // Custom allowances ticked 'Counts as PF wages (DA / retaining allowance)'.
-          pf_wage_components: customAllowances.filter((ca) => ca.pfWages && ca.name && Number(ca.amount) > 0
-            && !(structureComponents || []).some((c) => String(c.name) === ca.name.trim())).map((ca) => ca.name),
-          breakdown: res.data,
-        });
-      }
+      // The breakdown response is display-only. What the form saves comes only from the form's own
+      // state (effect above), never from this response, so a late response can't restore removed rows.
     } catch (err) {
       if (requestId !== calcRequestIdRef.current) return;
       console.error('Failed to calculate breakdown:', err);
@@ -363,15 +346,21 @@ export default function SalaryBreakdownCalculator({
   }, [
     monthlyCtc, annualCtc, taxRegime, workState, basicPct, hraPctOfBasic,
     conveyance, medical, customAllowances, adHocAdditions, structureComponents,
-    sec80c, sec80d, sec24b, dateOfJoining, onChange
+    sec80c, sec80d, sec24b, dateOfJoining
   ]);
 
+  // Pending = debounce waiting or request in flight; the form disables Save meanwhile (safety net).
+  const [pending, setPending] = useState(false);
   useEffect(() => {
+    setPending(true);
     const timer = setTimeout(() => {
+      setPending(false);  // from here `loading` (latest request only) covers the in-flight time
       calculateBreakdown();
     }, 250);
     return () => clearTimeout(timer);
   }, [calculateBreakdown]);
+  useEffect(() => { if (onBusyChange) onBusyChange(pending || loading); }, [pending, loading, onBusyChange]);
+  useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); if (onBusyChange) onBusyChange(false); }, []);
 
   // Safe formatting helper to guarantee NaN never displays
   const formatInr = (val, decimals = 2) => {
