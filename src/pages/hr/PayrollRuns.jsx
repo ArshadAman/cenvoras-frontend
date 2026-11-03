@@ -867,20 +867,22 @@ function ReopenModal({ isOpen, onClose, payrollRun, onSuccess }) {
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [touched, setTouched] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setReason('');
       setError('');
+      setTouched(false);
     }
   }, [isOpen]);
 
+  const reasonMissing = !reason.trim();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!reason.trim()) {
-      setError('A reason is required to reopen a payroll run.');
-      return;
-    }
+    setTouched(true);
+    if (reasonMissing) return;
     setError('');
     setSaving(true);
     try {
@@ -911,10 +913,17 @@ function ReopenModal({ isOpen, onClose, payrollRun, onSuccess }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form noValidate onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-1">Reason for Reopening *</label>
-            <textarea required rows={3} value={reason} onChange={e => setReason(e.target.value)} className={ic + ' resize-none'} placeholder="e.g. Leave adjustments reported post approval" />
+            <label htmlFor="reopen-reason" className="block text-sm text-[var(--text-secondary)] mb-1">Reason for Reopening *</label>
+            <textarea id="reopen-reason" rows={3} value={reason}
+              onChange={e => { setReason(e.target.value); setError(''); }}
+              onBlur={() => setTouched(true)}
+              aria-invalid={touched && reasonMissing}
+              className={ic + ' resize-none'} placeholder="e.g. Leave adjustments reported post approval" />
+            {touched && reasonMissing && (
+              <p className="mt-1 text-xs text-[var(--status-danger)]">Reason is required</p>
+            )}
           </div>
 
           <p className="text-xs text-[var(--text-muted)]">Admin only. Only an approved, unpaid run can be reopened. Your name, the time and this reason are logged.</p>
@@ -924,7 +933,7 @@ function ReopenModal({ isOpen, onClose, payrollRun, onSuccess }) {
 
           <div className="pt-3 flex justify-end gap-3 border-t border-[var(--border-subtle)]">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl hover:text-[var(--text-primary)] transition">Cancel</button>
-            <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-semibold text-[var(--status-warning-on-fill)] bg-[var(--status-warning-fill)] rounded-xl hover:opacity-90 disabled:opacity-50 transition shadow-sm">
+            <button type="submit" disabled={saving || reasonMissing} title={reasonMissing ? 'Enter a reason to reopen' : undefined} className="px-5 py-2 text-sm font-semibold text-[var(--status-warning-on-fill)] bg-[var(--status-warning-fill)] rounded-xl hover:opacity-90 disabled:opacity-50 transition shadow-sm">
               {saving ? 'Reopening...' : 'Confirm Reopen'}
             </button>
           </div>

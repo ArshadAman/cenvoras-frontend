@@ -14,7 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 // All 28 States and 8 Union Territories of India
-const INDIAN_STATES = [
+export const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
   'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
   'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
@@ -328,9 +328,10 @@ export default function SalaryBreakdownCalculator({
   const monthlyGross = (breakdown && !isNaN(Number(breakdown.monthly_gross || breakdown.gross_salary)))
     ? Number(breakdown.monthly_gross || breakdown.gross_salary)
     : 0;
-  const annualGross = (breakdown && !isNaN(Number(breakdown.annual_gross)))
-    ? Number(breakdown.annual_gross)
-    : monthlyGross * 12;
+  // Annual Gross = contracted monthly gross × 12. The calculate endpoint's `annual_gross` is the
+  // TDS projection for the current FY (only the months from DOJ), so it is shown separately.
+  const annualGross = monthlyGross * 12;
+  const projectedFyGross = Number(breakdown?.tds_details?.projected_annual_gross ?? breakdown?.projected_annual_gross ?? breakdown?.annual_gross ?? 0);
   const totalDeductions = (breakdown?.employee_deductions && !isNaN(Number(breakdown.employee_deductions.total_deductions)))
     ? Number(breakdown.employee_deductions.total_deductions)
     : 0;
@@ -843,6 +844,9 @@ export default function SalaryBreakdownCalculator({
               </div>
               <div className="text-xs text-[var(--text-muted)] mt-1">
                 Annual Gross: ₹{formatInr(annualGross, 0)}
+                {projectedFyGross > 0 && Math.round(projectedFyGross) !== Math.round(annualGross) && (
+                  <span className="block">This FY (from joining, for TDS): ₹{formatInr(projectedFyGross, 0)}</span>
+                )}
               </div>
             </div>
 
