@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { hrApi } from "../../api/hr";
 import {
   ChartBarIcon, UserGroupIcon, CalendarDaysIcon, CurrencyRupeeIcon,
@@ -44,19 +44,24 @@ function AlertDetailsModal({ isOpen, onClose, alert, onSelectEmployee }) {
             alert.items.map((item, idx) => (
               <div key={item.id || idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-primary)]/50 border border-[var(--border-subtle)] hover:bg-[var(--bg-surface-hover)] transition">
                 <div className="min-w-0 pr-3">
-                  <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{item.name || item.employee_name}</p>
+                  <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
+                    {item.name || item.employee_name || item.employee_code || "General Exception"}
+                  </p>
                   <p className="text-xs text-[var(--text-muted)] mt-0.5 truncate">
-                    {item.employee_code && <span className="font-mono text-[var(--accent-primary)] mr-1.5">{item.employee_code}</span>}
+                    {item.employee_code && (item.name || item.employee_name) && (
+                      <span className="font-mono text-[var(--accent-primary)] mr-1.5">{item.employee_code}</span>
+                    )}
                     {item.department && <span className="text-[var(--text-secondary)]">· {item.department} </span>}
                     {item.designation && <span className="text-[var(--text-muted)]">({item.designation}) </span>}
-                    {item.reason && <span className="text-[var(--status-warning)] font-medium">· {item.reason}</span>}
-                    {item.message && !item.reason && <span className="text-[var(--status-warning)] font-medium">· {item.message}</span>}
+                    {(item.message || item.reason) && (
+                      <span className="text-[var(--status-warning)] font-medium">· {item.message || item.reason}</span>
+                    )}
                   </p>
                 </div>
-                {(item.employee_id || item.id) && onSelectEmployee && (
+                {onSelectEmployee && (
                   <button
                     type="button"
-                    onClick={() => onSelectEmployee(item.employee_id || item.id)}
+                    onClick={() => onSelectEmployee(item, alert)}
                     className="shrink-0 btn-primary text-xs py-1 px-3"
                   >
                     Edit / Fix
@@ -655,6 +660,7 @@ function SalaryIncrementModal({ isOpen, onClose, onSuccess, employee }) {
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function HRDashboard() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState("overview");
   const [metrics, setMetrics] = useState(null);
   const [employees, setEmployees] = useState([]);
@@ -669,7 +675,7 @@ export default function HRDashboard() {
   const [loading, setLoading] = useState(true);
 
   // Modals
-  const [empModal, setEmpModal] = useState({ open: false, employee: null });
+  const [empModal, setEmpModal] = useState({ open: false, employee: null, initialTab: 'personal' });
   const [deptModal, setDeptModal] = useState({ open: false, item: null });
   const [desigModal, setDesigModal] = useState({ open: false, item: null });
   const [attModal, setAttModal] = useState(false);
@@ -681,23 +687,75 @@ export default function HRDashboard() {
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [activeAlertDetails, setActiveAlertDetails] = useState(null);
 
-  const handleFixAlertEmployee = async (empId) => {
-    if (!empId) {
-      toast.error("No employee record linked to this alert");
-      return;
-    }
+  const handleFixAlertEmployee = async (itemOrEmpId, alertObj = null) => {
     setActiveAlertDetails(null);
-    const existing = employees.find(e => String(e.id) === String(empId));
-    if (existing) {
-      setEmpModal({ open: true, employee: existing });
-    } else {
+
+    const isObj = itemOrEmpId && typeof itemOrEmpId === "object";
+    const item = isObj ? itemOrEmpId : null;
+    const empId = isObj ? (item.employee_id || item.id) : itemOrEmpId;
+    const empCode = isObj ? item.employee_code : null;
+    const alert = alertObj || (isObj ? item : null);
+
+    // Determine target tab based on error code or alert title
+    const code = item?.code || "";
+    const alertTitle = alert?.title || "";
+    let targetTab = "personal";
+    if (code === "MISSING_BANK_INFO" || alertTitle.includes("Bank")) {
+      targetTab = "bank";
+    } else if (code === "NO_SALARY_STRUCTURE" || alertTitle.includes("Salary")) {
+      targetTab = "compensation";
+    }
+
+    // 1. Try finding in loaded employees list
+    let resolvedEmployee = null;
+    if (employees && employees.length > 0) {
+      resolvedEmployee = employees.find(e =>
+        (empId && String(e.id) === String(empId)) ||
+        (empCode && String(e.employee_code) === String(empCode)) ||
+        (empId && String(e.employee_code) === String(empId))
+      );
+    }
+
+    // 2. If not found in state and empId is a valid UUID, fetch employee by ID
+    const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(str || ""));
+    if (!resolvedEmployee && empId && isUUID(empId)) {
       try {
         const res = await hrApi.getEmployee(empId);
-        setEmpModal({ open: true, employee: res.data });
+        if (res.data && res.data.id) {
+          resolvedEmployee = res.data;
+        }
       } catch (err) {
-        toast.error("Could not load employee details");
+        // Fallback to search query
       }
     }
+
+    // 3. If still not found and employee code exists, search by employee code
+    const searchCode = empCode || (!isUUID(empId) ? empId : null);
+    if (!resolvedEmployee && searchCode) {
+      try {
+        const res = await hrApi.getEmployees({ search: searchCode });
+        const list = res.data?.results || res.data || [];
+        const match = list.find(e => String(e.employee_code) === String(searchCode));
+        if (match) {
+          resolvedEmployee = match;
+        } else if (list.length > 0) {
+          resolvedEmployee = list[0];
+        }
+      } catch (err) {
+        // Fallback to navigation
+      }
+    }
+
+    // 4. If employee was successfully resolved, open EmployeeFormModal
+    if (resolvedEmployee) {
+      setEmpModal({ open: true, employee: resolvedEmployee, initialTab: targetTab });
+      return;
+    }
+
+    // 5. If no employee record could be resolved, navigate to payroll or alert action url
+    const targetUrl = alert?.action_url || "/hr/payroll";
+    toast.info("Navigating to Payroll module to review and resolve this exception.");
+    navigate(targetUrl);
   };
 
   const fetchAll = useCallback(async () => {
@@ -959,12 +1017,14 @@ export default function HRDashboard() {
                                 <button
                                   key={it.id || i}
                                   type="button"
-                                  onClick={() => handleFixAlertEmployee(it.employee_id || it.id)}
+                                  onClick={() => handleFixAlertEmployee(it, alert)}
                                   className="text-xs px-2 py-0.5 rounded-md bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition inline-flex items-center gap-1"
                                   title="Click to view/edit employee"
                                 >
-                                  <span>{it.name || it.employee_name}</span>
-                                  {it.employee_code && <span className="text-[var(--text-muted)] font-mono text-xs">({it.employee_code})</span>}
+                                  <span>{it.name || it.employee_name || it.employee_code || "General"}</span>
+                                  {it.employee_code && (it.name || it.employee_name) && (
+                                    <span className="text-[var(--text-muted)] font-mono text-xs">({it.employee_code})</span>
+                                  )}
                                 </button>
                               ))}
                               {alert.items.length > 4 && (
@@ -1359,7 +1419,7 @@ export default function HRDashboard() {
       </div>
 
       {/* ─── Modals ─────────────────────────────────────────────────────────── */}
-      <EmployeeFormModal isOpen={empModal.open} onClose={() => setEmpModal({ open: false, employee: null })} employee={empModal.employee} onSuccess={fetchAll} />
+      <EmployeeFormModal isOpen={empModal.open} onClose={() => setEmpModal({ open: false, employee: null, initialTab: 'personal' })} employee={empModal.employee} initialTab={empModal.initialTab} onSuccess={fetchAll} />
       <SimpleFormModal isOpen={deptModal.open} onClose={() => setDeptModal({ open: false, item: null })} title={deptModal.item ? "Edit Department" : "Add Department"} label="Department Name" initialValue={deptModal.item?.name || ""} onSubmit={handleSaveDept} />
       <SimpleFormModal isOpen={desigModal.open} onClose={() => setDesigModal({ open: false, item: null })} title={desigModal.item ? "Edit Designation" : "Add Designation"} label="Designation Name" initialValue={desigModal.item?.name || ""} onSubmit={handleSaveDesig} />
       <AttendanceModal isOpen={attModal} onClose={() => setAttModal(false)} onSuccess={fetchAll} employees={employees} />
