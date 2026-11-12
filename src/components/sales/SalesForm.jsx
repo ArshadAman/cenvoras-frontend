@@ -3,7 +3,8 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
-import { getCustomers, createCustomer, patchCustomer } from "../../api/customers";
+import { getCustomers, patchCustomer } from "../../api/customers";
+import { hasShippingBillingDifference, normalizeAddressText, shouldAutoSelectBillToShipToOnInit } from "../../utils/shipping";
 import { createProduct, patchProduct } from "../../api/inventory";
 import { getWarehouses, getStockPoints, getSchemes } from "../../api/inventory"; // Added imports
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
@@ -27,12 +28,62 @@ import { getTodayKolkata } from "../../utils/date";
 import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
 import { GST_RATES } from "../../utils/gstRates";
 import { calculateLineAmount, calculateLineGross } from "../../utils/lineAmount";
-import { yupGstinOptional, isValidGstin, normalizeGstin, GSTIN_INVALID_MSG } from "../../utils/gstin";
+import { yupGstinOptional } from "../../utils/gstin";
 
-const ITEM_CELL_FOCUS = "focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] outline-none";
-const HEADER_FIELD_FOCUS = "focus:border-[var(--border-focus)] focus:ring-1 focus:ring-[var(--border-focus)] outline-none";
-const ITEM_INPUT_CLASS = `w-full min-h-[32px] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] text-center text-[var(--text-primary)] placeholder-[var(--text-muted)] ${ITEM_CELL_FOCUS}`;
+const ITEM_CELL_FOCUS = "focus:border-[var(--border-focus)] focus:ring-2 focus:ring-[var(--focus-ring)] focus:bg-[var(--input-bg-focus)] outline-none";
+const HEADER_FIELD_FOCUS = "focus:border-[var(--border-focus)] focus:ring-2 focus:ring-[var(--focus-ring)] focus:bg-[var(--input-bg-focus)] outline-none";
+const ITEM_INPUT_CLASS = `w-full min-h-[32px] bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1.5 text-xs min-h-[32px] text-center text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all ${ITEM_CELL_FOCUS}`;
 const ITEM_GRID_RULES = "[&>*]:border-r [&>*]:border-[var(--border-subtle)] [&>*:last-child]:border-r-0 [&>*]:px-1.5";
+
+function getSavedShippingList(customer) {
+  if (!customer) return [];
+  if (Array.isArray(customer.meta?.shipping_addresses)) {
+    return customer.meta.shipping_addresses.filter((a) => typeof a === "string" && a.trim() !== "");
+  }
+  if (Array.isArray(customer.shipping_addresses)) {
+    return customer.shipping_addresses.filter((a) => typeof a === "string" && a.trim() !== "");
+  }
+  if (typeof customer.meta?.shipping_address === "string" && customer.meta.shipping_address.trim()) {
+    return [customer.meta.shipping_address.trim()];
+  }
+  return [];
+}
+
+/**
+ * Automatically selects Bill-to-ship-to when billing and shipping details differ,
+ * and unselects when they match or shipping is cleared — while respecting manual user overrides
+ * until the billing/shipping pair changes again (e.g. for IGST s.10(1)(a) inter-state goods POS).
+ */
+function BillToShipToSync({ values, setFieldValue, editId, manualOverrideRef }) {
+  const prevPairRef = useRef(
+    `${normalizeAddressText(values.customer_address)}||${normalizeAddressText(values.delivery_address)}`
+  );
+  const prevEditIdRef = useRef(editId);
+
+  useEffect(() => {
+    const pairKey = `${normalizeAddressText(values.customer_address)}||${normalizeAddressText(values.delivery_address)}`;
+    if (prevEditIdRef.current !== editId) {
+      prevEditIdRef.current = editId;
+      prevPairRef.current = pairKey;
+      manualOverrideRef.current = false;
+      return;
+    }
+
+    if (pairKey !== prevPairRef.current) {
+      prevPairRef.current = pairKey;
+      manualOverrideRef.current = false;
+      const shouldCheck = hasShippingBillingDifference(
+        values.customer_address,
+        values.delivery_address
+      );
+      if (Boolean(values.bill_to_ship_to) !== shouldCheck) {
+        setFieldValue("bill_to_ship_to", shouldCheck);
+      }
+    }
+  }, [editId, values.customer_address, values.delivery_address, values.bill_to_ship_to, setFieldValue, manualOverrideRef]);
+
+  return null;
+}
 
 function makeEmptySalesItem() {
   return {
@@ -529,11 +580,8 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
   const [inputValue, setInputValue] = useState(values.customer_name || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
-  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
-  const queryClient = useQueryClient();
 
   useEscKey(() => setShowDropdown(false), showDropdown, 30);
-  useEscKey(() => setShowNewCustomerModal(false), showNewCustomerModal, 20);
 
   // Sync inputValue with Formik values
   useEffect(() => {
@@ -547,10 +595,10 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     setFieldValue('customer_phone', customer.phone || '');
     setFieldValue('customer_address', customer.address || '');
     setFieldValue('customer_gstin', customer.gstin || '');
-    const savedShippingAddress = 
-      (Array.isArray(customer.meta?.shipping_addresses) && customer.meta.shipping_addresses.length > 0)
-        ? customer.meta.shipping_addresses[0]
-        : (customer.meta?.shipping_address || customer.shipping_address || customer.address || '');
+    const savedList = getSavedShippingList(customer);
+    const savedShippingAddress = savedList.length > 0
+      ? savedList[0]
+      : (customer.shipping_address || customer.address || '');
     setFieldValue('delivery_address', savedShippingAddress);
     setFieldValue('customer', customer.id || null);
 
@@ -741,132 +789,20 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
         </div>
       )}
       
-      {/* Add New Customer Modal */}
+      {/* Unified New Customer Modal (same format as Customers section) */}
       {showNewCustomerModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowNewCustomerModal(false)}></div>
-          <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl animate-fade-up overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-[var(--border-subtle)]">
-              <h3 className="text-lg font-bold text-[var(--text-primary)]">Add New Customer</h3>
-              <button
-                type="button"
-                onClick={() => setShowNewCustomerModal(false)}
-                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            {/* Form */}
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">Name *</label>
-                <input
-                  type="text"
-                  defaultValue={inputValue}
-                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
-                  id="new-customer-name"
-                  placeholder="Customer name"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">Email</label>
-                <input
-                  type="email"
-                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
-                  id="new-customer-email"
-                  placeholder="email@example.com"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">Phone</label>
-                <input
-                  type="tel"
-                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
-                  id="new-customer-phone"
-                  placeholder="+91 98765 43210"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">Address</label>
-                <textarea
-                  rows={2}
-                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all resize-none"
-                  id="new-customer-address"
-                  placeholder="Full address"
-                ></textarea>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">GSTIN</label>
-                <input
-                  type="text"
-                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none transition-all"
-                  id="new-customer-gstin"
-                  placeholder="e.g., 29AAKCG6382L1ZU"
-                />
-              </div>
-            </div>
-            
-            {/* Actions */}
-            <div className="p-5 pt-0 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowNewCustomerModal(false)}
-                className="btn-secondary px-4 py-2 text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isCreatingCustomer}
-                onClick={async () => {
-                  const name = document.getElementById('new-customer-name')?.value?.trim();
-                  if (!name) {
-                    toast.error('Customer name is required');
-                    return;
-                  }
-                  const email = document.getElementById('new-customer-email')?.value?.trim();
-                  const phone = document.getElementById('new-customer-phone')?.value?.trim();
-                  const address = document.getElementById('new-customer-address')?.value?.trim();
-                  const gstinRaw = document.getElementById('new-customer-gstin')?.value?.trim();
-                  const gstin = gstinRaw ? normalizeGstin(gstinRaw) : '';
-                  if (gstin && !isValidGstin(gstin)) {
-                    toast.error(GSTIN_INVALID_MSG);
-                    return;
-                  }
-
-                  setIsCreatingCustomer(true);
-                  try {
-                    const newCust = await createCustomer({
-                      name,
-                      email: email || null,
-                      phone: phone || null,
-                      address: address || null,
-                      gstin: gstin || null,
-                    });
-
-                    const createdCust = newCust?.data || newCust;
-                    queryClient.invalidateQueries({ queryKey: ["customers"] });
-                    toast.success(`Customer "${createdCust.name || name}" added successfully`);
-
-                    selectCustomer(createdCust);
-                    setShowNewCustomerModal(false);
-                  } catch (err) {
-                    toast.error(formatErrorMessage(err, "Failed to create customer"));
-                  } finally {
-                    setIsCreatingCustomer(false);
-                  }
-                }}
-                className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
-              >
-                {isCreatingCustomer ? "Adding..." : "Add Customer"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <CustomerForm
+          isOpen={showNewCustomerModal}
+          initialName={inputValue.trim()}
+          escPriority={20}
+          onClose={() => setShowNewCustomerModal(false)}
+          onSaved={(createdCust) => {
+            if (createdCust) {
+              selectCustomer(createdCust);
+            }
+            setShowNewCustomerModal(false);
+          }}
+        />
       )}
     </div>
   );
@@ -1070,6 +1006,14 @@ export default function SalesForm({
   const [catalogSyncModal, setCatalogSyncModal] = useState(null);
   // Missing-product HSN prompt: { rows: [{ key, name, hsn }], resolve }
   const [missingHsnModal, setMissingHsnModal] = useState(null);
+  const billToShipToManualRef = useRef(false);
+  const [shippingEditState, setShippingEditState] = useState(null);
+  const [isSavingShippingAddr, setIsSavingShippingAddr] = useState(false);
+
+  useEffect(() => {
+    setShippingEditState(null);
+    billToShipToManualRef.current = false;
+  }, [isOpen, editData?.id]);
 
   const isFormDirty = Boolean(
     isOpen && !isLocked && formikRef.current?.dirty &&
@@ -1678,6 +1622,23 @@ export default function SalesForm({
   const initialValues = useMemo(() => {
     const rawInvoiceDate = editData?.invoice_date || editData?.quotation_date || editData?.challan_date || editData?.date;
     const parsedInvoiceDate = safeDateStr(rawInvoiceDate) || getTodayKolkata();
+    const editBillingAddr = editData?.customer_address || aiDraftData?.customer_address || "";
+    const editShippingAddr = editData?.delivery_address || aiDraftData?.delivery_address || "";
+    const editPos = editData?.place_of_supply || aiDraftData?.place_of_supply || "";
+    const editCustId = editData?.customer_details?.id || editData?.customer?.id || editData?.customer || null;
+    const matchedInitCust = (customers || []).find(
+      (c) =>
+        (editCustId && String(c.id) === String(editCustId)) ||
+        (editData?.customer_name &&
+          c.name?.trim().toLowerCase() === editData.customer_name?.trim().toLowerCase())
+    );
+    const editDefaultPos =
+      customerPosCode(
+        matchedInitCust || {
+          gstin: editData?.customer_gstin || aiDraftData?.customer_gstin || "",
+          address: editBillingAddr,
+        }
+      ) || "";
 
     return {
       // Required fields
@@ -1687,12 +1648,12 @@ export default function SalesForm({
       invoice_date: parsedInvoiceDate,
       
       // Optional customer fields (for Customer record creation)
-      customer: editData?.customer_details?.id || editData?.customer?.id || editData?.customer || null,
+      customer: editCustId,
       customer_email: editData?.customer_email || aiDraftData?.customer_email || "",
       customer_phone: editData?.customer_phone || aiDraftData?.customer_phone || "",
-      customer_address: editData?.customer_address || aiDraftData?.customer_address || "",
+      customer_address: editBillingAddr,
       customer_gstin: editData?.customer_gstin || aiDraftData?.customer_gstin || "",
-      delivery_address: editData?.delivery_address || "",
+      delivery_address: editShippingAddr,
       vehicle_number: editData?.vehicle_number || "",
       transport_mode: editData?.transport_mode || "",
       eway_bill_number: editData?.eway_bill_number || "",
@@ -1722,10 +1683,17 @@ export default function SalesForm({
         return [];
       })(),
       gst_treatment: editData?.gst_treatment || "registered",
-      place_of_supply: editData?.place_of_supply || aiDraftData?.place_of_supply || "",
-      // R21: boolean initial values so Formik treats these as true/false checkboxes (not "on" arrays).
-      bill_to_ship_to: false,
-      default_pos: "",
+      place_of_supply: editPos,
+      // Auto-select Bill-to-ship-to when billing & shipping differ (respecting pre-existing inter-state POS override on edit).
+      bill_to_ship_to: isEdit
+        ? shouldAutoSelectBillToShipToOnInit({
+            billingAddress: editBillingAddr,
+            deliveryAddress: editShippingAddr,
+            placeOfSupply: editPos,
+            defaultPos: editDefaultPos,
+          })
+        : hasShippingBillingDifference(editBillingAddr, editShippingAddr),
+      default_pos: editDefaultPos,
       warehouse: typeof editData?.warehouse === 'object' ? (editData.warehouse?.id || "") : (editData?.warehouse || aiDraftData?.warehouse || ""),
       journal: editData?.journal || (isSalesOrder ? "Sales" : isQuotation ? "Quotation" : isDeliveryChallan ? "Challan" : "Sales"),
       total_amount: editData?.total_amount || null,
@@ -2168,7 +2136,7 @@ export default function SalesForm({
               if (!isDraft) {
                 const cleanAddr = (values.delivery_address || "").trim();
                 const billingAddr = (values.customer_address || "").trim();
-                if (cleanAddr && cleanAddr !== billingAddr) {
+                if (cleanAddr && normalizeAddressText(cleanAddr) !== normalizeAddressText(billingAddr)) {
                   const matchedCust = (customers || []).find(
                     (c) =>
                       (values.customer && String(c.id) === String(values.customer)) ||
@@ -2176,11 +2144,9 @@ export default function SalesForm({
                         c.name?.trim().toLowerCase() === values.customer_name?.trim().toLowerCase())
                   );
                   if (matchedCust?.id) {
-                    const currentAddresses = Array.isArray(matchedCust.meta?.shipping_addresses)
-                      ? [...matchedCust.meta.shipping_addresses]
-                      : (matchedCust.meta?.shipping_address ? [matchedCust.meta.shipping_address] : []);
+                    const currentAddresses = getSavedShippingList(matchedCust);
                     const alreadySaved = currentAddresses.some(
-                      (addr) => (addr || "").trim() === cleanAddr
+                      (addr) => normalizeAddressText(addr) === normalizeAddressText(cleanAddr)
                     );
                     if (!alreadySaved) {
                       const shouldSave = window.confirm(
@@ -2191,7 +2157,6 @@ export default function SalesForm({
                         patchCustomer(matchedCust.id, {
                           meta: {
                             ...(matchedCust.meta || {}),
-                            shipping_address: cleanAddr,
                             shipping_addresses: currentAddresses,
                           }
                         }).then(() => {
@@ -2253,6 +2218,37 @@ export default function SalesForm({
             );
             const isIGST = taxType === 'igst';
 
+            const persistCustomerShippingAddresses = async (matchedCust, nextAddresses, successMessage) => {
+              if (!matchedCust?.id) return false;
+              setIsSavingShippingAddr(true);
+              try {
+                await patchCustomer(matchedCust.id, {
+                  meta: {
+                    ...(matchedCust.meta || {}),
+                    shipping_addresses: nextAddresses,
+                  },
+                });
+                queryClient.setQueryData(["customers"], (old) => {
+                  const updateCust = (c) =>
+                    String(c.id) === String(matchedCust.id)
+                      ? { ...c, shipping_addresses: nextAddresses, meta: { ...(c.meta || {}), shipping_addresses: nextAddresses } }
+                      : c;
+                  if (Array.isArray(old)) return old.map(updateCust);
+                  if (old && Array.isArray(old.results)) return { ...old, results: old.results.map(updateCust) };
+                  if (old && Array.isArray(old.data)) return { ...old, data: old.data.map(updateCust) };
+                  return old;
+                });
+                queryClient.invalidateQueries({ queryKey: ["customers"] });
+                toast.success(successMessage);
+                return true;
+              } catch (err) {
+                toast.error(formatErrorMessage(err, "Failed to update shipping addresses"));
+                return false;
+              } finally {
+                setIsSavingShippingAddr(false);
+              }
+            };
+
             return (
               <Form 
                 className="flex flex-col flex-1 overflow-hidden"
@@ -2286,6 +2282,12 @@ export default function SalesForm({
                   }
                 }}
               >
+                <BillToShipToSync
+                  values={values}
+                  setFieldValue={setFieldValue}
+                  editId={editData?.id || "new"}
+                  manualOverrideRef={billToShipToManualRef}
+                />
                 <div className="flex-1 overflow-y-auto p-0">
                   <div className="p-6 sm:p-8 space-y-8">
                   {/* Top Document Meta Row: Invoice #, Date, Due Date, PO #, PO Date */}
@@ -2298,7 +2300,7 @@ export default function SalesForm({
                     </div>
                     <div className={`grid grid-cols-1 sm:grid-cols-2 ${isQuotation ? 'md:grid-cols-2' : 'md:grid-cols-3 lg:grid-cols-5'} gap-4`}>
                       {/* Document / Invoice Number */}
-                      <div>
+                      <div className="form-field">
                         <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
                           {isSalesOrder ? 'Order Number *' : isDeliveryChallan ? 'Challan Number *' : isQuotation ? 'Quotation Number *' : 'Invoice Number *'}
                         </label>
@@ -2316,7 +2318,7 @@ export default function SalesForm({
                               spellCheck="false"
                               data-1p-ignore="true"
                               value={typed || previewNextNumber}
-                              className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm font-mono ${HEADER_FIELD_FOCUS}`}
+                              className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm font-mono ${HEADER_FIELD_FOCUS}`}
                               placeholder={isSalesOrder ? "e.g. SO001" : isDeliveryChallan ? "e.g. DC001" : isQuotation ? "e.g. QT001" : "e.g. INV001"}
                             />
                             );
@@ -2326,7 +2328,7 @@ export default function SalesForm({
                       </div>
 
                       {/* Document / Invoice Date */}
-                      <div>
+                      <div className="form-field">
                         <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
                           {isSalesOrder ? 'Order Date *' : isDeliveryChallan ? 'Challan Date *' : isQuotation ? 'Quotation Date *' : 'Invoice Date *'}
                         </label>
@@ -2342,7 +2344,7 @@ export default function SalesForm({
                       {!isQuotation && (
                         <>
                           {/* Due Date */}
-                          <div>
+                          <div className="form-field">
                             <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">
                               Due Date
                             </label>
@@ -2355,18 +2357,18 @@ export default function SalesForm({
                           </div>
 
                           {/* PO Number */}
-                          <div>
+                          <div className="form-field">
                             <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">PO Number</label>
                             <Field
                               name="po_number"
                               type="text"
-                              className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm font-mono ${HEADER_FIELD_FOCUS}`}
+                              className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm font-mono ${HEADER_FIELD_FOCUS}`}
                               placeholder="e.g. PO-8921"
                             />
                           </div>
 
                           {/* PO Date */}
-                          <div>
+                          <div className="form-field">
                             <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">PO Date</label>
                             <DateInputField
                               name="po_date"
@@ -2470,7 +2472,7 @@ export default function SalesForm({
                       </div>
 
                       <div>
-                        {/* Saved shipping addresses selector if available */}
+                        {/* Saved shipping addresses selector + inline edit/save/delete */}
                         {(() => {
                           const matchedCust = (customers || []).find(
                             (c) =>
@@ -2478,52 +2480,185 @@ export default function SalesForm({
                               (values.customer_name &&
                                 c.name?.trim().toLowerCase() === values.customer_name?.trim().toLowerCase())
                           );
-                          const savedList = Array.isArray(matchedCust?.meta?.shipping_addresses)
-                            ? matchedCust.meta.shipping_addresses
-                            : (matchedCust?.shipping_addresses ? [matchedCust.shipping_addresses] : []);
-                          
-                          if (!savedList || savedList.length === 0) return null;
+                          const savedList = getSavedShippingList(matchedCust);
+                          const normalizedCurrent = normalizeAddressText(values.delivery_address || "");
+                          const activeSavedIdx = savedList.findIndex(
+                            (addr) => normalizeAddressText(addr) === normalizedCurrent
+                          );
+                          const isCustomUnsaved =
+                            Boolean(matchedCust?.id) &&
+                            Boolean((values.delivery_address || "").trim()) &&
+                            normalizedCurrent !== normalizeAddressText(values.customer_address || "") &&
+                            activeSavedIdx === -1;
+
+                          const handleSaveNewShipping = async () => {
+                            const clean = (values.delivery_address || "").trim();
+                            if (!clean || !matchedCust?.id) return;
+                            const next = [
+                              clean,
+                              ...savedList.filter((a) => normalizeAddressText(a) !== normalizeAddressText(clean)),
+                            ];
+                            await persistCustomerShippingAddresses(matchedCust, next, "Saved shipping address to customer");
+                          };
+
+                          const handleCommitEditedSaved = async () => {
+                            if (!shippingEditState || !matchedCust?.id) return;
+                            const clean = shippingEditState.draft.trim();
+                            if (!clean) {
+                              toast.error("Shipping address cannot be empty");
+                              return;
+                            }
+                            const next = savedList
+                              .map((a, i) => (i === shippingEditState.index ? clean : a))
+                              .filter((a, i, arr) => arr.findIndex((x) => normalizeAddressText(x) === normalizeAddressText(a)) === i);
+                            const ok = await persistCustomerShippingAddresses(matchedCust, next, "Shipping address updated");
+                            if (ok) {
+                              setFieldValue('delivery_address', clean);
+                              setShippingEditState(null);
+                            }
+                          };
+
+                          const handleDeleteSaved = async (idx) => {
+                            if (!matchedCust?.id || idx < 0) return;
+                            const removed = savedList[idx];
+                            if (!window.confirm("Remove this saved shipping address from the customer?")) return;
+                            const next = savedList.filter((_, i) => i !== idx);
+                            const ok = await persistCustomerShippingAddresses(matchedCust, next, "Saved shipping address removed");
+                            if (ok) {
+                              if (shippingEditState?.index === idx) setShippingEditState(null);
+                              if (normalizeAddressText(values.delivery_address) === normalizeAddressText(removed)) {
+                                setFieldValue('delivery_address', next[0] || values.customer_address || "");
+                              }
+                            }
+                          };
 
                           return (
-                            <div className="mb-2">
-                              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                                Saved Shipping Addresses ({savedList.length})
-                              </label>
-                              <select
-                                value={values.delivery_address || ""}
-                                onChange={(e) => {
-                                  if (e.target.value) {
-                                    setFieldValue('delivery_address', e.target.value);
-                                  }
-                                }}
-                                className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] mb-2 ${HEADER_FIELD_FOCUS}`}
-                              >
-                                <option value="">-- Select from saved shipping addresses --</option>
-                                {savedList.map((addr, idx) => (
-                                  <option key={idx} value={addr} className="bg-[var(--bg-surface)]">
-                                    {addr.length > 60 ? `${addr.slice(0, 60)}...` : addr}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
+                            <>
+                              {savedList.length > 0 && (
+                                <div className="mb-3 form-field">
+                                  <div className="flex items-center justify-between mb-1 gap-2">
+                                    <label className="block text-xs font-medium text-[var(--text-secondary)]">
+                                      Saved Shipping Addresses ({savedList.length})
+                                    </label>
+                                    {activeSavedIdx !== -1 && shippingEditState?.index !== activeSavedIdx && (
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          disabled={isSavingShippingAddr}
+                                          onClick={() =>
+                                            setShippingEditState({
+                                              index: activeSavedIdx,
+                                              draft: savedList[activeSavedIdx],
+                                            })
+                                          }
+                                          className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent-primary)] hover:opacity-80 transition-opacity disabled:opacity-50"
+                                          title="Edit selected saved shipping address"
+                                        >
+                                          <PencilSquareIcon className="w-3.5 h-3.5" />
+                                          <span>Edit</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={isSavingShippingAddr}
+                                          onClick={() => handleDeleteSaved(activeSavedIdx)}
+                                          className="inline-flex items-center gap-1 text-xs font-medium text-[var(--status-danger)] hover:opacity-80 transition-opacity disabled:opacity-50"
+                                          title="Delete selected saved shipping address"
+                                        >
+                                          <TrashIcon className="w-3.5 h-3.5" />
+                                          <span>Delete</span>
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {shippingEditState !== null && shippingEditState.index < savedList.length ? (
+                                    <div className="p-2.5 rounded-xl border border-[var(--border-focus)] bg-[var(--input-bg-focus)] space-y-2 mb-2">
+                                      <textarea
+                                        rows="2"
+                                        autoFocus
+                                        value={shippingEditState.draft}
+                                        onChange={(e) =>
+                                          setShippingEditState((prev) => (prev ? { ...prev, draft: e.target.value } : null))
+                                        }
+                                        placeholder="Update saved shipping address..."
+                                        className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] ${HEADER_FIELD_FOCUS}`}
+                                      />
+                                      <div className="flex items-center justify-end gap-2">
+                                        <button
+                                          type="button"
+                                          disabled={isSavingShippingAddr}
+                                          onClick={() => setShippingEditState(null)}
+                                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[var(--input-border)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                        >
+                                          <XMarkIcon className="w-3.5 h-3.5" />
+                                          Cancel
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={isSavingShippingAddr}
+                                          onClick={handleCommitEditedSaved}
+                                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--accent-primary)] text-white text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                                        >
+                                          <CheckIcon className="w-3.5 h-3.5" />
+                                          {isSavingShippingAddr ? "Saving..." : "Save Address"}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <select
+                                      value={activeSavedIdx !== -1 ? String(activeSavedIdx) : ""}
+                                      onChange={(e) => {
+                                        const idxVal = e.target.value;
+                                        if (idxVal !== "" && savedList[Number(idxVal)]) {
+                                          setFieldValue('delivery_address', savedList[Number(idxVal)]);
+                                          setShippingEditState(null);
+                                        }
+                                      }}
+                                      className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] mb-1 ${HEADER_FIELD_FOCUS}`}
+                                    >
+                                      <option value="">-- Select from saved shipping addresses --</option>
+                                      {savedList.map((addr, idx) => (
+                                        <option key={idx} value={String(idx)} className="bg-[var(--bg-surface)]">
+                                          {addr.length > 60 ? `${addr.slice(0, 60)}...` : addr}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="form-field">
+                                <div className="flex items-center justify-between mb-1.5 gap-2">
+                                  <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
+                                    Shipping Address
+                                  </label>
+                                  {isCustomUnsaved && (
+                                    <button
+                                      type="button"
+                                      disabled={isSavingShippingAddr}
+                                      onClick={handleSaveNewShipping}
+                                      className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent-primary)] hover:opacity-80 transition-opacity disabled:opacity-50"
+                                      title="Save this address to customer's Saved Shipping Addresses"
+                                    >
+                                      <PlusIcon className="w-3.5 h-3.5" />
+                                      <span>{isSavingShippingAddr ? "Saving..." : "Save to Customer"}</span>
+                                    </button>
+                                  )}
+                                </div>
+                                <Field
+                                  name="delivery_address"
+                                  as="textarea"
+                                  rows="2"
+                                  className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm ${HEADER_FIELD_FOCUS}`}
+                                  placeholder="123 Shipping Address, City, State, PIN"
+                                />
+                              </div>
+                            </>
                           );
                         })()}
-
-                        <div className="mb-1.5">
-                          <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
-                            Shipping Address
-                          </label>
-                        </div>
-                        <Field
-                          name="delivery_address"
-                          as="textarea"
-                          rows="2"
-                          className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm ${HEADER_FIELD_FOCUS}`}
-                          placeholder="123 Shipping Address, City, State, PIN"
-                        />
                       </div>
 
-                      <div>
+                      <div className="form-field">
                         <div className="flex items-center justify-between mb-1.5">
                           <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
                             Place of Supply
@@ -2537,18 +2672,21 @@ export default function SalesForm({
                         <Field
                           name="place_of_supply"
                           as="select"
-                          className={`w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm ${HEADER_FIELD_FOCUS}`}
+                          className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm ${HEADER_FIELD_FOCUS}`}
                         >
                           <option value="">Select State</option>
                           {INDIAN_STATES.map(s => (
                             <option key={s.code} value={s.code}>{s.name} ({s.code})</option>
                           ))}
                         </Field>
-                        <label className="mt-2 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                        <label className="mt-2 flex items-center gap-2 text-xs text-[var(--text-secondary)] cursor-pointer select-none">
                           <input
                             type="checkbox"
                             checked={values.bill_to_ship_to === true}
-                            onChange={(e) => setFieldValue('bill_to_ship_to', e.target.checked)}
+                            onChange={(e) => {
+                              billToShipToManualRef.current = true;
+                              setFieldValue('bill_to_ship_to', e.target.checked);
+                            }}
                           />
                           Bill-to-ship-to (goods delivered to a third party on the customer's order)
                         </label>
@@ -3459,15 +3597,15 @@ export default function SalesForm({
                                        {(itemSettings.show_item_manufacturer || itemSettings.show_item_internal_reference) && (
                                            <div className="grid grid-cols-2 gap-4">
                                                {itemSettings.show_item_manufacturer && (
-                                                 <div>
+                                                 <div className="form-field">
                                                      <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Manufacturer</label>
-                                                     <Field name={`items.${index}.manufacturer`} type="text" placeholder="Manufacturer" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none" />
+                                                     <Field name={`items.${index}.manufacturer`} type="text" placeholder="Manufacturer" className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm ${ITEM_CELL_FOCUS}`} />
                                                  </div>
                                                )}
                                                {itemSettings.show_item_internal_reference && (
-                                                 <div>
+                                                 <div className="form-field">
                                                      <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Internal Ref</label>
-                                                     <Field name={`items.${index}.internal_reference`} type="text" placeholder="Internal Ref" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none" />
+                                                     <Field name={`items.${index}.internal_reference`} type="text" placeholder="Internal Ref" className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm ${ITEM_CELL_FOCUS}`} />
                                                  </div>
                                                )}
                                            </div>
@@ -3477,14 +3615,14 @@ export default function SalesForm({
                                       {(itemSettings.show_item_hsn || itemSettings.show_item_batch) && (
                                           <div className="grid grid-cols-2 gap-4">
                                               {itemSettings.show_item_hsn && (
-                                                <div>
+                                                <div className="form-field">
                                                     <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">HSN/SAC Code</label>
                                                     <Field name={`items.${index}.hsn_sac_code`}>
                                                       {({ field }) => (
                                                         <input
                                                           {...field}
                                                           type="text"
-                                                          className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none"
+                                                          className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm ${ITEM_CELL_FOCUS}`}
                                                           onBlur={async (e) => {
                                                             field.onBlur(e);
                                                             await autofillTaxFromLearnedHsn(
@@ -3499,11 +3637,11 @@ export default function SalesForm({
                                                 </div>
                                               )}
                                               {itemSettings.show_item_batch && (
-                                                <div>
+                                                <div className="form-field">
                                                     <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Batch</label>
                                                     <Field name={`items.${index}.batch`}>
                                                       {({ field }) => (
-                                                        <select {...field} className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none" disabled={!item.product_id}>
+                                                        <select {...field} className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm ${ITEM_CELL_FOCUS}`} disabled={!item.product_id}>
                                                           <option value="">Auto (FEFO)</option>
                                                           {productBatches.map((b) => (
                                                             <option key={b.id} value={b.id}>{b.name} ({b.qty})</option>
@@ -3518,17 +3656,17 @@ export default function SalesForm({
 
                                       {/* Row 2: Qty, Unit, Price */}
                                       <div className="grid grid-cols-3 gap-4">
-                                          <div>
+                                          <div className="form-field">
                                               <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Qty</label>
                                               <Field
                                                 name={`items.${index}.quantity`}
                                                 type="number" step="any"
                                                 min={isProtectedProductLine(item) ? getProtectedMinQty(item) : 0}
-                                                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center font-bold focus:border-[var(--accent-primary)] outline-none"
+                                                className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center font-bold ${ITEM_CELL_FOCUS}`}
                                                 onChange={(e) => handleItemQuantityChange(index, e.target.value, setFieldValue, values)}
                                               />
                                           </div>
-                                          <div>
+                                          <div className="form-field">
                                               <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Unit</label>
                                               <select
                                                 value={item.unit || "pcs"}
@@ -3545,20 +3683,20 @@ export default function SalesForm({
                                                     setFieldValue(`items.${index}.unit`, val);
                                                   }
                                                 }}
-                                                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-2 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none"
+                                                className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-2 py-2.5 text-[var(--text-primary)] text-sm text-center ${ITEM_CELL_FOCUS}`}
                                               >
                                                 {unitOptionsWith(availableUnits, item.unit).map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
                                                 <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
                                               </select>
                                           </div>
-                                          <div>
+                                          <div className="form-field">
                                               <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Price</label>
                                               <Field
                                                  name={`items.${index}.price`}
                                                  type="number"
                                                  min="0"
                                                  step="0.0001"
-                                                 className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-right font-mono focus:border-[var(--accent-primary)] outline-none"
+                                                 className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-right font-mono ${ITEM_CELL_FOCUS}`}
                                                  onChange={(e) => {
                                                    const price = e.target.value;
                                                    setFieldValue(`items.${index}.price`, price);
@@ -3576,7 +3714,7 @@ export default function SalesForm({
                                       {(itemSettings.show_item_discount || itemSettings.show_item_tax || itemSettings.show_item_free_quantity) && (
                                           <div className="grid grid-cols-3 gap-4">
                                             {itemSettings.show_item_free_quantity && (
-                                                <div className="relative">
+                                                <div className="relative form-field">
                                                     <div className="flex items-center justify-between mb-2">
                                                       <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)]">Free</label>
                                                       {(() => {
@@ -3592,16 +3730,16 @@ export default function SalesForm({
                                                         return null;
                                                       })()}
                                                     </div>
-                                                    <Field name={`items.${index}.free_quantity`} type="number" min="0" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--status-success)] font-bold text-sm text-center focus:border-[var(--accent-primary)] outline-none" />
+                                                    <Field name={`items.${index}.free_quantity`} type="number" min="0" className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--status-success)] font-bold text-sm text-center ${ITEM_CELL_FOCUS}`} />
                                                 </div>
                                             )}
                                             {itemSettings.show_item_discount && (
-                                                <div>
+                                                <div className="form-field">
                                                     <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Disc %</label>
                                                     <Field
                                                       name={`items.${index}.discount`}
                                                       type="number"
-                                                      className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none"
+                                                      className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center ${ITEM_CELL_FOCUS}`}
                                                       onChange={(e) => {
                                                         const discount = e.target.value;
                                                         setFieldValue(`items.${index}.discount`, discount);
@@ -3613,9 +3751,9 @@ export default function SalesForm({
                                                 </div>
                                             )}
                                             {itemSettings.show_item_tax && !gstTaxLocked && (
-                                                <div>
+                                                <div className="form-field">
                                                     <label className="block text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] mb-2">Tax %</label>
-                                                    <Field name={`items.${index}.tax`} type="number" disabled={gstTaxLocked} className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center focus:border-[var(--accent-primary)] outline-none" />
+                                                    <Field name={`items.${index}.tax`} type="number" disabled={gstTaxLocked} className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] text-sm text-center ${ITEM_CELL_FOCUS}`} />
                                                 </div>
                                             )}
                                           </div>
@@ -3941,7 +4079,7 @@ export default function SalesForm({
                   {missingHsnModal.rows.map((r, i) => {
                     const bad = r.hsn !== '' && !isValidHsn(r.hsn);
                     return (
-                      <div key={r.key}>
+                      <div key={r.key} className="form-field">
                         <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{r.name}</label>
                         <input
                           type="text"
@@ -3954,7 +4092,7 @@ export default function SalesForm({
                             const v = e.target.value.replace(/\D/g, '').slice(0, 8);
                             setMissingHsnModal((cur) => cur && ({ ...cur, rows: cur.rows.map((x, j) => (j === i ? { ...x, hsn: v } : x)) }));
                           }}
-                          className={`w-full px-3 py-2 text-sm rounded-lg bg-[var(--bg-primary)] border ${bad ? 'border-red-500' : 'border-[var(--border-subtle)]'} text-[var(--text-primary)]`}
+                          className={`w-full px-3 py-2 text-sm rounded-lg bg-[var(--input-bg)] border ${bad ? 'border-red-500' : 'border-[var(--input-border)]'} text-[var(--text-primary)] ${HEADER_FIELD_FOCUS}`}
                         />
                         {bad && <p className="text-xs text-red-500 mt-1">HSN/SAC must be 4, 6 or 8 digits.</p>}
                       </div>
@@ -4048,54 +4186,54 @@ export default function SalesForm({
                 </button>
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Product Name</label>
-                  <input value={productCreationState.name} readOnly className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] outline-none" />
+                <div className="md:col-span-2 form-field">
+                  <label className="form-label">Product Name</label>
+                  <input value={productCreationState.name} readOnly className="form-input" />
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Manufacturer</label>
+                <div className="form-field">
+                  <label className="form-label">Manufacturer</label>
                   <input
                     value={productCreationState.manufacturer || ""}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, manufacturer: e.target.value }))}
-                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
+                    className="form-input"
                     placeholder="e.g. Acme Corp"
                   />
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Internal Reference</label>
+                <div className="form-field">
+                  <label className="form-label">Internal Reference</label>
                   <input
                     value={productCreationState.internal_reference || ""}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, internal_reference: e.target.value }))}
-                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
+                    className="form-input"
                     placeholder="e.g. SKU-1234"
                   />
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Sale Price</label>
+                <div className="form-field">
+                  <label className="form-label">Sale Price</label>
                   <input
                     type="number"
                     step="any"
                     min="0"
                     value={productCreationState.sale_price}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, sale_price: e.target.value }))}
-                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
+                    className="form-input"
                     placeholder="0.00"
                   />
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Cost Price (Internal)</label>
+                <div className="form-field">
+                  <label className="form-label">Cost Price (Internal)</label>
                   <input
                     type="number"
                     step="any"
                     min="0"
                     value={productCreationState.cost_price || ""}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, cost_price: e.target.value }))}
-                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
+                    className="form-input"
                     placeholder="Purchase / Cost price"
                   />
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Unit</label>
+                <div className="form-field">
+                  <label className="form-label">Unit</label>
                   <select
                     value={productCreationState.unit || "pcs"}
                     onChange={(e) => {
@@ -4111,18 +4249,18 @@ export default function SalesForm({
                         setProductCreationState((current) => ({ ...current, unit: val }));
                       }
                     }}
-                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
+                    className="form-input"
                   >
                     {unitOptionsWith(availableUnits, productCreationState.unit).map((u) => <option key={u} value={u} className="bg-[var(--bg-surface)]">{u}</option>)}
                     <option value="__custom__" className="bg-[var(--bg-surface)] text-[var(--accent-primary)] font-bold">+ Custom Unit...</option>
                   </select>
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">GST %</label>
+                <div className="form-field">
+                  <label className="form-label">GST %</label>
                   <select
                     value={productCreationState.tax !== undefined ? String(productCreationState.tax) : "0"}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, tax: e.target.value }))}
-                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
+                    className="form-input"
                   >
                     {GST_RATES.map((rate) => (
                       <option key={rate.value} value={String(rate.value)} className="bg-[var(--bg-surface)]">
@@ -4131,22 +4269,22 @@ export default function SalesForm({
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">HSN/SAC Code</label>
+                <div className="form-field">
+                  <label className="form-label">HSN/SAC Code</label>
                   <input
                     value={productCreationState.hsn_sac_code}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, hsn_sac_code: e.target.value }))}
-                    className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
+                    className="form-input"
                     placeholder="Optional"
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">Description</label>
+                <div className="md:col-span-2 form-field">
+                  <label className="form-label">Description</label>
                   <textarea
                     rows={3}
                     value={productCreationState.description}
                     onChange={(e) => setProductCreationState((current) => ({ ...current, description: e.target.value }))}
-                    className="w-full resize-none rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[var(--accent-primary)] outline-none"
+                    className="form-input resize-none"
                     placeholder="Optional product description"
                   />
                 </div>
@@ -4171,14 +4309,18 @@ export default function SalesForm({
             editData={editingCustomer}
             onSaved={(updatedCustomer) => {
               if (updatedCustomer && formikRef.current) {
+                const prevBilling = formikRef.current.values?.customer_address || "";
+                const prevDelivery = formikRef.current.values?.delivery_address || "";
                 if (updatedCustomer.name) formikRef.current.setFieldValue('customer_name', updatedCustomer.name);
-                if (updatedCustomer.address) {
-                  formikRef.current.setFieldValue('customer_address', updatedCustomer.address);
-                  formikRef.current.setFieldValue('delivery_address', updatedCustomer.address);
+                if (updatedCustomer.address !== undefined) {
+                  formikRef.current.setFieldValue('customer_address', updatedCustomer.address || "");
+                  if (!prevDelivery.trim() || normalizeAddressText(prevDelivery) === normalizeAddressText(prevBilling)) {
+                    formikRef.current.setFieldValue('delivery_address', updatedCustomer.address || "");
+                  }
                 }
-                if (updatedCustomer.gstin) formikRef.current.setFieldValue('customer_gstin', updatedCustomer.gstin);
-                if (updatedCustomer.phone) formikRef.current.setFieldValue('customer_phone', updatedCustomer.phone);
-                if (updatedCustomer.email) formikRef.current.setFieldValue('customer_email', updatedCustomer.email);
+                if (updatedCustomer.gstin !== undefined) formikRef.current.setFieldValue('customer_gstin', updatedCustomer.gstin || "");
+                if (updatedCustomer.phone !== undefined) formikRef.current.setFieldValue('customer_phone', updatedCustomer.phone || "");
+                if (updatedCustomer.email !== undefined) formikRef.current.setFieldValue('customer_email', updatedCustomer.email || "");
                 {
                   const posCode = customerPosCode(updatedCustomer);
                   if (posCode) formikRef.current.setFieldValue('place_of_supply', posCode);

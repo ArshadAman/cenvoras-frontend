@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import useEscKey from '../../hooks/useEscStack';
 import { getTodayKolkata } from '../../utils/date';
+import DateInputField from '../../components/common/DateInputField';
 
 export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, initialData }) {
   useEscKey(onClose, isOpen, 20);
@@ -110,7 +111,7 @@ export default function SalaryAssignmentModal({ isOpen, onClose, onSuccess, init
 
           <div>
             <label className="block text-sm text-[var(--text-secondary)] mb-1">Effective From *</label>
-            <input required type="date" name="effective_from" value={form.effective_from} onChange={handleChange} className={inputClass} />
+            <DateInputField required name="effective_from" value={form.effective_from} onChange={handleChange} />
           </div>
 
           <div>

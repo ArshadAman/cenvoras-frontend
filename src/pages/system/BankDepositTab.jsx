@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { getBankDepositSummary, createBankDeposit } from '../../api/ledger';
 import { getTodayKolkata } from '../../utils/date';
 import { formatCurrency } from '../../utils/currency';
+import DateInputField from '../../components/common/DateInputField';
 
 export default function BankDepositTab() {
   const queryClient = useQueryClient();
@@ -129,12 +130,11 @@ export default function BankDepositTab() {
           </div>
           <div>
             <label className="block text-sm text-[var(--text-secondary)] mb-1">Date *</label>
-            <input
-              type="date"
+            <DateInputField
+              name="date"
               required
               value={form.date}
               onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-              className={ic}
             />
           </div>
         </div>

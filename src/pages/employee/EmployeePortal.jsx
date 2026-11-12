@@ -6,6 +6,7 @@ import {
   ChatBubbleLeftRightIcon, CheckCircleIcon, ArrowPathIcon, PlusIcon,
   XMarkIcon, BellIcon
 } from '@heroicons/react/24/outline';
+import DateInputField from "../../components/common/DateInputField";
 
 function StatCard({ icon: Icon, iconBg, iconColor, label, value, sub }) {
   return (
@@ -541,11 +542,11 @@ export default function EmployeePortal() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm text-[var(--text-secondary)] mb-1">Start Date *</label>
-                  <input required type="date" value={leaveForm.start_date} onChange={(e) => setLeaveForm({...leaveForm, start_date: e.target.value})} className={ic} />
+                  <DateInputField required name="start_date" value={leaveForm.start_date} onChange={(e) => setLeaveForm({...leaveForm, start_date: e.target.value})} />
                 </div>
                 <div>
                   <label className="block text-sm text-[var(--text-secondary)] mb-1">End Date *</label>
-                  <input required type="date" value={leaveForm.end_date} onChange={(e) => setLeaveForm({...leaveForm, end_date: e.target.value})} className={ic} />
+                  <DateInputField required name="end_date" value={leaveForm.end_date} onChange={(e) => setLeaveForm({...leaveForm, end_date: e.target.value})} />
                 </div>
               </div>
               <div>

@@ -3,7 +3,9 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesOrder, updateSalesOrder } from "../../api/sales_order";
 import { getProducts } from "../../api/sales";
-import { getCustomers, createCustomer } from "../../api/customers";
+import { getCustomers } from "../../api/customers";
+import CustomerForm from "../customers/CustomerForm";
+import DateInputField from "../common/DateInputField";
 import { formatErrorMessage } from "../../utils/toastUtils";
 import { getWarehouses, getStockPoints } from "../../api/inventory";
 import { INDIAN_STATES } from "../../utils/constants";
@@ -329,95 +331,19 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
       
       {/* Add New Customer Modal */}
       {showNewCustomerModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowNewCustomerModal(false)}></div>
-          <div className="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
-            {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-[var(--border-subtle)]">
-              <h3 className="text-lg font-bold text-[var(--text-primary)]">Add New Customer</h3>
-              <button
-                type="button"
-                onClick={() => setShowNewCustomerModal(false)}
-                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            {/* Form */}
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Name *</label>
-                <input
-                  type="text"
-                  defaultValue={inputValue}
-                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
-                  id="new-customer-name"
-                  placeholder="Customer name"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Email</label>
-                <input
-                  type="email"
-                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
-                  id="new-customer-email"
-                  placeholder="email@example.com"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Phone</label>
-                <input
-                  type="tel"
-                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all"
-                  id="new-customer-phone"
-                  placeholder="+91 98765 43210"
-                />
-              </div>
-            </div>
-            
-            {/* Actions */}
-            <div className="p-5 pt-0 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowNewCustomerModal(false)}
-                className="btn-secondary text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  const name = document.getElementById('new-customer-name')?.value?.trim();
-                  if (!name) {
-                    toast.error('Customer name is required');
-                    return;
-                  }
-                  const email = document.getElementById('new-customer-email')?.value?.trim();
-                  const phone = document.getElementById('new-customer-phone')?.value?.trim();
-                  try {
-                    const created = await createCustomer({
-                      name,
-                      email: email || null,
-                      phone: phone || null,
-                    });
-                    const customer = created?.data || created;
-                    selectCustomer(customer);
-                    setShowNewCustomerModal(false);
-                    toast.success(`Customer "${customer.name || name}" added`);
-                  } catch (err) {
-                    toast.error(formatErrorMessage(err, "Failed to create customer"));
-                  }
-                }}
-                className="btn-primary text-sm"
-              >
-                Add Customer
-              </button>
-            </div>
-          </div>
-        </div>
+        <CustomerForm
+          isOpen={showNewCustomerModal}
+          onClose={() => setShowNewCustomerModal(false)}
+          initialName={inputValue.trim()}
+          escPriority={20}
+          onSaved={(created) => {
+            const customer = created?.data || created;
+            if (customer) {
+              selectCustomer(customer);
+            }
+            setShowNewCustomerModal(false);
+          }}
+        />
       )}
     </div>
   );
@@ -617,7 +543,11 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                         </div>
                         <div>
                            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Date</label>
-                           <Field name="date" type="date" className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--border-focus)]/50 focus:border-[var(--border-focus)] outline-none transition-all" />
+                           <DateInputField
+                             name="date"
+                             value={values.date}
+                             onChange={(e) => setFieldValue('date', e.target.value)}
+                           />
                         </div>
                    </div>
 

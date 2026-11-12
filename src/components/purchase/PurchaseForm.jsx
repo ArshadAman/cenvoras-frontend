@@ -1302,8 +1302,14 @@ function PurchaseItemRow({ item, idx, values, setFieldValue, remove, push, isLas
           <div className="relative">
              <label className="block text-xs font-black text-[var(--text-muted)] mb-1.5 md:hidden uppercase tracking-widest">Expiry Date</label>
              <Field name={`items.${idx}.expiry_date`}>
-               {({ field }) => (
-                 <input {...field} type="date" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-1.5 text-[var(--text-primary)] text-xs font-bold focus:border-[var(--accent-primary)] outline-none" />
+               {({ field, form }) => (
+                 <DateInputField
+                   name={field.name}
+                   size="sm"
+                   value={field.value}
+                   onChange={(e) => form.setFieldValue(field.name, e.target.value)}
+                   placeholder="DD-MM-YYYY"
+                 />
                )}
              </Field>
           </div>

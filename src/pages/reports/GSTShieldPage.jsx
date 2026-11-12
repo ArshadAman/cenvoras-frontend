@@ -14,6 +14,7 @@ import {
 } from '../../api/gst';
 import { getCurrencySymbol } from '../../utils/currency';
 import { getTodayKolkata, getKolkataMonthBounds } from '../../utils/date';
+import DateInputField from '../../components/common/DateInputField';
 
 import {
   ShieldCheckIcon,
@@ -252,18 +253,20 @@ export default function GSTShieldPage() {
       <div className="bento-card !p-4 flex flex-wrap items-center justify-between gap-4 border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
         <div className="flex items-center gap-3">
           <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">CA Audit Period:</span>
-          <input
-            type="date"
+          <DateInputField
+            name="from_date"
+            size="sm"
+            className="w-36"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
           />
           <span className="text-[var(--text-muted)] text-xs">to</span>
-          <input
-            type="date"
+          <DateInputField
+            name="to_date"
+            size="sm"
+            className="w-36"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
           />
         </div>
 

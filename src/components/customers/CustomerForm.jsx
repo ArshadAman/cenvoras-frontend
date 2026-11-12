@@ -1,11 +1,12 @@
 import React from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { createPortal } from "react-dom";
+import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createCustomer, updateCustomer } from "../../api/customers";
 import { toast } from "react-toastify";
 import { INDIAN_STATES, GST_STATE_CODE_MAP } from "../../utils/constants";
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PlusIcon, TrashIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
 import useEscKey from "../../hooks/useEscStack";
 import { yupGstinOptional } from "../../utils/gstin";
 import { extractFieldErrors } from "../../utils/fieldErrors";
@@ -25,11 +26,21 @@ const customerSchema = Yup.object().shape({
   address: Yup.string()
     .max(500, "Address must be less than 500 characters"),
   meta: Yup.object().shape({
+    shipping_addresses: Yup.array().of(
+      Yup.string().max(500, "Shipping address must be less than 500 characters")
+    ),
   }),
 });
 
-export default function CustomerForm({ isOpen, onClose, editData = null, onSaved = null }) {
-  useEscKey(onClose, isOpen, 10);
+export default function CustomerForm({
+  isOpen,
+  onClose,
+  editData = null,
+  onSaved = null,
+  initialName = "",
+  escPriority = 20,
+}) {
+  useEscKey(onClose, isOpen, escPriority);
   const queryClient = useQueryClient();
   const isEdit = !!editData;
 
@@ -61,9 +72,28 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
 
   const handleSubmit = async (values, { setSubmitting, setFieldError, setStatus }) => {
     setStatus(undefined);
-    // Clean up empty values
+
+    const seenAddresses = new Set();
+    const cleanedShipping = [];
+    for (const raw of values.meta?.shipping_addresses || []) {
+      const trimmed = String(raw || "").trim();
+      if (!trimmed) continue;
+      const key = trimmed.replace(/\s+/g, " ").toLowerCase();
+      if (!seenAddresses.has(key)) {
+        seenAddresses.add(key);
+        cleanedShipping.push(trimmed);
+      }
+    }
+
+    const cleanMeta = {
+      ...(values.meta || {}),
+      shipping_addresses: cleanedShipping,
+    };
+
+    // Clean up empty top-level values while retaining normalized meta.shipping_addresses
     const cleanValues = Object.fromEntries(
-      Object.entries(values).filter(([_, value]) => {
+      Object.entries({ ...values, meta: cleanMeta }).filter(([key, value]) => {
+        if (key === "meta") return true;
         if (typeof value === 'string') return value.trim() !== "";
         return value !== null && value !== undefined;
       })
@@ -85,8 +115,14 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
     }
   };
 
+  const existingShipping = Array.isArray(editData?.meta?.shipping_addresses)
+    ? editData.meta.shipping_addresses.filter((a) => typeof a === "string" && a.trim() !== "")
+    : (Array.isArray(editData?.shipping_addresses)
+        ? editData.shipping_addresses.filter((a) => typeof a === "string" && a.trim() !== "")
+        : []);
+
   const initialValues = {
-    name: editData?.name || "",
+    name: editData?.name || initialName || "",
     email: editData?.email || "",
     phone: editData?.phone || "",
     gstin: editData?.gstin || "",
@@ -95,6 +131,7 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
     meta: {
       party_category: editData?.meta?.party_category || "consumer",
       gst_type: editData?.meta?.gst_type || "unregistered",
+      shipping_addresses: existingShipping,
     }
   };
 
@@ -103,10 +140,13 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
   const inputClass = "form-input";
   const labelClass = "form-label uppercase tracking-wider";
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+  const modalNode = (
+    <div
+      className="fixed inset-0 z-[10020] flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-sm overflow-y-auto"
+      onClick={onClose}
+    >
       {/* Modal Content */}
-      <div 
+      <div
         className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl animate-fade-up border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] overflow-hidden my-auto"
         onClick={(e) => e.stopPropagation()}
       >
@@ -117,6 +157,7 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
             {isEdit ? "Edit Customer" : "New Customer"}
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer"
           >
@@ -130,7 +171,7 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
           onSubmit={handleSubmit}
           enableReinitialize
         >
-          {({ isSubmitting, status }) => (
+          {({ isSubmitting, status, values }) => (
             <Form className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
               {status?.formError && (
                 <div role="alert" className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400">
@@ -140,10 +181,10 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Customer Name */}
-                <div className="md:col-span-2">
-                  <label htmlFor="name" className={labelClass}>Customer Name *</label>
+                <div className="md:col-span-2 form-field">
+                  <label htmlFor="customer-form-name" className={labelClass}>Customer Name *</label>
                   <Field
-                    id="name"
+                    id="customer-form-name"
                     name="name"
                     type="text"
                     className={inputClass}
@@ -153,10 +194,10 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
                 </div>
 
                 {/* Email */}
-                <div>
-                  <label htmlFor="email" className={labelClass}>Email Address</label>
+                <div className="form-field">
+                  <label htmlFor="customer-form-email" className={labelClass}>Email Address</label>
                   <Field
-                    id="email"
+                    id="customer-form-email"
                     name="email"
                     type="email"
                     className={inputClass}
@@ -166,10 +207,10 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
                 </div>
 
                 {/* Phone */}
-                <div>
-                  <label htmlFor="phone" className={labelClass}>Phone Number</label>
+                <div className="form-field">
+                  <label htmlFor="customer-form-phone" className={labelClass}>Phone Number</label>
                   <Field
-                    id="phone"
+                    id="customer-form-phone"
                     name="phone"
                     type="tel"
                     className={inputClass}
@@ -179,11 +220,11 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
                 </div>
 
                 {/* State */}
-                <div>
-                  <label htmlFor="state" className={labelClass}>State (Place of Supply)</label>
+                <div className="form-field">
+                  <label htmlFor="customer-form-state" className={labelClass}>State (Place of Supply)</label>
                   <Field
                     as="select"
-                    id="state"
+                    id="customer-form-state"
                     name="state"
                     className={inputClass}
                   >
@@ -198,13 +239,13 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
                 </div>
 
                 {/* GSTIN */}
-                <div>
-                  <label htmlFor="gstin" className={labelClass}>GSTIN</label>
+                <div className="form-field">
+                  <label htmlFor="customer-form-gstin" className={labelClass}>GSTIN</label>
                   <Field name="gstin">
                     {({ field, form }) => (
                       <input
                         {...field}
-                        id="gstin"
+                        id="customer-form-gstin"
                         type="text"
                         className={inputClass}
                         placeholder="22AAAAA0000A1Z5"
@@ -227,11 +268,11 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
                 </div>
 
                 {/* GST Type */}
-                <div>
-                  <label htmlFor="meta.gst_type" className={labelClass}>GST Type</label>
+                <div className="form-field">
+                  <label htmlFor="customer-form-gst-type" className={labelClass}>GST Type</label>
                   <Field
                     as="select"
-                    id="meta.gst_type"
+                    id="customer-form-gst-type"
                     name="meta.gst_type"
                     className={inputClass}
                   >
@@ -242,11 +283,11 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
                 </div>
 
                 {/* Party Category */}
-                <div>
-                  <label htmlFor="meta.party_category" className={labelClass}>Category</label>
+                <div className="form-field">
+                  <label htmlFor="customer-form-party-category" className={labelClass}>Category</label>
                   <Field
                     as="select"
-                    id="meta.party_category"
+                    id="customer-form-party-category"
                     name="meta.party_category"
                     className={inputClass}
                   >
@@ -257,11 +298,11 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
                   </Field>
                 </div>
 
-                {/* Address */}
-                <div className="md:col-span-2">
-                  <label htmlFor="address" className={labelClass}>Address</label>
+                {/* Billing Address */}
+                <div className="md:col-span-2 form-field">
+                  <label htmlFor="customer-form-address" className={labelClass}>Address</label>
                   <Field
-                    id="address"
+                    id="customer-form-address"
                     name="address"
                     as="textarea"
                     rows={3}
@@ -269,6 +310,93 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
                     placeholder="Full billing address..."
                   />
                   <ErrorMessage name="address" component="div" className="mt-1 text-xs text-red-400" />
+                </div>
+
+                {/* Saved Shipping Addresses */}
+                <div className="md:col-span-2">
+                  <FieldArray name="meta.shipping_addresses">
+                    {({ push, remove, move }) => {
+                      const addresses = values.meta?.shipping_addresses || [];
+                      return (
+                        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-primary)]/50 p-4 space-y-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+                                Saved Shipping Addresses ({addresses.length})
+                              </span>
+                              <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                                Add or edit delivery locations different from billing address.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => push("")}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--accent-primary)]/35 bg-[var(--action-primary-bg)] text-xs font-semibold text-[var(--accent-primary)] hover:brightness-110 transition-all cursor-pointer shrink-0"
+                            >
+                              <PlusIcon className="w-3.5 h-3.5" />
+                              Add Shipping Address
+                            </button>
+                          </div>
+
+                          {addresses.length === 0 ? (
+                            <p className="text-xs text-[var(--text-muted)] italic">
+                              No separate shipping addresses saved yet.
+                            </p>
+                          ) : (
+                            <div className="space-y-3">
+                              {addresses.map((_, idx) => (
+                                <div key={idx} className="form-field space-y-1.5">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <label
+                                      htmlFor={`customer-shipping-${idx}`}
+                                      className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider"
+                                    >
+                                      Shipping Address #{idx + 1} {idx === 0 && "(Primary)"}
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                      {idx > 0 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => move(idx, 0)}
+                                          title="Set as primary shipping address"
+                                          className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent-primary)] hover:underline cursor-pointer"
+                                        >
+                                          <ArrowUpIcon className="w-3 h-3" />
+                                          Make Primary
+                                        </button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => remove(idx)}
+                                        title="Remove shipping address"
+                                        className="inline-flex items-center gap-1 text-xs font-medium text-[var(--status-danger)] hover:underline cursor-pointer"
+                                      >
+                                        <TrashIcon className="w-3.5 h-3.5" />
+                                        Remove
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <Field
+                                    id={`customer-shipping-${idx}`}
+                                    name={`meta.shipping_addresses.${idx}`}
+                                    as="textarea"
+                                    rows={2}
+                                    className={inputClass}
+                                    placeholder="Full shipping address, city, state, PIN..."
+                                  />
+                                  <ErrorMessage
+                                    name={`meta.shipping_addresses.${idx}`}
+                                    component="div"
+                                    className="text-xs text-red-400"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }}
+                  </FieldArray>
                 </div>
               </div>
 
@@ -305,4 +433,9 @@ export default function CustomerForm({ isOpen, onClose, editData = null, onSaved
       </div>
     </div>
   );
+
+  if (typeof document !== "undefined") {
+    return createPortal(modalNode, document.body);
+  }
+  return modalNode;
 }

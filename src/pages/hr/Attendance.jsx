@@ -7,6 +7,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import { getTodayKolkata } from "../../utils/date";
+import DateInputField from "../../components/common/DateInputField";
 
 const STATUS_COLORS = {
   present: 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30',
@@ -79,14 +80,12 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Date *</label>
-            <input
+            <DateInputField
               required
-              type="date"
               name="date"
               min={selectedEmp?.date_of_joining || ''}
               value={form.date}
               onChange={handleChange}
-              className={inputCls}
             />
             {selectedEmp?.date_of_joining && (
               <p className="text-xs text-[var(--accent-primary)] mt-1 font-medium">

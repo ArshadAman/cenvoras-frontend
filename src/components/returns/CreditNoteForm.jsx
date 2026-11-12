@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { getTodayKolkata, formatDMY } from '../../utils/date';
 import { quantityError, isMeasuredUnit } from '../../utils/uqc';
+import DateInputField from '../common/DateInputField';
 
 export default function CreditNoteForm({ isOpen, onClose }) {
   const queryClient = useQueryClient();
@@ -367,11 +368,10 @@ export default function CreditNoteForm({ isOpen, onClose }) {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Credit note date</label>
-                  <input 
-                    type="date" 
+                  <DateInputField
+                    name="note_date"
                     value={noteDate}
                     onChange={(e) => setNoteDate(e.target.value)}
-                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
                     aria-invalid={!!dateError}
                     required
                   />

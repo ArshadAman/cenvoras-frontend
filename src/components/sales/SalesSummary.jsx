@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { getCurrencySymbol } from '../../utils/currency';
 import { getTodayKolkata, getKolkataMonthBounds } from '../../utils/date';
+import DateInputField from '../common/DateInputField';
 import { useQuery } from "@tanstack/react-query";
 import { getSalesAnalytics, getSalesInvoices, getOverdueSalesInvoices } from "../../api/sales";
 import { 
@@ -176,20 +177,22 @@ export default function SalesSummary() {
         <div className="flex items-center gap-2">
           {!isCollapsed && dateFilter === "custom" && (
             <div className="flex items-center gap-1.5 text-xs">
-              <input 
-                type="date"
+              <DateInputField
+                name="summary_start"
+                size="sm"
+                className="w-36"
                 min={minDate}
                 max={maxDate}
-                className="bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs border border-[var(--border-subtle)] rounded-lg px-2.5 py-1.5 outline-none focus:border-[var(--accent-primary)]"
                 value={customRange.start}
                 onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
               />
               <span className="text-[var(--text-muted)] text-xs">to</span>
-              <input 
-                type="date"
+              <DateInputField
+                name="summary_end"
+                size="sm"
+                className="w-36"
                 min={customRange.start || minDate}
                 max={maxDate}
-                className="bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs border border-[var(--border-subtle)] rounded-lg px-2.5 py-1.5 outline-none focus:border-[var(--accent-primary)]"
                 value={customRange.end}
                 onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
               />

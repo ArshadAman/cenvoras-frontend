@@ -5,6 +5,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Link } from "react-router-dom";
 import { format, subDays } from "date-fns";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import DateInputField from "../../components/common/DateInputField";
 
 export default function ProfitLossReport() {
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
@@ -32,19 +33,21 @@ export default function ProfitLossReport() {
             </div>
             
             <div className="flex flex-col sm:flex-row items-end gap-4">
-                 <div className="flex items-center gap-2 bg-[var(--bg-surface)] p-2 rounded-xl border border-[var(--border-subtle)]">
-                    <input 
-                        type="date" 
+                 <div className="flex items-center gap-2">
+                    <DateInputField
+                        name="start_date"
+                        size="sm"
+                        className="w-36"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="bg-transparent text-[var(--text-primary)] text-sm outline-none px-1"
                     />
                     <span className="text-[var(--text-muted)]">-</span>
-                    <input 
-                        type="date" 
+                    <DateInputField
+                        name="end_date"
+                        size="sm"
+                        className="w-36"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="bg-transparent text-[var(--text-primary)] text-sm outline-none px-1"
                     />
                  </div>
                  

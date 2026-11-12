@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import DateInputField from "../common/DateInputField";
 
 // Product Autocomplete Component (Reused logic)
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showManufacturer = true }) {
@@ -513,7 +514,12 @@ export default function PurchaseOrderForm({ isOpen, onClose, editData }) {
                         </div>
                         <div>
                            <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase">Expected Date</label>
-                           <Field name="expected_date" type="date" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)]" />
+                           <DateInputField
+                             name="expected_date"
+                             value={values.expected_date}
+                             onChange={(e) => setFieldValue("expected_date", e.target.value)}
+                             placeholder="Optional"
+                           />
                         </div>
                    </div>
 

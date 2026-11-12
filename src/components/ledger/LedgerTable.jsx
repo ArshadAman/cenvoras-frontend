@@ -23,6 +23,7 @@ import { toast } from 'react-toastify';
 import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../../utils/date';
 import PartyDetailsHost from './PartyDetailsHost';
 import { getCustomer } from '../../api/customers';
+import DateInputField from '../common/DateInputField';
 import { getVendor } from '../../api/vendors';
 
 const cellClip = 'overflow-hidden text-ellipsis whitespace-nowrap min-w-0 max-w-full';
@@ -373,19 +374,21 @@ const LedgerTable = ({
                 ))}
               </select>
             )}
-            <div className="flex items-center gap-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl p-1">
-              <input
-                type="date"
+            <div className="flex items-center gap-1.5">
+              <DateInputField
+                name="start_date"
+                size="sm"
+                className="w-36"
                 value={dateFilter.startDate}
                 onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
-                className="bg-transparent text-[var(--text-primary)] text-xs px-2 py-1 outline-none cursor-pointer"
               />
               <span className="text-[var(--text-muted)] text-xs">to</span>
-              <input
-                type="date"
+              <DateInputField
+                name="end_date"
+                size="sm"
+                className="w-36"
                 value={dateFilter.endDate}
                 onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
-                className="bg-transparent text-[var(--text-primary)] text-xs px-2 py-1 outline-none cursor-pointer"
               />
             </div>
             <button

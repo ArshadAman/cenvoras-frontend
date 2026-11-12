@@ -18,6 +18,7 @@ import {
 import { getCurrencySymbol } from '../../utils/currency';
 import { getUserProfile } from '../../api/users';
 import { profileBankAccounts, defaultBankAccountId, BANK_MODES } from '../../utils/profileBanks';
+import DateInputField from '../common/DateInputField';
 
 const PAYMENT_MODES = {
   cash: { label: 'Cash', icon: BanknotesIcon },
@@ -350,12 +351,16 @@ export default function PaymentForm({ onSuccess, onCancel, initialInvoice = null
 
               <div>
                 <label className={labelClass}>Date *</label>
-                <Field
-                  id="date"
-                  name="date"
-                  type="date"
-                  className={inputClass}
-                />
+                <Field name="date">
+                  {({ field, form }) => (
+                    <DateInputField
+                      name="date"
+                      required
+                      value={field.value}
+                      onChange={(e) => form.setFieldValue('date', e.target.value)}
+                    />
+                  )}
+                </Field>
                 <ErrorMessage name="date" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
               </div>
             </div>

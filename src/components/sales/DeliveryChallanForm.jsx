@@ -7,6 +7,7 @@ import { getCustomers } from "../../api/customers";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import DateInputField from "../common/DateInputField";
 
 // Reuse ProductAutocomplete and CustomerAutocomplete from SalesOrderForm logic (duplicated for now for independence)
 // Ideally these should be shared components
@@ -294,7 +295,11 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
                         </div>
                         <div>
                            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase">Date</label>
-                           <Field name="date" type="date" className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]" />
+                           <DateInputField
+                             name="date"
+                             value={values.date}
+                             onChange={(e) => setFieldValue("date", e.target.value)}
+                           />
                         </div>
                         <div>
                            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5 uppercase">Vehicle No.</label>

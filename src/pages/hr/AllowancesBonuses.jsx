@@ -7,6 +7,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import { getTodayKolkata } from '../../utils/date';
+import DateInputField from '../../components/common/DateInputField';
 
 function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
   const [form, setForm] = useState({
@@ -122,12 +123,11 @@ function AllowanceBonusModal({ isOpen, onClose, onSuccess, employees }) {
             </div>
             <div>
               <label className={labelCls}>Effective Date *</label>
-              <input
+              <DateInputField
                 required
-                type="date"
+                name="effective_date"
                 value={form.effective_date}
                 onChange={e => setForm(p => ({ ...p, effective_date: e.target.value }))}
-                className={ic}
               />
             </div>
           </div>

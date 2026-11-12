@@ -343,6 +343,26 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                           {customerDetails.address || 'No address provided'}
                         </span>
                       </div>
+                      {(() => {
+                        const savedShips = Array.isArray(customerDetails.meta?.shipping_addresses)
+                          ? customerDetails.meta.shipping_addresses.filter(Boolean)
+                          : (Array.isArray(customerDetails.shipping_addresses) ? customerDetails.shipping_addresses.filter(Boolean) : []);
+                        if (savedShips.length === 0) return null;
+                        return (
+                          <div className="pt-2">
+                            <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
+                              Saved Shipping Addresses ({savedShips.length})
+                            </span>
+                            <div className="space-y-2">
+                              {savedShips.map((addr, i) => (
+                                <span key={i} className="text-sm text-[var(--text-secondary)] leading-relaxed block bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--border-subtle)]">
+                                  {addr}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 

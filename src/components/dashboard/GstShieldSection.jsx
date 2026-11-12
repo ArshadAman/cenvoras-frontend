@@ -6,6 +6,7 @@ import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../..
 import { downloadCAAuditPack } from '../../api/gst';
 import InfoTip from '../common/InfoTip';
 import { gstShieldView } from '../../utils/gstShieldView';
+import DateInputField from '../common/DateInputField';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/api';
 import {
@@ -302,18 +303,20 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
               <div className="flex items-center gap-2">
                 <CalendarDaysIcon className="w-4 h-4 text-[var(--status-success)] shrink-0" />
                 <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Period:</span>
-                <input
-                  type="date"
+                <DateInputField
+                  name="from_date"
+                  size="sm"
+                  className="w-36"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-md px-2 py-0.5 text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
                 />
                 <span className="text-[var(--text-muted)] text-xs">to</span>
-                <input
-                  type="date"
+                <DateInputField
+                  name="to_date"
+                  size="sm"
+                  className="w-36"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-md px-2 py-0.5 text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
                 />
               </div>
 

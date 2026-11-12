@@ -11,6 +11,7 @@ import DojCorrectionModal from "../../components/hr/DojCorrectionModal";
 import { getUserRole } from "../../utils/auth";
 import SalaryBreakdownCalculator from "../../components/hr/SalaryBreakdownCalculator";
 import { getTodayKolkata } from "../../utils/date";
+import DateInputField from "../../components/common/DateInputField";
 
 // ─── Salary Increment Modal ──────────────────────────────────────────────────
 function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
@@ -173,7 +174,7 @@ function SalaryIncrementModal({ isOpen, onClose, employee, onSuccess }) {
             </div>
             <div>
               <label className="block text-sm text-[var(--text-secondary)] mb-1">Effective Date *</label>
-              <input required type="date" name="effective_date" value={form.effective_date} onChange={e => setForm(p => ({ ...p, effective_date: e.target.value }))} className={ic} />
+              <DateInputField required name="effective_date" value={form.effective_date} onChange={e => setForm(p => ({ ...p, effective_date: e.target.value }))} />
             </div>
           </div>
 

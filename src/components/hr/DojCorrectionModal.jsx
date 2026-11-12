@@ -2,6 +2,7 @@ import { dojHistoryLines as doJHistoryLines } from '../../utils/dojHistory';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { hrApi } from '../../api/hr';
+import DateInputField from '../common/DateInputField';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -194,7 +195,7 @@ export default function DojCorrectionModal({ isOpen, onClose, employee, onSucces
           <form onSubmit={doApply} className="space-y-3">
             <div>
               <label className="block text-sm text-[var(--text-secondary)] mb-1">Corrected date of joining *</label>
-              <input type="date" required value={newDoj} onChange={(e) => { setNewDoj(e.target.value); setPreview(null); }} className={ic} />
+              <DateInputField name="corrected_doj" required value={newDoj} onChange={(e) => { setNewDoj(e.target.value); setPreview(null); }} />
             </div>
             <div>
               <label className="block text-sm text-[var(--text-secondary)] mb-1">Reason *</label>

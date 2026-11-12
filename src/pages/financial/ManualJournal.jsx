@@ -6,6 +6,7 @@ import api from '../../api/api';
 import Button from '../../components/common/Button';
 import { PlusIcon, TrashIcon, ArrowLeftIcon, BookOpenIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import DateInputField from '../../components/common/DateInputField';
 
 const fetchAccounts = () => api.get('/ledger/accounts/').then(res => res.data);
 const createManualJournalEntry = (data) => api.post('/ledger/create-journal-entry/', data).then(res => res.data);
@@ -120,12 +121,11 @@ export default function ManualJournal() {
           <div className="bento-card p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="text-sm font-semibold text-[var(--text-muted)] block mb-2">Date *</label>
-              <input
-                type="date"
+              <DateInputField
+                name="date"
                 required
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="input-field w-full"
               />
             </div>
             <div className="md:col-span-2">

@@ -4,7 +4,8 @@ import * as Yup from "yup";
 import { createProduct, updateProduct, getManufacturers } from "../../api/inventory";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { XMarkIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import DateInputField from '../common/DateInputField';
 import { getCurrencySymbol } from '../../utils/currency';
 import { getAllUnits, saveCustomUnit } from '../../utils/units';
 import useEscKey from '../../hooks/useEscStack';
@@ -79,83 +80,6 @@ const productSchema = Yup.object().shape({
     storage_condition: Yup.string().max(150, "Storage condition must be 150 characters or less").nullable(),
   }),
 });
-
-// Helper component for DD/MM/YYYY Expiry Date input
-function FormattedDateInput({ value, onChange, className }) {
-  // Convert ISO (YYYY-MM-DD) to DD/MM/YYYY for display
-  const isoToDisplay = (isoStr) => {
-    if (!isoStr) return "";
-    const parts = String(isoStr).split('-');
-    if (parts.length === 3 && parts[0].length === 4) {
-      const [y, m, d] = parts;
-      return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
-    }
-    return isoStr;
-  };
-
-  // Convert DD/MM/YYYY to ISO (YYYY-MM-DD)
-  const displayToIso = (dispStr) => {
-    if (!dispStr) return "";
-    const clean = dispStr.trim();
-    const parts = clean.split(/[/.-]/);
-    if (parts.length === 3) {
-      let [d, m, y] = parts;
-      if (y.length === 2) y = `20${y}`;
-      if (y.length === 4 && d.length <= 2 && m.length <= 2) {
-        return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-      }
-    }
-    return dispStr;
-  };
-
-  const [displayText, setDisplayText] = useState(() => isoToDisplay(value));
-  const hiddenDateRef = React.useRef(null);
-
-  useEffect(() => {
-    setDisplayText(isoToDisplay(value));
-  }, [value]);
-
-  const handleTextChange = (e) => {
-    const raw = e.target.value;
-    setDisplayText(raw);
-    const iso = displayToIso(raw);
-    onChange(iso);
-  };
-
-  const handleNativePickerChange = (e) => {
-    const isoVal = e.target.value;
-    onChange(isoVal);
-    setDisplayText(isoToDisplay(isoVal));
-  };
-
-  return (
-    <div className="relative flex items-center">
-      <input
-        type="text"
-        value={displayText}
-        onChange={handleTextChange}
-        placeholder="dd/mm/yyyy"
-        className={`${className} pr-10 font-mono`}
-      />
-      <button
-        type="button"
-        onClick={() => hiddenDateRef.current?.showPicker ? hiddenDateRef.current.showPicker() : hiddenDateRef.current?.focus()}
-        className="absolute right-3 p-1 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors"
-        title="Open calendar"
-      >
-        <CalendarIcon className="w-5 h-5" />
-      </button>
-      <input
-        ref={hiddenDateRef}
-        type="date"
-        value={value || ""}
-        onChange={handleNativePickerChange}
-        className="sr-only"
-        tabIndex={-1}
-      />
-    </div>
-  );
-}
 
 // Storage Condition Dropdown + Custom Field Component
 function StorageConditionSelector({ value, onChange, inputClass, labelClass }) {
@@ -669,10 +593,11 @@ export default function ProductForm({ product, onClose }) {
 
                 <div>
                   <label className={labelClass}>Expiry Date/Warranty</label>
-                  <FormattedDateInput
+                  <DateInputField
+                    name="meta.expiry_date"
                     value={values.meta.expiry_date}
-                    onChange={(val) => setFieldValue("meta.expiry_date", val)}
-                    className={inputClass}
+                    onChange={(e) => setFieldValue("meta.expiry_date", e.target.value)}
+                    placeholder="DD-MM-YYYY"
                   />
                   <ErrorMessage name="meta.expiry_date" component="div" className="text-red-400 text-xs mt-0.5" />
                 </div>

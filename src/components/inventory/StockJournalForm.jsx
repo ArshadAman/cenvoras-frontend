@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import DateInputField from "../common/DateInputField";
 
 const JournalSchema = Yup.object().shape({
   date: Yup.date().required("Date is required"),
@@ -168,7 +169,11 @@ export default function StockJournalForm({ isOpen, onClose }) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Date</label>
-                        <Field name="date" type="date" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-2 text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/40 focus:border-[var(--accent-primary)] outline-none" />
+                        <DateInputField
+                          name="date"
+                          value={values.date}
+                          onChange={(e) => setFieldValue("date", e.target.value)}
+                        />
                     </div>
                     <div>
                         <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Warehouse</label>
