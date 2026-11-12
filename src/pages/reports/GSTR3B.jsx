@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { getGSTR3BSummary } from '../../api/gst';
 import { getCurrencySymbol } from '../../utils/currency';
 import { getKolkataMonthBounds } from '../../utils/date';
+import DateInputField from '../../components/common/DateInputField';
 import { toast } from 'react-toastify';
 import {
   DocumentTextIcon,
@@ -87,20 +88,22 @@ export default function GSTR3B() {
 
         {/* Action Controls & Date Pickers */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-1.5 gap-2">
+          <div className="flex items-center gap-2">
             <span className="text-xs text-[var(--text-secondary)] font-medium">From:</span>
-            <input
-              type="date"
+            <DateInputField
+              name="from_date"
+              size="sm"
+              className="w-36"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="bg-transparent text-[var(--text-primary)] text-xs focus:outline-none"
             />
             <span className="text-xs text-[var(--text-secondary)] font-medium">To:</span>
-            <input
-              type="date"
+            <DateInputField
+              name="to_date"
+              size="sm"
+              className="w-36"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="bg-transparent text-[var(--text-primary)] text-xs focus:outline-none"
             />
           </div>
 

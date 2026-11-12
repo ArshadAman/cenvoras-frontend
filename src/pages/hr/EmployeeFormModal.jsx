@@ -11,6 +11,7 @@ import { indianStates, getGSTStateCode } from '../../utils/indiaData';
 import useEscKey from '../../hooks/useEscStack';
 import { resolveCompanyWorkStateFromProfile } from '../../utils/companyState';
 import { openHrDocument } from '../../utils/hrDocuments';
+import DateInputField from '../../components/common/DateInputField';
 
 function resolveCompanyWorkState(profileData) {
   return resolveCompanyWorkStateFromProfile(profileData, indianStates, getGSTStateCode);
@@ -526,7 +527,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     <label className={labelCls + ' mb-0'}>Date of Birth *</label>
                     <span className="text-xs text-[var(--text-muted)] font-medium">At least 13 yrs old</span>
                   </div>
-                  <input required type="date" name="date_of_birth" max={maxDobDate} value={formData.date_of_birth} onChange={handleChange} className={inputCls} />
+                  <DateInputField required name="date_of_birth" max={maxDobDate} value={formData.date_of_birth} onChange={handleChange} />
                 </div>
               </div>
 
@@ -554,7 +555,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Date of Joining *</label>
-                  <input required type="date" name="date_of_joining" value={formData.date_of_joining} onChange={handleChange} className={inputCls} />
+                  <DateInputField required name="date_of_joining" value={formData.date_of_joining} onChange={handleChange} />
                 </div>
                 <div>
                   <label className={labelCls}>Gender *</label>

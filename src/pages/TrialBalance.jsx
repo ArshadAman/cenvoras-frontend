@@ -7,6 +7,7 @@ import { typeSignedNetLabel } from '../utils/ledgerBalance';
 import { getTodayKolkata } from '../utils/date';
 import { toast } from 'react-toastify';
 import GeneralLedgerModal from '../components/ledger/GeneralLedgerModal';
+import DateInputField from '../components/common/DateInputField';
 import {
   ScaleIcon,
   CheckCircleIcon,
@@ -178,13 +179,14 @@ export default function TrialBalance() {
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {/* As-Of Date Picker */}
-          <div className="flex items-center bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3 py-1.5 gap-2">
-            <span className="text-xs text-[var(--text-secondary)] font-medium">As of:</span>
-            <input
-              type="date"
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[var(--text-secondary)] font-medium whitespace-nowrap">As of:</span>
+            <DateInputField
+              name="as_of_date"
+              size="sm"
+              className="w-36"
               value={asOfDate}
               onChange={(e) => setAsOfDate(e.target.value)}
-              className="bg-transparent text-[var(--text-primary)] text-xs focus:outline-none"
             />
           </div>
 

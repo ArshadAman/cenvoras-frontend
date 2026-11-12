@@ -2,6 +2,7 @@ import StockWarningBanner from '../../components/reports/StockWarningBanner';
 import React, { useState } from "react";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { getTodayKolkata } from '../../utils/date';
+import DateInputField from '../../components/common/DateInputField';
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBalanceSheet, getBalanceSheetAccountDetail } from "../../api/gst";
@@ -204,11 +205,11 @@ export default function BalanceSheet() {
           <div className="flex items-center gap-3">
             <div>
               <label className="text-xs text-[var(--text-secondary)] block mb-1">As of Date</label>
-              <input
-                type="date"
+              <DateInputField
+                name="as_of"
+                className="w-44"
                 value={asOf}
                 onChange={(e) => setAsOf(e.target.value)}
-                className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent-primary)]/50 focus:border-[var(--accent-primary)] outline-none"
               />
             </div>
           </div>

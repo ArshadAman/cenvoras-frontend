@@ -6,6 +6,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { showErrorToast, showSuccessToast } from "../../utils/toastUtils";
 import { getTodayKolkata } from '../../utils/date';
+import DateInputField from '../../components/common/DateInputField';
 
 function AdvanceLoanModal({ isOpen, onClose, onSuccess, employees }) {
   const [form, setForm] = useState({
@@ -85,7 +86,7 @@ function AdvanceLoanModal({ isOpen, onClose, onSuccess, employees }) {
             </div>
             <div>
               <label className="block text-sm text-[var(--text-secondary)] mb-1">Disbursement Date *</label>
-              <input required type="date" value={form.disbursement_date} onChange={e => setForm(p => ({ ...p, disbursement_date: e.target.value }))} className={ic} />
+              <DateInputField required name="disbursement_date" value={form.disbursement_date} onChange={e => setForm(p => ({ ...p, disbursement_date: e.target.value }))} />
             </div>
           </div>
 

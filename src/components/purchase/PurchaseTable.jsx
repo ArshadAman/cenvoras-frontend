@@ -8,6 +8,7 @@ import { EyeIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outlin
 import { parseDateOnly } from '../../utils/date';
 import useResizableColumns from "../../hooks/useResizableColumns";
 import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from "../common/tableHeaderClasses";
+import DateInputField from "../common/DateInputField";
 
 const DEFAULT_COLUMN_WIDTHS = {
   checkbox: 44,
@@ -305,17 +306,21 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
         </div>
 
         <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 w-full lg:w-auto">
-          <input
-            type="date"
+          <DateInputField
+            name="date_start"
+            size="sm"
+            className="w-full sm:w-40"
             value={dateFilter.start}
             onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
-            className="w-full sm:w-auto px-4 py-2.5 border border-[var(--border-default)] rounded-xl bg-[var(--bg-primary)] text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--border-focus)] focus:border-[var(--border-focus)] outline-none transition-all"
+            placeholder="From date"
           />
-          <input
-            type="date"
+          <DateInputField
+            name="date_end"
+            size="sm"
+            className="w-full sm:w-40"
             value={dateFilter.end}
             onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
-            className="w-full sm:w-auto px-4 py-2.5 border border-[var(--border-default)] rounded-xl bg-[var(--bg-primary)] text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--border-focus)] focus:border-[var(--border-focus)] outline-none transition-all"
+            placeholder="To date"
           />
           <button
             onClick={() => setDateFilter({ start: "", end: "" })}

@@ -24,7 +24,10 @@
   --border-focus: #1877D2;
 
   --input-bg: #FFFFFF;
-  --input-border: rgba(68, 84, 111, 0.25);
+  --input-bg-focus: #FFFFFF;
+  --input-border: rgba(68, 84, 111, 0.28);
+  --input-border-hover: rgba(68, 84, 111, 0.48);
+  --focus-ring: rgba(24, 119, 210, 0.24);
   --card-bg: #E7EDF5;
   --card-border: rgba(68, 84, 111, 0.18);
   --bg-surface-hover: #F2F5F9;
@@ -97,8 +100,11 @@
   --border-subtle: rgba(193, 205, 222, 0.10);
   --border-focus: #64A8FF;
 
-  --input-bg: rgba(23, 28, 38, 0.75);
-  --input-border: rgba(193, 205, 222, 0.22);
+  --input-bg: rgba(23, 28, 38, 0.88);
+  --input-bg-focus: #1B2331;
+  --input-border: rgba(193, 205, 222, 0.28);
+  --input-border-hover: rgba(193, 205, 222, 0.48);
+  --focus-ring: rgba(100, 168, 255, 0.34);
   --card-bg: #252E3D;
   --card-border: rgba(193, 205, 222, 0.14);
   --bg-surface-hover: #171C26;
@@ -361,7 +367,8 @@
   .select-base:focus,
   .textarea-base:focus {
     border-color: var(--border-focus);
-    box-shadow: 0 0 0 2px rgba(148, 137, 121, 0.25);
+    background-color: var(--input-bg-focus);
+    box-shadow: 0 0 0 3px var(--focus-ring);
   }
 
   .form-error {
@@ -1152,7 +1159,76 @@
 
   .input-field:focus {
     border-color: var(--border-focus);
-    box-shadow: 0 0 0 2px var(--border-focus);
+    background-color: var(--input-bg-focus);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+  }
+
+  /* Universal Active & Resting Form Field Highlighting (Dark + Light, outside invoice sheets) */
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]),
+    select,
+    textarea
+  ):not(.no-field-highlight):not(.bg-transparent):not([class*="bg-transparent"]):not(.border-none):not(.border-0):not([class*="border-none"]):not([class*="border-0"]) {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]),
+    select,
+    textarea
+  ):not(.no-field-highlight):not(.bg-transparent):not([class*="bg-transparent"]):not(.border-none):not(.border-0):not([class*="border-none"]):not([class*="border-0"]):not([aria-invalid="true"]):not([class*="border-[var(--status-danger)"]):not([class*="border-red-"]):not([class*="border-rose-"]):not([readonly]):not(:disabled) {
+    border-color: var(--input-border);
+  }
+
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]),
+    select,
+    textarea
+  ):not(.no-field-highlight):not(.bg-transparent):not([class*="bg-transparent"]):not(.border-none):not(.border-0):not([class*="border-none"]):not([class*="border-0"]):not([aria-invalid="true"]):not([class*="border-[var(--status-danger)"]):not([readonly]):not(:disabled):hover {
+    border-color: var(--input-border-hover);
+  }
+
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]),
+    select,
+    textarea
+  ):not(.no-field-highlight):not(.bg-transparent):not([class*="bg-transparent"]):not(.border-none):not(.border-0):not([class*="border-none"]):not([class*="border-0"]):not([readonly]):focus,
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]),
+    select,
+    textarea
+  ):not(.no-field-highlight):not(.bg-transparent):not([class*="bg-transparent"]):not(.border-none):not(.border-0):not([class*="border-none"]):not([class*="border-0"]):not([readonly]):focus-visible {
+    border-color: var(--border-focus) !important;
+    background-color: var(--input-bg-focus);
+    box-shadow: 0 0 0 3px var(--focus-ring) !important;
+    outline: none !important;
+  }
+
+  :where(input, textarea)[readonly]:not(.no-field-highlight):not(.bg-transparent):not([class*="bg-transparent"]) {
+    border-style: dashed;
+    border-color: var(--border-default);
+    opacity: 0.82;
+    cursor: default;
+  }
+
+  :where(input[type="checkbox"], input[type="radio"]):not(.no-field-highlight):focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+
+  /* Active field label highlight so the currently-entered field is immediately obvious */
+  :where(div:has(> label):not(:has(div:has(> label))):has(:is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([readonly]):focus) > label),
+  :where(.form-field:focus-within > label),
+  :where(.form-field:focus-within > .form-label) {
+    color: var(--accent-primary) !important;
+    transition: color 0.15s ease;
+  }
+
+  /* Ensure invoice/bill templates stay immune to dark/focus utility overrides */
+  .invoice-sheet :is(input, select, textarea),
+  [data-bill-template] :is(input, select, textarea),
+  .bill-template :is(input, select, textarea) {
+    box-shadow: none !important;
   }
 
   select.input-field {
@@ -1184,6 +1260,25 @@
     border-radius: 999px;
     border: 2px solid transparent;
     background-clip: padding-box;
+  }
+}
+
+@layer utilities {
+  /* Ensure resting editable controls never render with barely-visible subtle borders */
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]),
+    select,
+    textarea
+  ):not(.no-field-highlight):not(.bg-transparent):not([class*="bg-transparent"]):not(.border-none):not(.border-0):not([class*="border-none"]):not([class*="border-0"]):not([aria-invalid="true"]):not([class*="border-[var(--status-danger)"]):not([class*="border-red-"]):not([class*="border-rose-"]):not([readonly]):not(:disabled) {
+    border-color: var(--input-border);
+  }
+
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]),
+    select,
+    textarea
+  ):not(.no-field-highlight):not(.bg-transparent):not([class*="bg-transparent"]):not(.border-none):not(.border-0):not([class*="border-none"]):not([class*="border-0"]):not([aria-invalid="true"]):not([class*="border-[var(--status-danger)"]):not([readonly]):not(:disabled):hover {
+    border-color: var(--input-border-hover);
   }
 }
 

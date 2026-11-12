@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol } from '../../utils/currency';
+import DateInputField from '../common/DateInputField';
 
 // Customer Autocomplete for ledger entry form
 function LedgerCustomerAutocomplete({ values, setFieldValue, initialCustomer }) {
@@ -205,11 +206,16 @@ export default function LedgerEntryForm({ entry, onSuccess, onCancel }) {
             {/* Date */}
             <div>
               <label className={labelClass}>Date *</label>
-              <Field
-                name="date"
-                type="date"
-                className={inputClass}
-              />
+              <Field name="date">
+                {({ field, form }) => (
+                  <DateInputField
+                    name="date"
+                    required
+                    value={field.value}
+                    onChange={(e) => form.setFieldValue('date', e.target.value)}
+                  />
+                )}
+              </Field>
               <ErrorMessage name="date" component="div" className="mt-1 text-xs text-[var(--status-danger)]" />
             </div>
 

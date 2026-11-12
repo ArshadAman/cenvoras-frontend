@@ -14,6 +14,7 @@ import EmployeeFormModal from "./EmployeeFormModal";
 import SimpleFormModal from "./SimpleFormModal";
 import LeaveTypeModal from "./LeaveTypeModal";
 import { getTodayKolkata } from '../../utils/date';
+import DateInputField from '../../components/common/DateInputField';
 
 // ─── Alert Details Modal ───────────────────────────────────────────────────────
 function AlertDetailsModal({ isOpen, onClose, alert, onSelectEmployee }) {
@@ -169,14 +170,12 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
               {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.employee_code})</option>)}
             </select></div>
           <div><label className={labelCls}>Date *</label>
-            <input
+            <DateInputField
               required
-              type="date"
               name="date"
               min={selectedEmp?.date_of_joining || ''}
               value={form.date}
               onChange={hc}
-              className={ic}
             />
             {selectedEmp?.date_of_joining && (
               <p className="text-xs text-[var(--accent-primary)] mt-1">
@@ -315,8 +314,8 @@ function LeaveModal({ isOpen, onClose, onSuccess, employees, leaveTypes, onLeave
                 )}
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={labelCls}>Start *</label><input required type="date" name="start_date" value={form.start_date} onChange={hc} className={ic} /></div>
-                <div><label className={labelCls}>End *</label><input required type="date" name="end_date" value={form.end_date} onChange={hc} className={ic} /></div>
+                <div><label className={labelCls}>Start *</label><DateInputField required name="start_date" value={form.start_date} onChange={hc} /></div>
+                <div><label className={labelCls}>End *</label><DateInputField required name="end_date" value={form.end_date} onChange={hc} /></div>
               </div>
               <div><label className={labelCls}>Reason</label>
                 <textarea name="reason" value={form.reason} onChange={hc} rows={2} className={ic + " resize-none"} /></div>
@@ -421,7 +420,7 @@ function TaskModal({ isOpen, onClose, onSuccess, employees, task = null }) {
           </div>
           <div>
             <label className={labelCls}>Deadline</label>
-            <input type="date" name="deadline" value={form.deadline} onChange={hc} className={ic} />
+            <DateInputField name="deadline" value={form.deadline} onChange={hc} />
           </div>
           {task && (
             <div>
@@ -646,7 +645,7 @@ function SalaryIncrementModal({ isOpen, onClose, onSuccess, employee }) {
           <div><label className={labelCls}>Increment Percentage (%) *</label>
             <input required type="number" step="0.01" min="0" name="increment_percentage" value={form.increment_percentage} onChange={hc} className={ic} placeholder="e.g. 10.5" /></div>
           <div><label className={labelCls}>Effective Date *</label>
-            <input required type="date" name="effective_from" value={form.effective_from} onChange={hc} className={ic} /></div>
+            <DateInputField required name="effective_from" value={form.effective_from} onChange={hc} /></div>
           <div className="pt-3 flex justify-end gap-3 border-t border-[var(--border-subtle)]">
             <button type="button" onClick={onClose} className="btn-secondary text-sm">Cancel</button>
             <button type="submit" disabled={saving} className="btn-primary text-sm disabled:opacity-50">{saving ? "Applying..." : "Apply Increment"}</button>

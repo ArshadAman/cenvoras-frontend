@@ -8,6 +8,7 @@ import useEscKey from '../../hooks/useEscStack';
 import useResizableColumns from '../../hooks/useResizableColumns';
 import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from '../common/tableHeaderClasses';
 import { typeSignedNet, typeSignedNetLabel } from '../../utils/ledgerBalance';
+import DateInputField from '../common/DateInputField';
 
 const DEFAULT_COLUMN_WIDTHS = {
   date: 110,
@@ -198,20 +199,18 @@ export default function GeneralLedgerModal({
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <label className={labelClass}>From Date</label>
-              <input
-                type="date"
+              <DateInputField
+                name="date_from"
                 value={dateFrom}
                 onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }}
-                className={inputClass}
               />
             </div>
             <div>
               <label className={labelClass}>To Date</label>
-              <input
-                type="date"
+              <DateInputField
+                name="date_to"
                 value={dateTo}
                 onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); }}
-                className={inputClass}
               />
             </div>
             <div>

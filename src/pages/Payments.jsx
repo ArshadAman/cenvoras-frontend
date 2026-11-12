@@ -30,6 +30,8 @@ import { getCurrencySymbol } from '../utils/currency';
 import { getTodayKolkata } from '../utils/date';
 import { getUserProfile } from '../api/users';
 import { profileBankAccounts, defaultBankAccountId, findBankAccount, bankAccountLabel, BANK_MODES } from '../utils/profileBanks';
+import CustomerForm from '../components/customers/CustomerForm';
+import DateInputField from '../components/common/DateInputField';
 
 const roundTo3 = (value) => {
   const num = Number(value || 0);
@@ -184,6 +186,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData, bankAcc
   // Search & Invoice Logic
   const [customerSearch, setCustomerSearch] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
   // R20: fetch a customer's invoices once; re-filter locally when the receipt date changes (no refetch).
   const [rawInvoices, setRawInvoices] = useState([]);
   const setInvoices = setRawInvoices;
@@ -505,26 +508,34 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData, bankAcc
               <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" />
             </div>
             
-            {showCustomerDropdown && customerSearch && (
-              <div className="absolute z-50 w-full mt-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-xl max-h-48 overflow-y-auto overflow-x-hidden">
-                {filteredCustomers.length > 0 ? (
-                  filteredCustomers.map(c => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => handleSelectCustomer(c)}
-                      className="w-full text-left p-3 hover:bg-[var(--bg-primary)] transition-colors border-b border-[var(--border-subtle)] last:border-0"
-                    >
-                      <div className="text-sm font-medium text-[var(--text-primary)]">{c.name}</div>
-                      <div className="text-xs text-[var(--text-muted)] font-mono">
-                        ID: {c.id.slice(0, 8)} • Balance: {getCurrencySymbol()}{formatAmount(c.current_balance)}
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <div className="p-3 text-sm text-[var(--text-muted)] italic">
-                    New customer will be created
-                  </div>
+            {showCustomerDropdown && customerSearch.trim() && (
+              <div className="absolute z-50 w-full mt-1 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl shadow-xl max-h-56 overflow-y-auto overflow-x-hidden">
+                {filteredCustomers.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => handleSelectCustomer(c)}
+                    className="w-full text-left p-3 hover:bg-[var(--bg-primary)] transition-colors border-b border-[var(--border-subtle)] last:border-0"
+                  >
+                    <div className="text-sm font-medium text-[var(--text-primary)]">{c.name}</div>
+                    <div className="text-xs text-[var(--text-muted)] font-mono">
+                      ID: {c.id.slice(0, 8)} • Balance: {getCurrencySymbol()}{formatAmount(c.current_balance)}
+                    </div>
+                  </button>
+                ))}
+                {!customers.some((c) => c.name?.trim().toLowerCase() === customerSearch.trim().toLowerCase()) && (
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setShowNewCustomerModal(true);
+                      setShowCustomerDropdown(false);
+                    }}
+                    className="w-full text-left p-3 hover:bg-[var(--bg-primary)] transition-colors border-t border-[var(--border-default)] flex items-center gap-2 text-sm font-medium text-[var(--accent-primary)]"
+                  >
+                    <PlusIcon className="w-4 h-4 shrink-0" />
+                    <span>Add New Customer: &ldquo;{customerSearch.trim()}&rdquo;</span>
+                  </button>
                 )}
               </div>
             )}
@@ -536,7 +547,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData, bankAcc
             <select
               value={formData.invoice}
               onChange={(e) => handleSelectInvoice(e.target.value)}
-              className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
+              className="w-full px-4 py-2.5 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-[var(--text-primary)] focus:border-[var(--border-focus)] focus:outline-none text-sm"
               disabled={isLoadingInvoices}
             >
               <option value="" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Select an invoice...</option>
@@ -562,7 +573,7 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData, bankAcc
                   placeholder="5,000"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className="w-full px-4 py-2.5 pl-7 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
+                  className="w-full px-4 py-2.5 pl-7 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-focus)] text-sm"
                 />
               </div>
             </div>
@@ -570,12 +581,11 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData, bankAcc
             {/* Date */}
             <div>
               <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Date *</label>
-              <input
-                type="date"
+              <DateInputField
+                name="date"
                 required
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-4 py-2.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] text-sm"
               />
             </div>
           </div>
@@ -774,6 +784,22 @@ function PaymentModal({ isOpen, onClose, customers, onSuccess, editData, bankAcc
           </div>
         </form>
       </div>
+
+      {showNewCustomerModal && (
+        <CustomerForm
+          isOpen={showNewCustomerModal}
+          onClose={() => setShowNewCustomerModal(false)}
+          initialName={customerSearch.trim()}
+          escPriority={20}
+          onSaved={(created) => {
+            const customer = created?.data || created;
+            if (customer) {
+              handleSelectCustomer(customer);
+            }
+            setShowNewCustomerModal(false);
+          }}
+        />
+      )}
     </div>,
     document.body
   );

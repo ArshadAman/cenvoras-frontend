@@ -4,6 +4,7 @@ import { PaperAirplaneIcon, PlusIcon, CheckIcon, XMarkIcon, EyeIcon } from '@her
 import { showErrorToast, showSuccessToast } from "../../utils/toastUtils";
 
 import LeaveTypeModal from "./LeaveTypeModal";
+import DateInputField from "../../components/common/DateInputField";
 
 function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTypes, onLeaveTypeAdded }) {
   const [form, setForm] = useState({ employee: '', leave_type: '', start_date: '', end_date: '', reason: '' });
@@ -133,11 +134,11 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Start Date *</label>
-                <input required type="date" name="start_date" value={form.start_date} onChange={handleChange} className={inputCls} />
+                <DateInputField required name="start_date" value={form.start_date} onChange={handleChange} />
               </div>
               <div>
                 <label className={labelCls}>End Date *</label>
-                <input required type="date" name="end_date" value={form.end_date} onChange={handleChange} className={inputCls} />
+                <DateInputField required name="end_date" value={form.end_date} onChange={handleChange} />
               </div>
             </div>
             <div>

@@ -6,6 +6,7 @@ import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ArrowLeftIcon, ChartBarIcon
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { getTodayKolkata, getKolkataFYStart } from '../../utils/date';
 import StockWarningBanner from '../../components/reports/StockWarningBanner';
+import DateInputField from '../../components/common/DateInputField';
 
 const today = getTodayKolkata();
 const yearStart = getKolkataFYStart();
@@ -42,13 +43,11 @@ export default function ProfitLossStatement() {
           <div className="flex flex-wrap items-end gap-4">
             <div>
               <label className="text-xs text-[var(--text-secondary)] block mb-1">From</label>
-              <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
-                className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent-primary)]/50 focus:border-[var(--accent-primary)] outline-none" />
+              <DateInputField name="from_date" className="w-44" value={fromDate} onChange={e => setFromDate(e.target.value)} />
             </div>
             <div>
               <label className="text-xs text-[var(--text-secondary)] block mb-1">To</label>
-              <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
-                className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent-primary)]/50 focus:border-[var(--accent-primary)] outline-none" />
+              <DateInputField name="to_date" className="w-44" value={toDate} onChange={e => setToDate(e.target.value)} />
             </div>
           </div>
         </div>

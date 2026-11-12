@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getStockLedger } from '../../api/reports';
 import { getProducts } from '../../api/inventory';
 import { DocumentTextIcon, ArrowDownCircleIcon, ArrowUpCircleIcon, ArrowLeftIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import DateInputField from '../../components/common/DateInputField';
 
 export default function StockLedgerReport() {
     const [selectedProduct, setSelectedProduct] = useState('');
@@ -60,20 +61,20 @@ export default function StockLedgerReport() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Start Date</label>
-                        <input
-                            type="date"
+                        <DateInputField
+                            name="start_date"
+                            className="w-44"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="input-field"
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">End Date</label>
-                        <input
-                            type="date"
+                        <DateInputField
+                            name="end_date"
+                            className="w-44"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="input-field"
                         />
                     </div>
                 </div>

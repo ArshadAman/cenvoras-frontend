@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import DateInputField from "../common/DateInputField";
 
 export default function AdvancedPurchaseFilters({ onFiltersChange, onClose }) {
   const [filters, setFilters] = useState({
@@ -62,18 +63,16 @@ export default function AdvancedPurchaseFilters({ onFiltersChange, onClose }) {
               Date Range
             </label>
             <div className="grid grid-cols-2 gap-2">
-              <input
-                type="date"
+              <DateInputField
+                name="filter_date_start"
                 value={filters.dateRange.start}
                 onChange={(e) => handleFilterChange('dateRange', { ...filters.dateRange, start: e.target.value })}
-                className={inputClass}
                 placeholder="From"
               />
-              <input
-                type="date"
+              <DateInputField
+                name="filter_date_end"
                 value={filters.dateRange.end}
                 onChange={(e) => handleFilterChange('dateRange', { ...filters.dateRange, end: e.target.value })}
-                className={inputClass}
                 placeholder="To"
               />
             </div>

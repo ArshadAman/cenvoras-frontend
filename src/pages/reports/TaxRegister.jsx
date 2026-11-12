@@ -9,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { getCurrencySymbol, formatCurrency, getCountryCode } from '../../utils/currency';
 import { getTodayKolkata, getKolkataMonthBounds } from '../../utils/date';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
+import DateInputField from '../../components/common/DateInputField';
 
 // R22: display-only labels for Table 11 supply type; JSON/CSV keep INTER/INTRA.
 const SUPPLY_TYPE_LABELS = { INTER: 'Inter-state', INTRA: 'Intra-state' };
@@ -141,13 +142,11 @@ export default function TaxRegister() {
           <div className="flex flex-wrap items-end gap-4">
             <div>
               <label className="text-xs text-[var(--text-secondary)] block mb-1 font-semibold">From</label>
-              <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
-                className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent-primary)]/50 focus:border-[var(--accent-primary)] outline-none" />
+              <DateInputField name="from_date" className="w-44" value={fromDate} onChange={e => setFromDate(e.target.value)} />
             </div>
             <div>
               <label className="text-xs text-[var(--text-secondary)] block mb-1 font-semibold">To</label>
-              <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
-                className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent-primary)]/50 focus:border-[var(--accent-primary)] outline-none" />
+              <DateInputField name="to_date" className="w-44" value={toDate} onChange={e => setToDate(e.target.value)} />
             </div>
             {activeTab !== 'gstr1' && (
               <div>

@@ -4,6 +4,7 @@ import { getProductBatches } from "../../api/inventory";
 import { splitBatch } from "../../api/reports";
 import { XMarkIcon, ScissorsIcon } from '@heroicons/react/24/outline';
 import useEscKey from "../../hooks/useEscStack";
+import DateInputField from "../common/DateInputField";
 
 export default function BatchSplitModal({ onClose }) {
   useEscKey(onClose, true, 20);
@@ -130,20 +131,20 @@ export default function BatchSplitModal({ onClose }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Mfg. Date <span className="text-[var(--text-muted)] text-xs font-normal">(Optional)</span></label>
-              <input
-                type="date"
+              <DateInputField
+                name="manufacturing_date"
                 value={manufacturingDate}
                 onChange={(e) => setManufacturingDate(e.target.value)}
-                className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-4 py-3 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none transition-all"
+                placeholder="Optional"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Exp. Date <span className="text-[var(--text-muted)] text-xs font-normal">(Optional)</span></label>
-              <input
-                type="date"
+              <DateInputField
+                name="expiry_date"
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
-                className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg px-4 py-3 text-[var(--text-primary)] text-sm focus:border-[var(--accent-primary)] outline-none transition-all"
+                placeholder="Optional"
               />
             </div>
           </div>

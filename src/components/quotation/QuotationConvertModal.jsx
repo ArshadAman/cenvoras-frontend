@@ -4,6 +4,7 @@ import { CheckIcon, XMarkIcon, TagIcon } from '@heroicons/react/24/outline';
 import { getCurrencySymbol } from '../../utils/currency';
 import useEscKey from '../../hooks/useEscStack';
 import { getTodayKolkata } from '../../utils/date';
+import DateInputField from '../common/DateInputField';
 
 export default function QuotationConvertModal({ isOpen, quotation, onClose, onConfirm, isSubmitting }) {
   useEscKey(onClose, isOpen, 15);
@@ -180,11 +181,11 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
               <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
                 Customer PO Date
               </label>
-              <input
-                type="date"
+              <DateInputField
+                name="po_date"
+                size="sm"
                 value={poDate}
                 onChange={(e) => setPoDate(e.target.value)}
-                className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
               />
             </div>
           </div>
