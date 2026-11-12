@@ -40,6 +40,8 @@ import { patchCustomer } from "../../api/customers";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { generatePixelPerfectPDF } from "../../utils/pdfEngine";
 import { serializeInvoiceHtml } from "../../utils/htmlInvoiceSerializer";
+import { resolveValidPdfBlob } from "../../utils/pdfValidation";
+import { INVOICE_PRINT_PAGE_STYLE, INVOICE_INLINE_PRINT_STYLE } from "../../utils/invoicePrintStyles";
 import { buildThemedInvoiceEmailHtml } from "../../utils/invoiceEmailGenerator";
 
 export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {}, documentType = "invoice" }) {
@@ -452,136 +454,11 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         : invoiceDetails.items || invoice?.items || [],
   };
 
-  // Print functionality with anti-slicing CSS rules
+  // Print functionality with anti-slicing CSS rules matching on-screen preview
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `${isDeliveryChallan ? "Delivery-Challan" : isQuotation ? "Quotation" : isSalesOrder ? "Proforma-Invoice" : "Invoice"}-${enrichedInvoice.invoice_number || invoice?.id}`,
-    pageStyle: `
-      @page {
-        size: A4 portrait;
-        margin: 0mm;
-      }
-      @page :left {
-        margin: 0mm;
-      }
-      @page :right {
-        margin: 0mm;
-      }
-      @media print {
-        *, *::before, *::after {
-          box-sizing: border-box !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        html, body {
-          margin: 0 !important;
-          padding: 0 !important;
-          width: 100% !important;
-          height: auto !important;
-          background: #ffffff !important;
-        }
-        thead {
-          display: table-header-group !important;
-        }
-        thead tr {
-          page-break-before: avoid !important;
-          break-before: avoid !important;
-        }
-        tr:not(.invoice-print-shell-row) {
-          break-inside: avoid !important;
-          page-break-inside: avoid !important;
-        }
-        .invoice-print-shell,
-        .invoice-print-shell > tbody,
-        .invoice-print-shell-row {
-          break-inside: auto !important;
-          page-break-inside: auto !important;
-          page-break-before: avoid !important;
-          break-before: avoid !important;
-          margin: 0 !important;
-          padding: 0 !important;
-        }
-        .print-hidden, [data-no-print], button {
-          display: none !important;
-        }
-        .invoice-sheet {
-          position: relative !important;
-          display: flex !important;
-          flex-direction: column !important;
-          box-shadow: none !important;
-          transform: none !important;
-          width: 100% !important;
-          max-width: 100% !important;
-          min-height: 100% !important;
-          margin: 0 !important;
-          box-sizing: border-box !important;
-          background: #ffffff !important;
-          overflow: visible !important;
-        }
-        /* Classic: full-bleed letterhead; 7mm body inset on the print-shell cell. */
-        .invoice-sheet:has(.invoice-print-shell[data-print-theme="classic"]) {
-          padding: 0 0 10mm 0 !important;
-          padding-top: 0 !important;
-        }
-        .invoice-sheet-body,
-        .invoice-sheet .flex-1 {
-          flex: 0 0 auto !important;
-          flex-grow: 0 !important;
-        }
-        .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header {
-          display: table-row !important;
-        }
-        .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td {
-          /* Slight white gap under letterhead before body (items or bank/totals on page break) */
-          padding: 0 0 3mm 0 !important;
-          border: none !important;
-          overflow: visible !important;
-        }
-        .invoice-print-shell {
-          border-collapse: collapse !important;
-          border-spacing: 0 !important;
-          width: 100% !important;
-          margin: 0 !important;
-        }
-        .invoice-continuation-letterhead-classic {
-          display: block !important;
-          margin: 0 !important;
-          width: 100% !important;
-          box-sizing: border-box !important;
-        }
-        .invoice-print-shell[data-print-theme="classic"] .invoice-print-shell-row > td {
-          padding: 0 7mm !important;
-          border: none !important;
-          overflow: visible !important;
-        }
-        /* Bank + totals (+ amount in words): never split across pages */
-        .invoice-totals-block {
-          break-inside: avoid !important;
-          page-break-inside: avoid !important;
-          break-before: auto !important;
-          page-break-before: auto !important;
-        }
-        /* Terms / signatory / Made with Cenvora — flow under totals */
-        .invoice-page-footer {
-          position: static !important;
-          bottom: auto !important;
-          left: auto !important;
-          right: auto !important;
-          break-inside: avoid !important;
-          page-break-inside: avoid !important;
-        }
-        [data-print-target] {
-          width: 100% !important;
-          max-width: 100% !important;
-          min-height: 100% !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          box-shadow: none !important;
-          background: #ffffff !important;
-          transform: none !important;
-        }
-      }
-    `,
+    pageStyle: INVOICE_PRINT_PAGE_STYLE,
   });
 
   // High-Quality PDF Download: Vector PDF (Chrome vector, exact replica) or Client Engine (300+ DPI)
@@ -636,7 +513,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
             blob = await downloadSalesInvoicePDF(invoiceDetails.id, payload);
           }
 
-          const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+          const validPdfBlob = await resolveValidPdfBlob(blob);
+          const blobUrl = window.URL.createObjectURL(validPdfBlob);
           const link = document.createElement('a');
           link.href = blobUrl;
           link.setAttribute('download', filename);
@@ -780,18 +658,18 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       )}
 
       {/* Main Modal */}
-      <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 print:static print:inset-auto print:block print:p-0">
         {/* Backdrop */}
         <div 
-          className="absolute inset-0 bg-black/70 backdrop-blur-sm" 
+          className="absolute inset-0 bg-black/70 backdrop-blur-sm print:hidden" 
           onClick={onClose}
         />
         
         {/* Modal Content */}
-        <div className="relative w-full max-w-5xl max-h-[95vh] flex flex-col bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
+        <div className="relative w-full max-w-5xl max-h-[95vh] flex flex-col bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden animate-fade-up print:w-full print:max-w-none print:max-h-none print:border-0 print:shadow-none print:rounded-none print:overflow-visible print:bg-white">
           
           {/* Modernized Header */}
-          <div className="relative z-30 flex flex-col md:flex-row items-start md:items-center justify-between px-5 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] gap-3">
+          <div className="relative z-30 flex flex-col md:flex-row items-start md:items-center justify-between px-5 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] gap-3 print:hidden">
             {/* Left section: Document Title, Badge, Theme & Bank Selectors */}
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
               <div className="flex items-center gap-2.5">
@@ -1025,15 +903,17 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
           </div>
 
           {/* Invoice Content */}
-          <div ref={previewContainerRef} className="flex-1 overflow-auto p-2 sm:p-8 bg-[var(--bg-primary)] flex justify-center items-start">
+          <div ref={previewContainerRef} className="flex-1 overflow-auto p-2 sm:p-8 bg-[var(--bg-primary)] flex justify-center items-start print:overflow-visible print:p-0 print:bg-white print:block">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent-primary)] mb-4" />
                 <p className="text-[var(--text-muted)]">{isDeliveryChallan ? "Loading delivery challan..." : isQuotation ? "Loading quotation..." : "Loading invoice..."}</p>
               </div>
             ) : previewTemplate ? (
-              <div className="w-full flex justify-center pb-10">
+              <div className="w-full flex justify-center pb-10 print:block print:pb-0">
+                <style type="text/css" media="print" data-modal-print-style="true">{INVOICE_INLINE_PRINT_STYLE}</style>
                 <div 
+                  data-print-wrapper="true"
                   style={{
                     transform: `scale(${previewScale})`,
                     transformOrigin: 'top center',
@@ -1046,30 +926,8 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
                     ref={printRef}
                     data-print-target
                     data-bill-template="true"
-                    className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-0 m-0 print:w-full print:max-w-none print:shadow-none print:m-0"
+                    className="w-[210mm] min-h-[297mm] bg-white shadow-2xl p-0 m-0 print:shadow-none"
                   >
-                    <style type="text/css" media="print">{`
-                      @page {
-                        size: A4 portrait;
-                        margin: 0mm;
-                      }
-                      @page :left {
-                        margin: 0mm;
-                      }
-                      @page :right {
-                        margin: 0mm;
-                      }
-                      body {
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        width: 100% !important;
-                      }
-                      .invoice-sheet {
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        margin: 0 !important;
-                      }
-                    `}</style>
                     <InvoicePreview
                       invoice={enrichedInvoice}
                       template={previewTemplate}

@@ -17,7 +17,7 @@ export function serializeInvoiceHtml(element) {
   let collectedStyles = '';
 
   try {
-    const styleElements = document.querySelectorAll('style, link[rel="stylesheet"]');
+    const styleElements = document.querySelectorAll('style:not([data-modal-print-style]), link[rel="stylesheet"]');
     styleElements.forEach((el) => {
       if (el.tagName.toLowerCase() === 'style' && el.innerHTML) {
         collectedStyles += `\n${el.innerHTML}`;
@@ -102,7 +102,7 @@ export function serializeInvoiceHtml(element) {
   <title>Invoice</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     @page {
       size: A4 portrait;
@@ -118,11 +118,21 @@ export function serializeInvoiceHtml(element) {
       padding: 0;
       background-color: #ffffff !important;
       color: #1f2937;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', 'Noto Sans', 'Liberation Sans', sans-serif;
+      font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', 'Noto Sans', 'Liberation Sans', sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
     /* A4 sheet; Classic thead letterhead repeats every page; footer flows under totals */
+    [data-print-target] {
+      width: 210mm !important;
+      max-width: 100% !important;
+      min-height: 297mm !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      background-color: #ffffff !important;
+      transform: none !important;
+    }
     .invoice-sheet {
       position: relative !important;
       display: flex !important;
@@ -130,6 +140,7 @@ export function serializeInvoiceHtml(element) {
       box-shadow: none !important;
       transform: none !important;
       width: 210mm !important;
+      max-width: 100% !important;
       min-height: 297mm !important;
       margin: 0 auto !important;
       box-sizing: border-box !important;
@@ -140,13 +151,20 @@ export function serializeInvoiceHtml(element) {
       padding: 0 0 10mm 0 !important;
       padding-top: 0 !important;
     }
-    .invoice-sheet-body,
-    .invoice-sheet .flex-1 {
+    .invoice-sheet-body {
       flex: 0 0 auto !important;
       flex-grow: 0 !important;
     }
     thead {
       display: table-header-group !important;
+    }
+    thead tr {
+      page-break-before: avoid !important;
+      break-before: avoid !important;
+    }
+    tr:not(.invoice-print-shell-row) {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
     }
     .invoice-print-shell,
     .invoice-print-shell > tbody,
@@ -154,6 +172,8 @@ export function serializeInvoiceHtml(element) {
     .invoice-print-shell-row > td {
       break-inside: auto !important;
       page-break-inside: auto !important;
+      page-break-before: avoid !important;
+      break-before: avoid !important;
     }
     .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header {
       display: table-row !important;
@@ -197,7 +217,7 @@ export function serializeInvoiceHtml(element) {
       page-break-inside: avoid !important;
     }
     .font-mono, [class*="font-mono"], code, pre {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'DejaVu Sans', 'Noto Sans', monospace, sans-serif !important;
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'DejaVu Sans', 'Noto Sans', monospace, sans-serif !important;
     }
     /* Compiled project Tailwind CSS */
     ${compiledTailwindStyles}

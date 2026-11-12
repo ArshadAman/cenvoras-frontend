@@ -40,7 +40,9 @@ export const getDeliveryChallanPdf = (id, payload) => {
     const body = typeof payload === 'object' && ('html' in payload || 'template' in payload)
       ? payload
       : { template: payload };
-    return api.post(`/billing/delivery-challans/${id}/pdf/`, body, { responseType: 'blob' });
+    return api.post(`/billing/delivery-challans/${id}/pdf/`, body, { responseType: 'blob' })
+      .then((res) => res.data);
   }
-  return api.get(`/billing/delivery-challans/${id}/pdf/`, { responseType: 'blob' });
+  return api.get(`/billing/delivery-challans/${id}/pdf/`, { responseType: 'blob' })
+    .then((res) => res.data);
 };
