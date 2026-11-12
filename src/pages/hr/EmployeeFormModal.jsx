@@ -49,13 +49,13 @@ const EMPTY_FORM = {
   tax_regime: 'new',
 };
 
-export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess }) {
+export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess, initialTab = 'personal' }) {
   useEscKey(onClose, isOpen, 10);
   const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
   const [branches, setBranches] = useState([]);
   const [allEmployees, setAllEmployees] = useState([]);
-  const [activeTab, setActiveTab] = useState('personal');
+  const [activeTab, setActiveTab] = useState(initialTab || 'personal');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [salaryConfig, setSalaryConfig] = useState(null);
@@ -94,7 +94,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   useEffect(() => {
     if (!isOpen) {
       hydratedForRef.current = null;
-      setActiveTab('personal');
+      setActiveTab(initialTab || 'personal');
       setSalaryConfig(null);
       setSalaryEdited(false);
       setFormData({ ...EMPTY_FORM, work_state: companyWorkState });
@@ -109,7 +109,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
     }
     hydratedForRef.current = hydrateKey;
     formSessionRef.current += 1;
-    setActiveTab('personal');
+    setActiveTab(initialTab || 'personal');
     setSalaryEdited(false);
     setCalculatorKey((k) => k + 1);
     fetchDropdowns();
@@ -174,14 +174,14 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       setFormData({ ...EMPTY_FORM, work_state: companyWorkState });
       setSalaryConfig(null);
     }
-  }, [isOpen, employee, companyWorkState]);
+  }, [isOpen, employee, companyWorkState, initialTab]);
 
   // Fill work_state for new employees once company profile loads (without resetting the form)
   useEffect(() => {
     if (!isOpen || employee) return;
     if (!companyWorkState) return;
     setFormData((prev) => (prev.work_state ? prev : { ...prev, work_state: companyWorkState }));
-  }, [isOpen, employee, companyWorkState]);
+  }, [isOpen, employee, companyWorkState, initialTab]);
 
   const fetchDropdowns = async () => {
     try {
