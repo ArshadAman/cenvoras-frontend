@@ -19,6 +19,10 @@ export default function ModuleProtectedRoute({ moduleKey, children }) {
     return children;
   }
 
+  if (role === 'employee') {
+    return <AccessDeniedRedirect to="/employee/portal" />;
+  }
+
   if (isLoading) {
     return null;
   }

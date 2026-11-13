@@ -253,13 +253,32 @@ export default function DateInputField({
 
   const handleTextChange = (e) => {
     if (readOnly || disabled) return;
-    let input = e.target.value.replace(/[^\d/]/g, "");
+    const raw = e.target.value;
 
+    // Check if ISO format was pasted directly e.g. 2026-11-20
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw.trim())) {
+      const iso = raw.trim();
+      if (!((minIso && iso < minIso) || (maxIso && iso > maxIso))) {
+        emitChange(iso);
+        const [y, m] = iso.split("-").map(Number);
+        setViewYear(y);
+        setViewMonth(m - 1);
+        return;
+      }
+    }
+
+    // Strip anything except digits and slashes, and collapse consecutive slashes
+    let input = raw.replace(/[^\d/]/g, "").replace(/\/+/g, "/");
+
+    // Auto-insert slash after day and month only when user types digits without trailing slash
     if (input.length === 2 && !input.includes("/") && e.nativeEvent?.inputType !== "deleteContentBackward") {
       input = `${input}/`;
     } else if (input.length === 5 && input.split("/").length === 2 && e.nativeEvent?.inputType !== "deleteContentBackward") {
       input = `${input}/`;
     }
+
+    // Ensure no repeated slashes were created by auto-insertion
+    input = input.replace(/\/+/g, "/");
 
     if (input.length <= 10) {
       setDisplayValue(input);
@@ -285,6 +304,8 @@ export default function DateInputField({
     if (displayValue && displayValue.length === 10) {
       const iso = displayToIso(displayValue);
       if (iso && ((minIso && iso < minIso) || (maxIso && iso > maxIso))) {
+        setDisplayValue(normalizedIso ? isoToDisplay(normalizedIso) : "");
+      } else if (!iso) {
         setDisplayValue(normalizedIso ? isoToDisplay(normalizedIso) : "");
       }
     } else if (displayValue && displayValue.length < 10) {
