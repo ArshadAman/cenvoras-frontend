@@ -12,7 +12,7 @@ import DebitNoteDetailsModal from "../components/returns/DebitNoteDetailsModal";
 import { getCurrencySymbol } from '../utils/currency';
 import { parseDateOnly } from '../utils/date';
 import useResizableColumns from '../hooks/useResizableColumns';
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from '../components/common/tableHeaderClasses';
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from '../components/common/tableHeaderClasses';
 
 const DEFAULT_COLUMN_WIDTHS = {
   number: 150,
@@ -196,30 +196,45 @@ export default function DebitNoteList() {
                   </tr>
                 ) : (
                   sortedNotes.map((dn) => (
-                    <tr key={dn.id} className="hover:bg-[var(--bg-primary)] transition-colors">
-                      <td className="px-6 py-4">
+                    <tr key={dn.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)] transition-colors">
+                      <td className={LIST_TD}>
                         <button
                           type="button"
                           onClick={() => setViewId(dn.id)}
-                          className="text-[var(--accent-primary)] font-semibold text-sm hover:underline text-left"
+                          className="text-xs font-mono font-semibold text-[var(--accent-primary)] hover:underline truncate max-w-full block mx-auto"
+                          title={dnLabel(dn)}
                         >
                           {dnLabel(dn)}
                         </button>
                       </td>
-                      <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">{dn.date}</td>
-                      <td className="px-6 py-4 text-[var(--text-primary)] font-medium text-sm">{dn.vendor_name}</td>
-                      <td className="px-6 py-4 text-[var(--text-muted)] text-xs font-mono">{dn.vendor_gstin || '—'}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${reasonColors[dn.reason] || reasonColors.other}`}>
+                      <td className={LIST_TD}>
+                        <div className="text-xs font-mono text-[var(--text-muted)] truncate">
+                          {dn.date}
+                        </div>
+                      </td>
+                      <td className={LIST_TD}>
+                        <div className="text-sm font-semibold text-[var(--text-primary)] truncate" title={dn.vendor_name}>
+                          {dn.vendor_name}
+                        </div>
+                      </td>
+                      <td className={LIST_TD}>
+                        <div className="text-xs font-mono text-[var(--text-muted)] truncate" title={dn.vendor_gstin || '—'}>
+                          {dn.vendor_gstin || '—'}
+                        </div>
+                      </td>
+                      <td className={LIST_TD}>
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs uppercase font-semibold tracking-wider ${reasonColors[dn.reason] || reasonColors.other}`}>
                           {reasonLabels[dn.reason] || dn.reason}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">{dn.items?.length || 0} items</td>
-                      <td className="px-6 py-4 text-right text-[var(--text-primary)] font-semibold text-sm tabular-nums">
-                        {getCurrencySymbol()}{fmt(dn.total_amount)}
+                      <td className={`${LIST_TD} text-xs font-mono text-[var(--text-secondary)] truncate`}>{dn.items?.length || 0} items</td>
+                      <td className={LIST_TD_AMOUNT}>
+                        <div className="text-xs font-mono font-bold text-[var(--text-primary)] font-tabular truncate">
+                          {getCurrencySymbol()}{fmt(dn.total_amount)}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="inline-flex items-center gap-1">
+                      <td className={LIST_TD}>
+                        <div className="inline-flex items-center justify-center gap-1">
                           <button
                             type="button"
                             onClick={() => setViewId(dn.id)}

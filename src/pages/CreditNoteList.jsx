@@ -12,7 +12,7 @@ import CreditNoteDetailsModal from "../components/returns/CreditNoteDetailsModal
 import { getCurrencySymbol } from '../utils/currency';
 import { formatDateKolkata } from '../utils/date';
 import useResizableColumns from '../hooks/useResizableColumns';
-import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from '../components/common/tableHeaderClasses';
+import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from '../components/common/tableHeaderClasses';
 
 const DEFAULT_COLUMN_WIDTHS = {
   number: 150,
@@ -203,29 +203,40 @@ export default function CreditNoteList() {
                   </tr>
                 ) : (
                   sortedNotes.map((cn) => (
-                    <tr key={cn.id} className="hover:bg-[var(--bg-primary)] transition-colors">
-                      <td className="px-6 py-4">
+                    <tr key={cn.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)] transition-colors">
+                      <td className={LIST_TD}>
                         <button
                           type="button"
                           onClick={() => setViewId(cn.id)}
-                          className="text-[var(--accent-primary)] font-semibold text-sm hover:underline text-left"
+                          className="text-xs font-mono font-semibold text-[var(--accent-primary)] hover:underline truncate max-w-full block mx-auto"
+                          title={cnLabel(cn)}
                         >
                           {cnLabel(cn)}
                         </button>
                       </td>
-                      <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">{formatCnDate(cn.date)}</td>
-                      <td className="px-6 py-4 text-[var(--text-primary)] font-medium text-sm">{cn.customer_name}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${reasonColors[cn.reason] || reasonColors.other}`}>
+                      <td className={LIST_TD}>
+                        <div className="text-xs font-mono text-[var(--text-muted)] truncate">
+                          {formatCnDate(cn.date)}
+                        </div>
+                      </td>
+                      <td className={LIST_TD}>
+                        <div className="text-sm font-semibold text-[var(--text-primary)] truncate" title={cn.customer_name}>
+                          {cn.customer_name}
+                        </div>
+                      </td>
+                      <td className={LIST_TD}>
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs uppercase font-semibold tracking-wider ${reasonColors[cn.reason] || reasonColors.other}`}>
                           {reasonLabels[cn.reason] || cn.reason}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">{cn.items?.length || 0} items</td>
-                      <td className="px-6 py-4 text-right text-[var(--text-primary)] font-semibold text-sm tabular-nums">
-                        {getCurrencySymbol()}{fmt(cn.total_amount)}
+                      <td className={`${LIST_TD} text-xs font-mono text-[var(--text-secondary)] truncate`}>{cn.items?.length || 0} items</td>
+                      <td className={LIST_TD_AMOUNT}>
+                        <div className="text-xs font-mono font-bold text-[var(--text-primary)] font-tabular truncate">
+                          {getCurrencySymbol()}{fmt(cn.total_amount)}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="inline-flex items-center gap-1">
+                      <td className={LIST_TD}>
+                        <div className="inline-flex items-center justify-center gap-1">
                           <button
                             type="button"
                             onClick={() => setViewId(cn.id)}
