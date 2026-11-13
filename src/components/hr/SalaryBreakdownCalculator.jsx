@@ -251,10 +251,18 @@ export default function SalaryBreakdownCalculator({
     const comps = { Basic: basicVal, HRA: hraVal };
     if (Number(conveyance) > 0) comps['Conveyance Allowance'] = Number(conveyance);
     if (Number(medical) > 0) comps['Medical Allowance'] = Number(medical);
+    let customTot = 0;
     customAllowances.forEach((ca) => {
       const n = (ca.name || '').trim();
-      if (n && Number(ca.amount) > 0) comps[n] = Number(ca.amount);
+      if (n && Number(ca.amount) > 0) {
+        comps[n] = Number(ca.amount);
+        customTot += Number(ca.amount);
+      }
     });
+    const totalFixed = Math.round((basicVal + hraVal + Number(conveyance || 0) + Number(medical || 0) + customTot) * 100) / 100;
+    const exceedsCtc = monthlyCtc > 0 && totalFixed > monthlyCtc;
+    const excessAmount = exceedsCtc ? Math.round((totalFixed - monthlyCtc) * 100) / 100 : 0;
+
     const adHoc = {};
     adHocAdditions.forEach((ah) => { if (ah.name && Number(ah.amount) > 0) adHoc[ah.name] = Number(ah.amount); });
     onChangeRef.current({
@@ -263,6 +271,9 @@ export default function SalaryBreakdownCalculator({
       pf_wage_components: customAllowances.filter((ca) => ca.pfWages && ca.name && Number(ca.amount) > 0
         && !(structureComponents || []).some((c) => String(c.name) === ca.name.trim())).map((ca) => ca.name.trim()),
       breakdown: null,
+      exceedsCtc,
+      excessAmount,
+      totalFixed,
     });
   }, [monthlyCtc, annualCtc, taxRegime, workState, basicPct, hraPctOfBasic, conveyance, medical,
       customAllowances, adHocAdditions, structureComponents]);
@@ -404,6 +415,16 @@ export default function SalaryBreakdownCalculator({
 
   const inputCls = "w-full rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] px-3.5 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors";
   const labelCls = "block text-xs font-semibold text-[var(--text-muted)] mb-1.5 uppercase tracking-wider";
+
+  const renderBasicVal = Math.round(monthlyCtc * (basicPct / 100) * 100) / 100;
+  const renderHraVal = Math.round(renderBasicVal * (hraPctOfBasic / 100) * 100) / 100;
+  let renderCustomTot = 0;
+  customAllowances.forEach(ca => {
+    if ((ca.name || '').trim() && Number(ca.amount) > 0) renderCustomTot += Number(ca.amount);
+  });
+  const renderTotalFixed = Math.round((renderBasicVal + renderHraVal + Number(conveyance || 0) + Number(medical || 0) + renderCustomTot) * 100) / 100;
+  const renderExceedsCtc = monthlyCtc > 0 && renderTotalFixed > monthlyCtc;
+  const renderExcessAmount = renderExceedsCtc ? Math.round((renderTotalFixed - monthlyCtc) * 100) / 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -655,6 +676,18 @@ export default function SalaryBreakdownCalculator({
                 Special Allowance absorbs remainder to 100% CTC
               </span>
             </div>
+
+            {renderExceedsCtc && (
+              <div className="mt-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-red-400">
+                <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-400" />
+                <div>
+                  <p className="text-sm font-semibold text-red-300">Allowances Exceed Monthly CTC</p>
+                  <p className="text-xs text-red-200 mt-1">
+                    Total fixed earnings and allowances (₹{renderTotalFixed.toLocaleString('en-IN')}) exceed the monthly CTC (₹{monthlyCtc.toLocaleString('en-IN')}) by ₹{renderExcessAmount.toLocaleString('en-IN')}. In Cenvora, fixed earnings cannot exceed the contracted monthly CTC.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {showAllowancesSection && (
               <div className="mt-3 p-4 bg-white/[0.02] border border-white/10 rounded-xl space-y-4">

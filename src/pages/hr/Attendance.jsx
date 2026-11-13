@@ -34,21 +34,37 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
   const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   const selectedEmp = employees.find((e) => String(e.id) === String(form.employee));
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, forceOverwrite = false) => {
+    if (e) e.preventDefault();
     if (selectedEmp?.date_of_joining && form.date < selectedEmp.date_of_joining) {
       toast.error(`Attendance cannot be marked before joining date (${selectedEmp.date_of_joining})`);
       return;
     }
+    const today = getTodayKolkata();
+    if (form.date > today) {
+      toast.error('Attendance cannot be marked for future dates.');
+      return;
+    }
     setSaving(true);
     try {
-      await hrApi.createAttendance(form);
+      const payload = { ...form };
+      if (forceOverwrite) {
+        payload.overwrite = true;
+      }
+      await hrApi.createAttendance(payload);
       toast.success("Attendance logged successfully");
       onSuccess();
       onClose();
     } catch (err) {
       const data = err.response?.data;
       const msg = data?.date?.[0] || data?.date || data?.detail || data?.non_field_errors?.[0] || "Failed to log attendance";
+      if (typeof msg === 'string' && msg.includes('Confirm overwrite to replace')) {
+        const confirmReplace = window.confirm(`${msg}\n\nDo you want to overwrite and replace the existing attendance record?`);
+        if (confirmReplace) {
+          handleSubmit(null, true);
+          return;
+        }
+      }
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -84,6 +100,7 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
               required
               name="date"
               min={selectedEmp?.date_of_joining || ''}
+              max={getTodayKolkata()}
               value={form.date}
               onChange={handleChange}
             />

@@ -89,8 +89,9 @@ export default function TeamSettings() {
 
   const profile = profileData?.profile || {};
   
-  // Read dynamic limits directly from plan 
-  const currentCount = teamMembersList.length;
+  // Read dynamic limits directly from plan — differentiate staff seats from portal employees (Medium 11)
+  const staffCount = teamMembersList.filter((m) => m.role !== 'employee').length;
+  const employeeCount = teamMembersList.filter((m) => m.role === 'employee').length;
   const maxLimit = Number(profile?.max_managers) || 0;
   const isVip = Boolean(
     profile?.is_lifetime_free
@@ -101,7 +102,7 @@ export default function TeamSettings() {
     ? 'VIP Lifetime'
     : (profile?.plan_name || 'Starter Plan');
   
-  const canAddMore = maxLimit === -1 || currentCount < maxLimit;
+  const canAddMore = maxLimit === -1 || staffCount < maxLimit;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -191,14 +192,17 @@ export default function TeamSettings() {
             </div>
             <div>
               <p className="text-[var(--text-primary)] font-medium">Subscription Plan: <span className="text-[var(--accent-primary)] font-bold">{planName}</span></p>
-              <p className="text-[var(--text-secondary)]">Limit: {maxLimit === -1 ? 'Unlimited' : maxLimit} Members</p>
+              <p className="text-[var(--text-secondary)]">Staff Limit: {maxLimit === -1 ? 'Unlimited' : maxLimit} Managers / Staff</p>
+              {employeeCount > 0 && (
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">Plus {employeeCount} Self-Service Portal {employeeCount === 1 ? 'Employee' : 'Employees'}</p>
+              )}
             </div>
           </div>
           <div className="text-right">
             <p className="text-3xl font-bold text-[var(--text-primary)] tracking-tighter">
-              {currentCount} <span className="text-lg text-[var(--text-secondary)]">/ {maxLimit === -1 ? 'Unlimited' : maxLimit}</span>
+              {staffCount} <span className="text-lg text-[var(--text-secondary)]">/ {maxLimit === -1 ? 'Unlimited' : maxLimit}</span>
             </p>
-            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest mt-1">Members Used</p>
+            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest mt-1">Staff Seats Used</p>
           </div>
         </div>
 
@@ -234,19 +238,23 @@ export default function TeamSettings() {
                     </td>
                   </tr>
                 ) : (
-                  teamMembersList.map((member) => (
-                    <tr key={member.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
-                      <td className="p-4 text-sm font-medium text-[var(--text-primary)] flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] flex items-center justify-center border border-[var(--accent-primary)]/30 text-xs font-bold">
-                           {member.first_name?.[0] || member.email[0].toUpperCase()}
-                        </div>
-                        {member.first_name} {member.last_name}
-                      </td>
-                      <td className="p-4 text-sm text-[var(--text-secondary)]">{member.email}</td>
-                      <td className="p-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
-                          {member.role}
-                        </span>
+                  teamMembersList.map((member) => {
+                    const fullName = (member.display_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || '').trim();
+                    const initial = (fullName ? fullName[0] : (member.email?.[0] || '?')).toUpperCase();
+                    return (
+                      <tr key={member.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
+                        <td className="p-4 text-sm font-medium text-[var(--text-primary)] flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] flex items-center justify-center border border-[var(--accent-primary)]/30 text-xs font-bold">
+                            {initial}
+                          </div>
+                          <span>{fullName}</span>
+                        </td>
+                        <td className="p-4 text-sm text-[var(--text-secondary)]">{member.email}</td>
+                        <td className="p-4">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30">
+                            {member.role}
+                          </span>
+                        </td>
                       </td>
                       <td className="p-4 text-sm text-[var(--text-secondary)]">
                         {member.date_joined ? (() => {
