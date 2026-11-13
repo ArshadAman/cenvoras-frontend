@@ -724,9 +724,11 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
               <NumberInput label="Bill / Ship Address" value={type.addressSize} onChange={setSize('addressSize')} min={7} max={16} unit="px" />
 
               <SectionHeader>Table</SectionHeader>
-              <NumberInput label="Table Header" value={type.tableHeaderSize} onChange={setSize('tableHeaderSize')} min={7} max={14} unit="px" />
-              <NumberInput label="Line Items" value={type.tableBodySize} onChange={setSize('tableBodySize')} min={7} max={16} unit="px" />
-              <NumberInput label="Line Notes" value={type.smallSize} onChange={setSize('smallSize')} min={7} max={14} unit="px" />
+              <NumberInput label="Table Header" value={type.tableHeaderSize} onChange={setSize('tableHeaderSize')} min={7} max={18} unit="px" />
+              <NumberInput label="Line Items" value={type.tableBodySize} onChange={setSize('tableBodySize')} min={7} max={18} unit="px" />
+              <NumberInput label="Description" value={type.itemDescriptionSize} onChange={setSize('itemDescriptionSize')} min={7} max={18} unit="px" />
+              <NumberInput label="Manufacturer" value={type.manufacturerSize} onChange={setSize('manufacturerSize')} min={7} max={18} unit="px" />
+              <NumberInput label="Line Notes" value={type.smallSize} onChange={setSize('smallSize')} min={7} max={18} unit="px" />
 
               <SectionHeader>Totals</SectionHeader>
               <NumberInput label="Totals" value={type.totalsSize} onChange={setSize('totalsSize')} min={8} max={18} unit="px" />
