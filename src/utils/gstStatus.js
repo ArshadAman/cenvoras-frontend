@@ -15,11 +15,17 @@ export function storedGstStatus(profile) {
   return profile && profile.gst_status_set ? profile.gst_status || null : null;
 }
 
-// Title for a sales invoice. Composition -> BILL OF SUPPLY; Not registered -> INVOICE (never
-// "Tax Invoice"); else the custom title or TAX INVOICE. Other document titles passed in the same
-// slot (QUOTATION, PROFORMA INVOICE, DELIVERY CHALLAN, ...) are left alone.
+// Title for a sales invoice. Draft -> DRAFT INVOICE; Composition -> BILL OF SUPPLY;
+// Not registered -> INVOICE (never "Tax Invoice"); else the custom title or TAX INVOICE.
+// Other document titles passed in the same slot (QUOTATION, PROFORMA INVOICE, DELIVERY CHALLAN, ...) are left alone.
 const INVOICE_TITLE_RE = /^\s*(tax\s+)?invoice\s*$/i;
-export function documentTitle(customTitle, profile) {
+export function documentTitle(customTitle, profile, invoiceOrStatus) {
+  const status = typeof invoiceOrStatus === 'string'
+    ? invoiceOrStatus
+    : (invoiceOrStatus?.status || (invoiceOrStatus?.invoice_number?.startsWith('DFT-') ? 'draft' : ''));
+  if (String(status).toLowerCase() === 'draft' || invoiceOrStatus?.invoice_number?.startsWith('DFT-')) {
+    return 'DRAFT INVOICE';
+  }
   const st = storedGstStatus(profile);
   const isInvoiceTitle = !customTitle || INVOICE_TITLE_RE.test(customTitle) || /tax\s+invoice/i.test(customTitle);
   if (isInvoiceTitle && st === 'composition') return 'BILL OF SUPPLY';

@@ -32,6 +32,12 @@ test('other documents keep their titles', () => {
   assert.equal(documentTitle('Tax Invoice / Original', p), 'INVOICE');
 });
 
+test('draft invoice returns DRAFT INVOICE', () => {
+  assert.equal(documentTitle('', {}, 'draft'), 'DRAFT INVOICE');
+  assert.equal(documentTitle('TAX INVOICE', {}, { status: 'draft' }), 'DRAFT INVOICE');
+  assert.equal(documentTitle('', {}, { invoice_number: 'DFT-001' }), 'DRAFT INVOICE');
+});
+
 import { needsGstStatusConfirmation } from '../src/utils/gstStatus.js';
 test('confirm banner flag', () => {
   assert.equal(needsGstStatusConfirmation({ gst_status_needs_confirmation: true }), true);

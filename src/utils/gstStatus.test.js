@@ -18,4 +18,9 @@ describe('sales form document name by GST status', () => {
     expect(salesFormDocName({ gst_status: 'composition', gst_status_set: false })).toBe('Sales Invoice');
     expect(salesFormDocName(null)).toBe('Sales Invoice');
   });
+  it('draft invoice -> DRAFT INVOICE', () => {
+    expect(documentTitle('', {}, 'draft')).toBe('DRAFT INVOICE');
+    expect(documentTitle('TAX INVOICE', {}, { status: 'draft' })).toBe('DRAFT INVOICE');
+    expect(documentTitle('', {}, { invoice_number: 'DFT-001' })).toBe('DRAFT INVOICE');
+  });
 });

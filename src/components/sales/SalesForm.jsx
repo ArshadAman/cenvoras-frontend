@@ -26,7 +26,7 @@ import useEscKey from "../../hooks/useEscStack";
 import useUnsavedPrompt from "../../hooks/useUnsavedPrompt";
 import { getTodayKolkata } from "../../utils/date";
 import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
-import { GST_RATES } from "../../utils/gstRates";
+import { GST_RATES, gstRatesWithLegacy } from "../../utils/gstRates";
 import { calculateLineAmount, calculateLineGross } from "../../utils/lineAmount";
 import { yupGstinOptional } from "../../utils/gstin";
 
@@ -201,12 +201,21 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
   const [isFocused, setIsFocused] = useState(false);
   const wrapperRef = useRef(null);
   const descRef = useRef(null);
+  const listRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState(null);
   const descValue = values.items[idx]?.description ?? values.items[idx]?.product_description ?? "";
   const hasDescription = Boolean(String(descValue).trim());
   const [descExpanded, setDescExpanded] = useState(hasDescription);
 
   const [focusDesc, setFocusDesc] = useState(false);
+
+  useEffect(() => {
+    if (!showDropdown || !listRef.current || selectedIndex < 0) return;
+    const activeEl = listRef.current.querySelector(`[data-index="${selectedIndex}"]`);
+    if (activeEl && typeof activeEl.scrollIntoView === 'function') {
+      activeEl.scrollIntoView({ block: 'nearest' });
+    }
+  }, [selectedIndex, showDropdown]);
 
   useEffect(() => {
     if (hasDescription) setDescExpanded(true);
@@ -526,17 +535,20 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
 
           return createPortal(
             <div
+              ref={listRef}
               style={dropdownStyle}
               className="max-h-60 overflow-y-auto rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-2xl backdrop-blur-xl"
             >
               {filteredProducts.slice(0, 50).map((product, index) => (
                 <div
                   key={product.id}
+                  data-index={index}
                   className={`cursor-pointer border-b border-[var(--border-subtle)] px-4 py-3 text-sm transition-colors last:border-0 ${
                     index === selectedIndex
-                      ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]'
+                      ? 'bg-[var(--accent-primary)]/15 border-l-4 border-[var(--accent-primary)] text-[var(--text-primary)]'
                       : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]'
                   }`}
+                  onMouseEnter={() => setSelectedIndex(index)}
                   onMouseDown={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
@@ -563,11 +575,13 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
               {showAddButton && (
                 <button
                   type="button"
-                  className={`w-full border-t border-[var(--border-subtle)] px-4 py-3 text-left text-sm transition-colors font-medium ${
+                  data-index={Math.min(filteredProducts.length, 50)}
+                  className={`w-full border-t border-[var(--border-subtle)] px-4 py-3 text-left text-sm transition-colors font-medium flex items-center gap-2 ${
                     selectedIndex === Math.min(filteredProducts.length, 50)
-                      ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]'
+                      ? 'bg-[var(--accent-primary)]/15 border-l-4 border-[var(--accent-primary)] text-[var(--accent-primary)]'
                       : 'text-[var(--accent-primary)] hover:bg-[var(--bg-surface-hover)]'
                   }`}
+                  onMouseEnter={() => setSelectedIndex(Math.min(filteredProducts.length, 50))}
                   onMouseDown={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
@@ -576,7 +590,8 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                     onCreateNewProduct(inputValue.trim(), idx);
                   }}
                 >
-                  + Add to inventory: "{inputValue.trim()}"
+                  <span className="text-base font-bold leading-none">➕</span>
+                  <span>Add to inventory: "{inputValue.trim()}"</span>
                 </button>
               )}
             </div>,
@@ -594,8 +609,17 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
   const [inputValue, setInputValue] = useState(values.customer_name || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
+  const listRef = useRef(null);
 
   useEscKey(() => setShowDropdown(false), showDropdown, 30);
+
+  useEffect(() => {
+    if (!showDropdown || !listRef.current || selectedIndex < 0) return;
+    const activeEl = listRef.current.querySelector(`[data-index="${selectedIndex}"]`);
+    if (activeEl && typeof activeEl.scrollIntoView === 'function') {
+      activeEl.scrollIntoView({ block: 'nearest' });
+    }
+  }, [selectedIndex, showDropdown]);
 
   // Sync inputValue with Formik values
   useEffect(() => {
@@ -746,15 +770,17 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
         )}
       </Field>
       {showDropdown && (
-        <div className="absolute z-50 mt-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl w-full max-h-64 overflow-y-auto backdrop-blur-xl">
+        <div ref={listRef} className="absolute z-50 mt-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-2xl w-full max-h-64 overflow-y-auto backdrop-blur-xl">
           {filteredCustomers.slice(0, 50).map((customer, index) => (
             <div
               key={customer.id}
+              data-index={index}
               className={`px-4 py-3 cursor-pointer text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors ${
                 index === selectedIndex
-                  ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]' 
+                  ? 'bg-[var(--accent-primary)]/15 border-l-4 border-[var(--accent-primary)] text-[var(--text-primary)]' 
                   : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]'
               }`}
+              onMouseEnter={() => setSelectedIndex(index)}
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -783,11 +809,13 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
           )}
           {inputValue.trim() && !(customers || []).some((c) => c.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()) && (
             <div
-              className={`px-4 py-3 cursor-pointer text-sm border-t border-[var(--border-subtle)] ${
+              data-index={Math.min(filteredCustomers.length, 50)}
+              className={`px-4 py-3 cursor-pointer text-sm border-t border-[var(--border-subtle)] transition-colors ${
                 selectedIndex === Math.min(filteredCustomers.length, 50)
-                  ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)]' 
+                  ? 'bg-[var(--accent-primary)]/15 border-l-4 border-[var(--accent-primary)] text-[var(--accent-primary)]' 
                   : 'text-[var(--accent-primary)] hover:bg-[var(--bg-surface-hover)] font-medium'
               }`}
+              onMouseEnter={() => setSelectedIndex(Math.min(filteredCustomers.length, 50))}
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -795,7 +823,7 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
                 setShowDropdown(false);
               }}
             >
-              <div className="font-medium text-[var(--accent-primary)] flex items-center gap-2">
+              <div className="font-semibold flex items-center gap-2">
                 <span>➕</span> Add New Customer: "{inputValue}"
               </div>
             </div>
@@ -1445,6 +1473,7 @@ export default function SalesForm({
         const itemPath = `items.${productCreationState.idx}`;
         const quantity = Number(formikRef.current.values?.items?.[productCreationState.idx]?.quantity || 1);
         const normalizedPrice = Number(createdProduct.sale_price ?? salePrice) || 0;
+        const normalizedPurPrice = Number(createdProduct.cost_price ?? createdProduct.purchase_price ?? createdProduct.price ?? costPrice) || 0;
 
         formikRef.current.setFieldValue(`${itemPath}.product`, createdProduct.name);
         formikRef.current.setFieldValue(`${itemPath}.product_id`, createdProduct.id);
@@ -1452,6 +1481,7 @@ export default function SalesForm({
         formikRef.current.setFieldValue(`${itemPath}.internal_reference`, createdProduct.internal_reference || productCreationState.internal_reference || "");
         formikRef.current.setFieldValue(`${itemPath}.unit`, createdProduct.unit || productCreationState.unit || 'pcs');
         formikRef.current.setFieldValue(`${itemPath}.price`, normalizedPrice);
+        formikRef.current.setFieldValue(`${itemPath}.purchase_price`, normalizedPurPrice);
         formikRef.current.setFieldValue(`${itemPath}.amount`, calculateLineAmount(quantity, normalizedPrice, 0));
         formikRef.current.setFieldValue(`${itemPath}.hsn_sac_code`, createdProduct.hsn_sac_code || productCreationState.hsn_sac_code || "");
         formikRef.current.setFieldValue(`${itemPath}.product_description`, createdProduct.description || productCreationState.description || "");
@@ -2098,6 +2128,7 @@ export default function SalesForm({
                       challan_number: c.challan_number.trim(),
                       challan_date: c.challan_date || null,
                     }))
+                    .sort((a, b) => a.challan_number.localeCompare(b.challan_number, undefined, { numeric: true, sensitivity: 'base' }))
                 : [];
               const serializedChallanNumber = linkedChallans.length
                 ? linkedChallans.map((c) => c.challan_number).join(', ')
@@ -2877,30 +2908,33 @@ export default function SalesForm({
 
                           {attachedChallans.length > 0 && (
                             <div className="flex flex-wrap gap-2">
-                              {(values.delivery_challans || []).map((ch, chIdx) => {
-                                const number = ch.challan_number?.trim();
-                                if (!number) return null;
-                                const dateLabel = formatChipDate(ch.challan_date);
-                                return (
-                                  <div
-                                    key={`${number}-${chIdx}`}
-                                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1 text-xs text-[var(--text-primary)]"
-                                  >
-                                    <span className="font-mono font-semibold">{number}</span>
-                                    {dateLabel ? (
-                                      <span className="text-[var(--text-muted)]">· {dateLabel}</span>
-                                    ) : null}
-                                    <button
-                                      type="button"
-                                      onClick={() => removeChallan(chIdx)}
-                                      className="ml-0.5 p-0.5 rounded-full text-[var(--text-muted)] hover:text-[var(--status-danger)] hover:bg-[var(--bg-primary)] transition-colors"
-                                      title="Remove Challan"
+                              {[...(values.delivery_challans || [])]
+                                .map((ch, originalIdx) => ({ ...ch, originalIdx }))
+                                .filter((ch) => ch.challan_number?.trim())
+                                .sort((a, b) => (a.challan_number || '').localeCompare(b.challan_number || '', undefined, { numeric: true, sensitivity: 'base' }))
+                                .map((ch) => {
+                                  const number = ch.challan_number?.trim();
+                                  const dateLabel = formatChipDate(ch.challan_date);
+                                  return (
+                                    <div
+                                      key={`${number}-${ch.originalIdx}`}
+                                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1 text-xs text-[var(--text-primary)]"
                                     >
-                                      <XMarkIcon className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                );
-                              })}
+                                      <span className="font-mono font-semibold">{number}</span>
+                                      {dateLabel ? (
+                                        <span className="text-[var(--text-muted)]">· {dateLabel}</span>
+                                      ) : null}
+                                      <button
+                                        type="button"
+                                        onClick={() => removeChallan(ch.originalIdx)}
+                                        className="ml-0.5 p-0.5 rounded-full text-[var(--text-muted)] hover:text-[var(--status-danger)] hover:bg-[var(--bg-primary)] transition-colors"
+                                        title="Remove Challan"
+                                      >
+                                        <XMarkIcon className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
                             </div>
                           )}
 
@@ -3466,15 +3500,21 @@ export default function SalesForm({
                                           }
 
                                           if (col.key === "tax") {
+                                            const currentTaxVal = values.items[index]?.tax !== undefined ? Number(values.items[index]?.tax) : 0;
                                             return (
                                               <div key={col.key}>
                                                 <Field
+                                                  as="select"
                                                   name={`items.${index}.tax`}
-                                                  type="number"
                                                   disabled={gstTaxLocked}
                                                   title={gstTaxLocked ? documentTitle('', companyProfile) === 'BILL OF SUPPLY' ? 'Composition: no GST can be charged' : 'Not registered: no GST can be charged (s.32)' : undefined}
-                                                  step="1"
-                                                  className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-xs min-h-[32px] font-mono font-tabular text-[var(--text-primary)] ${ITEM_CELL_FOCUS}`}
+                                                  value={currentTaxVal}
+                                                  onChange={(e) => {
+                                                    const val = Number(e.target.value) || 0;
+                                                    setFieldValue(`items.${index}.tax`, val);
+                                                    setFieldValue(`items.${index}.tax_rate`, val);
+                                                  }}
+                                                  className={`w-full text-center bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded px-1 py-1.5 text-xs min-h-[32px] font-mono font-tabular text-[var(--text-primary)] cursor-pointer ${ITEM_CELL_FOCUS}`}
                                                   onKeyDown={(e) => {
                                                     if (e.key === "Tab" && !e.shiftKey) {
                                                       const isLastRow = index === values.items.length - 1;
@@ -3509,7 +3549,13 @@ export default function SalesForm({
                                                       }
                                                     }
                                                   }}
-                                                />
+                                                >
+                                                  {gstRatesWithLegacy(currentTaxVal).map((rate) => (
+                                                    <option key={rate.value} value={rate.value} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">
+                                                      {rate.value}%
+                                                    </option>
+                                                  ))}
+                                                </Field>
                                               </div>
                                             );
                                           }
@@ -4264,7 +4310,12 @@ export default function SalesForm({
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="md:col-span-2 form-field">
                   <label className="form-label">Product Name</label>
-                  <input value={productCreationState.name} readOnly className="form-input" />
+                  <input
+                    value={productCreationState.name || ""}
+                    onChange={(e) => setProductCreationState((current) => ({ ...current, name: e.target.value }))}
+                    className="form-input"
+                    placeholder="Product name"
+                  />
                 </div>
                 <div className="form-field">
                   <label className="form-label">Manufacturer</label>

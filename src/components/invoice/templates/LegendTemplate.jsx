@@ -132,8 +132,8 @@ const LegendTemplate = forwardRef(({
             </div>
           </div>
           <div className="p-4 w-1/3 text-right">
-            <h2 className="font-bold tracking-widest" style={{ fontSize: `${type.invoiceTitleSize}px` }}>{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : documentTitle(content.invoiceTitle, businessInfo)}</h2>
-{!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
+            <h2 className="font-bold tracking-widest" style={{ fontSize: `${type.invoiceTitleSize}px` }}>{isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : documentTitle(content.invoiceTitle, businessInfo, invoice)}</h2>
+{!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo, invoice) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1">Original for Recipient</p>
           </div>
         </div>

@@ -151,9 +151,9 @@ const ServiceTemplate = forwardRef(({
         </div>
         <div className="text-right">
           <h2 className="font-black tracking-tighter mb-1" style={{ color: primaryColor, fontSize: `${type.invoiceTitleSize}px` }}>
-            {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : documentTitle(content.invoiceTitle, businessInfo)}
+            {isDeliveryChallan ? (content.challanTitle || 'DELIVERY CHALLAN') : documentTitle(content.invoiceTitle, businessInfo, invoice)}
           </h2>
-{!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
+{!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo, invoice) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
           <p className="text-gray-900 font-bold text-sm">
             {isDeliveryChallan ? 'Challan #:' : 'Invoice #:'} {isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}
           </p>
