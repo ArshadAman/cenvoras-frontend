@@ -41,7 +41,7 @@ import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import { generatePixelPerfectPDF } from "../../utils/pdfEngine";
 import { serializeInvoiceHtml } from "../../utils/htmlInvoiceSerializer";
 import { resolveValidPdfBlob } from "../../utils/pdfValidation";
-import { INVOICE_PRINT_PAGE_STYLE, INVOICE_INLINE_PRINT_STYLE, INVOICE_PREVIEW_LAYOUT_STYLE } from "../../utils/invoicePrintStyles";
+import { INVOICE_PRINT_PAGE_STYLE, INVOICE_INLINE_PRINT_STYLE } from "../../utils/invoicePrintStyles";
 import { buildThemedInvoiceEmailHtml } from "../../utils/invoiceEmailGenerator";
 
 export default function SalesDetailsModal({ isOpen, onClose, invoice, businessInfo = {}, documentType = "invoice" }) {
@@ -912,7 +912,6 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
               </div>
             ) : previewTemplate ? (
               <div className="w-full flex justify-center pb-10 print:block print:pb-0">
-                <style type="text/css" data-preview-layout-style="true">{INVOICE_PREVIEW_LAYOUT_STYLE}</style>
                 <style type="text/css" media="print" data-modal-print-style="true">{INVOICE_INLINE_PRINT_STYLE}</style>
                 <div 
                   data-print-wrapper="true"

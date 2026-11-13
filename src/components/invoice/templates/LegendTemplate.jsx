@@ -211,13 +211,12 @@ const LegendTemplate = forwardRef(({
                   const isLast = idx === visibleColumns.length - 1;
                   const isNum = ['price', 'amount'].includes(col.id);
                   const isDesc = col.id === 'description';
-                  const alignClass = isDesc ? 'text-left px-3' : isNum ? 'text-right px-3' : 'text-center px-2';
-                  const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '30%' : col.id === 'batch' ? '10%' : col.id === 'hsn' ? '12%' : col.id === 'quantity' ? '8%' : col.id === 'free_qty' ? '7%' : col.id === 'unit' ? '8%' : col.id === 'make' ? '10%' : col.id === 'pack_size' ? '10%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '8%' : col.id === 'tax' ? '10%' : '14%';
+                  const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '30%' : col.id === 'batch' ? '10%' : col.id === 'hsn' ? '10%' : col.id === 'quantity' ? '8%' : col.id === 'free_qty' ? '7%' : col.id === 'unit' ? '7%' : col.id === 'make' ? '10%' : col.id === 'pack_size' ? '10%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '7%' : col.id === 'tax' ? '8%' : '16%';
                   return (
                     <th 
                       key={col.id} 
-                      className={`py-2 font-bold uppercase tracking-wider ${alignClass} ${!isLast ? 'border-r border-white/20' : ''}`}
-                      style={{ width: colWidth, whiteSpace: 'nowrap', fontSize: `${type.tableHeaderSize}px` }}
+                      className={`py-2 font-bold uppercase tracking-wider text-center px-2 ${!isLast ? 'border-r border-white/20' : ''}`}
+                      style={{ width: colWidth, whiteSpace: 'nowrap', overflow: 'hidden', fontSize: `${type.tableHeaderSize}px` }}
                     >
                       {col.id === 'serial' ? 'Sl.' : col.label}
                     </th>
@@ -303,12 +302,14 @@ const LegendTemplate = forwardRef(({
                       style={{ 
                         paddingTop: '0.6px',
                         paddingBottom: '0.6px',
-                        paddingLeft: '8px', 
-                        paddingRight: '8px',
+                        paddingLeft: isDesc ? '8px' : '6px',
+                        paddingRight: isDesc ? '8px' : '6px',
                         margin: 0, 
                         lineHeight: 1.2, 
                         fontSize: `${type.tableBodySize}px`, 
                         textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
+                        fontVariantNumeric: isNum ? 'tabular-nums' : 'normal',
+                        overflow: 'hidden',
                         verticalAlign: 'middle' 
                       }}
                     >

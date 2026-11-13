@@ -91,10 +91,10 @@ const ProfessionalTemplate = forwardRef(({
       case 'unit': return '50px';
       case 'make': return '70px';
       case 'pack_size': return '70px';
-      case 'price': return '95px';
+      case 'price': return '105px';
       case 'discount': return '50px';
       case 'tax': return '50px';
-      case 'amount': return '95px';
+      case 'amount': return '115px';
       default: return 'auto';
     }
   };
@@ -340,12 +340,14 @@ const ProfessionalTemplate = forwardRef(({
                       style={{ 
                         paddingTop: '0.6px',
                         paddingBottom: '0.6px',
-                        paddingLeft: '8px', 
-                        paddingRight: '8px',
+                        paddingLeft: isDesc ? '8px' : '6px', 
+                        paddingRight: isDesc ? '8px' : '6px',
                         margin: 0, 
                         lineHeight: 1.2, 
                         fontSize: `${type.tableBodySize}px`, 
                         textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
+                        fontVariantNumeric: isNum ? 'tabular-nums' : 'normal',
+                        overflow: 'hidden',
                         verticalAlign: 'middle' 
                       }}
                     >

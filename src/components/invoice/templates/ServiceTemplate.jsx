@@ -213,10 +213,8 @@ const ServiceTemplate = forwardRef(({
               {visibleColumns.map(col => (
                 <th 
                   key={col.id} 
-                  className={`py-3 px-2 font-black text-gray-900 uppercase tracking-widest ${
-                    ['quantity', 'price', 'amount', 'tax', 'discount'].includes(col.id) ? 'text-right' : ''
-                  }`}
-                  style={{ width: preferredWidths[col.id] || '10%', whiteSpace: 'nowrap', fontSize: `${type.tableHeaderSize}px` }}
+                  className="py-3 px-2 font-black text-gray-900 uppercase tracking-widest text-center"
+                  style={{ width: preferredWidths[col.id] || '10%', whiteSpace: 'nowrap', overflow: 'hidden', fontSize: `${type.tableHeaderSize}px` }}
                 >
                   {col.id === 'serial' ? 'Sl.' : col.label}
                 </th>
@@ -296,6 +294,8 @@ const ServiceTemplate = forwardRef(({
                     isNumeric = true;
                   }
                   
+                  const isNum = ['price', 'amount'].includes(col.id);
+                  const isDesc = col.id === 'description';
                   return (
                     <td 
                       key={col.id} 
@@ -303,12 +303,14 @@ const ServiceTemplate = forwardRef(({
                       style={{ 
                         paddingTop: '0.6px',
                         paddingBottom: '0.6px',
-                        paddingLeft: '8px',
-                        paddingRight: '8px',
+                        paddingLeft: isDesc ? '8px' : '6px',
+                        paddingRight: isDesc ? '8px' : '6px',
                         margin: 0,
                         lineHeight: 1.2,
                         fontSize: `${type.tableBodySize}px`,
-                        textAlign: col.id === 'description' ? 'left' : ['price', 'amount'].includes(col.id) ? 'right' : 'center',
+                        textAlign: isDesc ? 'left' : isNum ? 'right' : 'center',
+                        fontVariantNumeric: isNum ? 'tabular-nums' : 'normal',
+                        overflow: 'hidden',
                         verticalAlign: 'middle',
                       }}
                     >
