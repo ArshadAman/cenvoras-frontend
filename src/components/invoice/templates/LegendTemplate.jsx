@@ -228,15 +228,26 @@ const LegendTemplate = forwardRef(({
               {items.map((item, idx) => {
                 if (item.row_type === 'note') {
                   return (
-                    <tr key={idx} className="border-b border-gray-200 bg-gray-50/50">
+                    <tr key={idx} className="border-b border-gray-300 bg-gray-50/50">
                       <td colSpan={visibleColumns.length} className="py-1.5 px-2 text-left text-gray-700 italic font-medium" style={{ fontSize: `${type.smallSize}px` }}>
                         Note: {item.description || item.product_description || item.product || ''}
                       </td>
                     </tr>
                   );
                 }
+                const desc = item.description || item.product_description || item.product_detail?.description;
+                const hasVisibleDesc = invoiceSettings.show_item_description !== false && Boolean(desc);
                 return (
-                <tr key={idx} style={{ paddingTop: '0.6px', paddingBottom: '0.6px', margin: 0, lineHeight: 1.2 }} className="border-b border-gray-200">
+                <tr 
+                  key={idx} 
+                  style={{ 
+                    paddingTop: hasVisibleDesc ? '2px' : '0.6px', 
+                    paddingBottom: hasVisibleDesc ? '3px' : '0.6px', 
+                    margin: 0, 
+                    lineHeight: 1.2 
+                  }} 
+                  className="border-b border-gray-300"
+                >
                 {visibleColumns.map((col, cIdx) => {
                   const isLast = cIdx === visibleColumns.length - 1;
                   const isNum = ['price', 'amount'].includes(col.id);
@@ -245,22 +256,30 @@ const LegendTemplate = forwardRef(({
                   let val = '';
                   if(col.id==='serial') val = items.slice(0, idx).filter((row) => row.row_type !== 'note').length + 1;
                   else if(col.id==='description') {
-                    const desc = item.description || item.product_description || item.product_detail?.description;
                     val = (
-                      <div className="leading-tight py-0">
-                        <div className="font-normal text-gray-900">{item.product_name || item.product}</div>
+                      <div className={`leading-tight ${hasVisibleDesc ? 'py-1' : 'py-0'}`}>
+                        <div className="font-normal text-gray-900" style={{ fontSize: `${type.tableBodySize}px` }}>{item.product_name || item.product}</div>
                         {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                          <div className="text-xs text-gray-500 font-medium italic mt-0.5">
+                          <div 
+                            className="text-gray-500 font-medium italic mt-0.5"
+                            style={{ fontSize: `${type.manufacturerSize}px` }}
+                          >
                             Mfr: {item.manufacturer || item.product_detail?.manufacturer}
                           </div>
                         )}
-                        {desc && (
-                          <div className="text-xs text-gray-500 whitespace-pre-line mt-0.5 leading-tight font-normal" style={{ wordBreak: 'break-word' }}>
+                        {hasVisibleDesc && (
+                          <div 
+                            className="text-gray-500 whitespace-pre-line mt-1 mb-0.5 leading-tight font-normal" 
+                            style={{ fontSize: `${type.itemDescriptionSize}px`, wordBreak: 'break-word' }}
+                          >
                             {desc}
                           </div>
                         )}
                         {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
-                          <div className="text-xs text-gray-500 mt-0.5 font-medium">
+                          <div 
+                            className="text-gray-500 mt-0.5 font-medium"
+                            style={{ fontSize: `${type.smallSize}px` }}
+                          >
                             {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
                             {(item.storage_condition || item.product_detail?.storage_condition) && item.product_detail?.temperature ? ' | ' : ''}
                             {item.product_detail?.temperature ? `Temp: ${item.product_detail.temperature}` : ''}
@@ -427,12 +446,14 @@ const LegendTemplate = forwardRef(({
               </ul>
             </div>
           )}
-          <div className="text-right p-3 ml-auto" style={{ fontSize: `${type.footerSize}px` }}>
-            <p className="font-bold mb-10">For {companyName}</p>
-            <p className="border-t border-gray-400 inline-block pt-1">
-              {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
-            </p>
-          </div>
+          {sections.showSignature !== false && (
+            <div className="text-right p-3 ml-auto" style={{ fontSize: `${type.footerSize}px` }}>
+              <p className="font-bold mb-10">For {companyName}</p>
+              <p className="border-t border-gray-400 inline-block pt-1">
+                {content.signatureLabel || (isDeliveryChallan ? 'Received By / Signatory' : 'Authorized Signatory')}
+              </p>
+            </div>
+          )}
         </div>
         <div className="mt-2 text-center text-gray-500 font-medium w-full" style={{ fontSize: `${type.footerSize}px` }}>
           {isDeliveryChallan
