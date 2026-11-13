@@ -159,17 +159,17 @@ const InvoicePreview = forwardRef(({
   const preferredWidths = {
     serial: 4,
     description: 0,
-    batch: 10,
-    hsn: 10,
-    quantity: 5,
+    batch: 9,
+    hsn: 8,
+    quantity: 6,
     free_qty: 5,
     unit: 6,
-    make: 12,
-    pack_size: 12,
-    price: 10,
+    make: 10,
+    pack_size: 10,
+    price: 14,
     discount: 6,
     tax: 6,
-    amount: 10,
+    amount: 16,
   };
 
   const nonDescriptionWidth = visibleColumns
@@ -459,10 +459,10 @@ const InvoicePreview = forwardRef(({
                       textAlign: 'center',
                       borderColor: colors.tableBorder,
                       fontSize: `${type.tableHeaderSize}px`,
-                      paddingLeft: '8px',
-                      paddingRight: '8px',
+                      paddingLeft: isDesc ? '8px' : '6px',
+                      paddingRight: isDesc ? '8px' : '6px',
                       whiteSpace: isDesc ? 'normal' : 'nowrap',
-                      overflow: 'visible',
+                      overflow: 'hidden',
                     }}
                   >
                     {getColumnLabel(col)}
@@ -540,16 +540,17 @@ const InvoicePreview = forwardRef(({
                           style={{ 
                             paddingTop: '0.6px',
                             paddingBottom: '0.6px',
-                            paddingLeft: '8px',
-                            paddingRight: '8px',
+                            paddingLeft: isDesc ? '8px' : '6px',
+                            paddingRight: isDesc ? '8px' : '6px',
                             margin: 0,
                             lineHeight: 1.2,
                             fontSize: `${type.tableBodySize}px`,
                             textAlign: isDesc ? 'left' : isNum ? 'right' : 'center',
+                            fontVariantNumeric: isNum ? 'tabular-nums' : 'normal',
                             borderColor: colors.tableBorder,
                             wordBreak: isDesc ? 'break-word' : 'normal',
                             whiteSpace: isDesc ? 'normal' : 'nowrap',
-                            overflow: 'visible',
+                            overflow: 'hidden',
                             verticalAlign: 'middle',
                           }}
                         >
