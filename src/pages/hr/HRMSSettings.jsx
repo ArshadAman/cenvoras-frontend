@@ -194,6 +194,72 @@ export default function HRMSSettings() {
           </div>
         </div>
 
+        {/* Section 2b: Professional Tax (PT) */}
+        <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 space-y-4 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-3">
+            <div>
+              <h2 className="text-base font-semibold text-[var(--text-primary)] uppercase tracking-wider">
+                Professional Tax (PT) Slabs & Deductions
+              </h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                State-mandated professional tax deducted monthly based on each employee's work location.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              <input
+                type="checkbox"
+                name="pt_enabled"
+                checked={settings.pt_enabled !== false}
+                onChange={handleChange}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-[var(--border-subtle)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-primary)]"></div>
+            </label>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
+              <span className="font-medium">Active State Rules:</span>
+              <span className={settings.pt_enabled !== false ? "text-emerald-500 font-semibold" : "text-amber-500 font-semibold"}>
+                {settings.pt_enabled !== false ? "✓ Professional Tax Deduction is Active" : "✕ Professional Tax Deduction is Disabled"}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 p-4">
+              <h4 className="text-xs font-semibold text-[var(--text-primary)] mb-2 uppercase tracking-wider">Odisha Slabs (Act 7 of 2000)</h4>
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)]">
+                    <th className="py-1.5 px-3">Monthly Gross Salary</th>
+                    <th className="py-1.5 px-3">Monthly Deduction</th>
+                    <th className="py-1.5 px-3">Special Rule</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-subtle)]/40 text-[var(--text-secondary)]">
+                  <tr>
+                    <td className="py-2 px-3">Up to ₹13,333.33</td>
+                    <td className="py-2 px-3 font-medium text-[var(--text-primary)]">₹0</td>
+                    <td className="py-2 px-3">Exempt</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-3">₹13,333.34 – ₹25,000.00</td>
+                    <td className="py-2 px-3 font-medium text-[var(--text-primary)]">₹125 / month</td>
+                    <td className="py-2 px-3">Flat ₹125/mo</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-3">Above ₹25,000.00</td>
+                    <td className="py-2 px-3 font-medium text-[var(--text-primary)]">₹200 / month</td>
+                    <td className="py-2 px-3">₹300 in March (₹2,500 annual cap)</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="text-[11px] text-[var(--text-muted)] mt-2">
+                * Note: Slabs for other states (Karnataka, Maharashtra, Gujarat, etc.) are automatically applied when employees are assigned to branches in those states.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Section 3: Recruitment & Onboarding Communications */}
         <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 space-y-4 shadow-sm">
           <h2 className="text-base font-semibold text-[var(--text-primary)] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-3">

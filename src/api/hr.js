@@ -44,6 +44,9 @@ export const hrApi = {
   deleteAttendance: (id) => api.delete(`/hr/attendance/${id}/`),
   bulkAttendance: (data) => api.post('/hr/attendance/bulk/', data),
   exportAttendance: (params) => api.get('/hr/attendance/export/', { params, responseType: 'blob' }),
+  getTodayAttendanceStatus: () => api.get('/hr/attendance/today-status/'),
+  checkIn: (data = {}) => api.post('/hr/attendance/check-in/', data),
+  checkOut: (data = {}) => api.post('/hr/attendance/check-out/', data),
   getEmployeeAttendanceSummary: (employeeIdOrParams, params = {}) => {
     if (typeof employeeIdOrParams === 'object') {
       return api.get('/hr/attendance/employee_summary/', { params: employeeIdOrParams });
@@ -52,6 +55,12 @@ export const hrApi = {
       params: { employee_id: employeeIdOrParams, ...params },
     });
   },
+
+  // Holidays
+  getHolidays: (params) => api.get('/hr/holidays/', { params }),
+  createHoliday: (data) => api.post('/hr/holidays/', data),
+  updateHoliday: (id, data) => api.put(`/hr/holidays/${id}/`, data),
+  deleteHoliday: (id) => api.delete(`/hr/holidays/${id}/`),
 
   // Leave Types
   getLeaveTypes: (params) => api.get('/hr/leave-types/', { params }),

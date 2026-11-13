@@ -4,7 +4,8 @@ import { toast } from "react-toastify";
 import {
   UserIcon, ClockIcon, CalendarDaysIcon, BriefcaseIcon, 
   ChatBubbleLeftRightIcon, CheckCircleIcon, ArrowPathIcon, PlusIcon,
-  XMarkIcon, BellIcon
+  XMarkIcon, BellIcon, ArrowDownTrayIcon, BanknotesIcon, BuildingLibraryIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 import DateInputField from "../../components/common/DateInputField";
 
@@ -108,6 +109,11 @@ function TaskDetailsModal({ isOpen, onClose, task, onStatusChange = null }) {
   );
 }
 
+const formatINR = (val) => {
+  const num = Number(val || 0);
+  return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
 export default function EmployeePortal() {
   const [loading, setLoading] = useState(true);
 
@@ -115,10 +121,15 @@ export default function EmployeePortal() {
   const [attendance, setAttendance] = useState([]);
   const [leaves, setLeaves] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
+  const [leaveBalances, setLeaveBalances] = useState([]);
+  const [payslips, setPayslips] = useState([]);
+  const [holidays, setHolidays] = useState([]);
+  const [todayAttendance, setTodayAttendance] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [queries, setQueries] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [clockActionLoading, setClockActionLoading] = useState(false);
 
   // Forms
   const [leaveForm, setLeaveForm] = useState({ leave_type: "", start_date: "", end_date: "", reason: "" });
@@ -131,11 +142,15 @@ export default function EmployeePortal() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [empRes, attRes, lvRes, ltRes, tskRes, qryRes, nRes] = await Promise.allSettled([
+      const [empRes, attRes, lvRes, ltRes, lbRes, psRes, holRes, todayAttRes, tskRes, qryRes, nRes] = await Promise.allSettled([
         hrApi.getEmployees(),
         hrApi.getAttendance(),
         hrApi.getLeaveApplications(),
         hrApi.getLeaveTypes(),
+        hrApi.getLeaveBalances(),
+        hrApi.getPayslips(),
+        hrApi.getHolidays(),
+        hrApi.getTodayAttendanceStatus(),
         hrApi.getTasks(),
         hrApi.getQueries(),
         hrApi.getNotifications()
@@ -143,11 +158,19 @@ export default function EmployeePortal() {
       
       if (empRes.status === "fulfilled") {
         const emps = empRes.value.data?.results || empRes.value.data || [];
-        setProfile(emps[0]); // Assuming backend returns only the logged-in employee's profile
+        setProfile(emps[0]);
       }
-      if (attRes.status === "fulfilled") setAttendance(attRes.value.data?.results || attRes.value.data || []);
+      if (attRes.status === "fulfilled") {
+        const attList = attRes.value.data?.results || attRes.value.data || [];
+        const todayStr = new Date().toISOString().split('T')[0];
+        setAttendance(attList.filter(a => a.date <= todayStr));
+      }
       if (lvRes.status === "fulfilled") setLeaves(lvRes.value.data?.results || lvRes.value.data || []);
       if (ltRes.status === "fulfilled") setLeaveTypes(ltRes.value.data?.results || ltRes.value.data || []);
+      if (lbRes.status === "fulfilled") setLeaveBalances(lbRes.value.data?.results || lbRes.value.data || []);
+      if (psRes.status === "fulfilled") setPayslips(psRes.value.data?.results || psRes.value.data || []);
+      if (holRes.status === "fulfilled") setHolidays(holRes.value.data?.results || holRes.value.data || []);
+      if (todayAttRes.status === "fulfilled") setTodayAttendance(todayAttRes.value.data);
       if (tskRes.status === "fulfilled") setTasks(tskRes.value.data?.results || tskRes.value.data || []);
       if (qryRes.status === "fulfilled") setQueries(qryRes.value.data?.results || qryRes.value.data || []);
       if (nRes.status === "fulfilled") setNotifications(nRes.value.data?.results || nRes.value.data || []);
@@ -163,38 +186,96 @@ export default function EmployeePortal() {
     fetchAll();
   }, [fetchAll]);
 
+  const handleCheckIn = async () => {
+    setClockActionLoading(true);
+    try {
+      await hrApi.checkIn();
+      toast.success("Checked in successfully");
+      const [todayRes, attRes] = await Promise.all([
+        hrApi.getTodayAttendanceStatus(),
+        hrApi.getAttendance()
+      ]);
+      setTodayAttendance(todayRes.data);
+      const todayStr = new Date().toISOString().split('T')[0];
+      setAttendance((attRes.data?.results || attRes.data || []).filter(a => a.date <= todayStr));
+    } catch (err) {
+      toast.error(err.response?.data?.error || err.response?.data?.detail || "Check-in failed");
+    } finally {
+      setClockActionLoading(false);
+    }
+  };
+
+  const handleCheckOut = async () => {
+    setClockActionLoading(true);
+    try {
+      await hrApi.checkOut();
+      toast.success("Checked out successfully");
+      const [todayRes, attRes] = await Promise.all([
+        hrApi.getTodayAttendanceStatus(),
+        hrApi.getAttendance()
+      ]);
+      setTodayAttendance(todayRes.data);
+      const todayStr = new Date().toISOString().split('T')[0];
+      setAttendance((attRes.data?.results || attRes.data || []).filter(a => a.date <= todayStr));
+    } catch (err) {
+      toast.error(err.response?.data?.error || err.response?.data?.detail || "Check-out failed");
+    } finally {
+      setClockActionLoading(false);
+    }
+  };
+
+  const handleDownloadPayslip = async (ps) => {
+    try {
+      const res = await hrApi.downloadPayslipPdf(ps.id);
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Payslip_${ps.employee_code || profile?.employee_code || 'Employee'}_${ps.month || ''}_${ps.year || ''}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error("Failed to download payslip PDF");
+    }
+  };
+
   const handleApplyLeave = async (e) => {
     e.preventDefault();
+    if (!leaveForm.reason || !leaveForm.reason.trim()) {
+      toast.error("Please provide a reason for the leave application.");
+      return;
+    }
     if (profile?.date_of_joining && leaveForm.start_date && leaveForm.start_date < profile.date_of_joining) {
       toast.error(`Leave cannot be applied before your joining date (${profile.date_of_joining})`);
       return;
     }
+    if (leaveForm.end_date < leaveForm.start_date) {
+      toast.error("End date cannot be earlier than start date.");
+      return;
+    }
+
+    // Overlap validation
+    const hasOverlap = leaves.some(l => 
+      (l.status === 'approved' || l.status === 'pending') &&
+      !(leaveForm.end_date < l.start_date || leaveForm.start_date > l.end_date)
+    );
+    if (hasOverlap) {
+      toast.error("The requested dates overlap with an existing pending or approved leave application.");
+      return;
+    }
+
     setSaving(true);
     try {
-      // Backend automatically maps 'employee' to current user if not provided, or we can pass profile.id
       await hrApi.createLeaveApplication({ ...leaveForm, employee: profile?.id });
       toast.success("Leave applied successfully");
       setShowLeaveModal(false);
+      setLeaveForm({ leave_type: "", start_date: "", end_date: "", reason: "" });
       fetchAll();
     } catch (err) {
       const data = err.response?.data;
-      const msg = data?.start_date?.[0] || data?.end_date?.[0] || data?.non_field_errors?.[0] || data?.detail || "Failed to apply leave";
+      const msg = data?.start_date?.[0] || data?.end_date?.[0] || data?.reason?.[0] || data?.non_field_errors?.[0] || data?.detail || "Failed to apply leave";
       toast.error(msg);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleRaiseQuery = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await hrApi.createTask({ ...queryForm, type: 'query', employee: profile?.id }); // Assuming queries endpoint
-      toast.success("Query raised successfully");
-      setShowQueryModal(false);
-      fetchAll();
-    } catch (err) {
-      toast.error("Failed to raise query");
     } finally {
       setSaving(false);
     }
@@ -207,6 +288,7 @@ export default function EmployeePortal() {
       await hrApi.createQuery({ ...queryForm, employee: profile?.id });
       toast.success("Query submitted successfully");
       setShowQueryModal(false);
+      setQueryForm({ subject: "", message: "" });
       fetchAll();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to submit query");
@@ -215,16 +297,6 @@ export default function EmployeePortal() {
     }
   };
   
-  const handleCompleteTask = async (task) => {
-    try {
-      await hrApi.updateTask(task.id, { ...task, status: 'completed' });
-      toast.success("Task marked as completed");
-      fetchAll();
-    } catch (err) {
-      toast.error("Failed to update task");
-    }
-  };
-
   const handleUpdateTaskStatus = async (taskId, status) => {
     try {
       const task = tasks.find(t => t.id === taskId);
@@ -261,7 +333,7 @@ export default function EmployeePortal() {
             {profile?.full_name || "Employee"} Portal
           </h1>
         </div>
-        <button onClick={fetchAll} className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
+        <button onClick={fetchAll} className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer">
           <ArrowPathIcon className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh
         </button>
       </div>
@@ -270,13 +342,26 @@ export default function EmployeePortal() {
       <div className="overflow-x-auto pb-1">
         <div className="flex gap-1 p-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-fit min-w-full md:min-w-0 whitespace-nowrap shadow-sm">
           <button onClick={() => setTab("dashboard")}
-            className={`px-4 py-2 text-sm font-semibold rounded-xl transition ${tab === "dashboard" ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+            className={`px-4 py-2 text-sm font-semibold rounded-xl transition cursor-pointer ${tab === "dashboard" ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
             My Dashboard
           </button>
+          <button onClick={() => setTab("payslips")}
+            className={`px-4 py-2 text-sm font-semibold rounded-xl transition flex items-center gap-2 cursor-pointer ${tab === "payslips" ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+            <BanknotesIcon className="w-4 h-4" />
+            <span>My Payslips</span>
+            {payslips.length > 0 && (
+              <span className="px-1.5 py-0.2 bg-[var(--bg-primary)]/80 text-xs rounded-full font-mono">{payslips.length}</span>
+            )}
+          </button>
+          <button onClick={() => setTab("holidays")}
+            className={`px-4 py-2 text-sm font-semibold rounded-xl transition flex items-center gap-2 cursor-pointer ${tab === "holidays" ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+            <CalendarIcon className="w-4 h-4" />
+            <span>Holiday Calendar</span>
+          </button>
           <button onClick={() => setTab("announcements")}
-            className={`px-4 py-2 text-sm font-semibold rounded-xl transition relative flex items-center gap-2 ${tab === "announcements" ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+            className={`px-4 py-2 text-sm font-semibold rounded-xl transition relative flex items-center gap-2 cursor-pointer ${tab === "announcements" ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] shadow-sm" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
             <BellIcon className="w-4 h-4" />
-            <span>Announcements & Broadcasts</span>
+            <span>Announcements</span>
             {notifications.length > 0 && (
               <span className="flex h-2 w-2 rounded-full bg-[var(--status-danger)] animate-pulse"></span>
             )}
@@ -286,12 +371,112 @@ export default function EmployeePortal() {
 
       {tab === "dashboard" && (
         <>
-          {/* Stats Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard icon={BriefcaseIcon} iconBg="bg-[var(--status-info-bg)]" iconColor="text-[var(--status-info-text)]" label="Total Tasks" value={tasks.length} />
-            <StatCard icon={CheckCircleIcon} iconBg="bg-[var(--status-success-bg)]" iconColor="text-[var(--status-success-text)]" label="Completed Tasks" value={tasks.filter(t => t.status === 'completed').length} />
-            <StatCard icon={CalendarDaysIcon} iconBg="bg-[var(--border-subtle)]/20" iconColor="text-[var(--accent-primary)]" label="Total Leaves" value={leaves.length} />
-            <StatCard icon={ClockIcon} iconBg="bg-[var(--status-warning-bg)]" iconColor="text-[var(--status-warning-text)]" label="Pending Leaves" value={leaves.filter(l => l.status === 'pending').length} />
+          {/* Top Row: Attendance Clock-in Widget + Stats */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Check-In / Check-Out Widget */}
+            <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs uppercase font-semibold tracking-wider text-[var(--text-muted)]">Today's Attendance</span>
+                  <span className="text-xs font-mono text-[var(--text-secondary)]">
+                    {new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+                <div className="mt-1">
+                  {todayAttendance?.checked_in ? (
+                    todayAttendance.checked_out ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-emerald-500 font-semibold text-sm">
+                          <CheckCircleIcon className="w-5 h-5" /> Completed for Today
+                        </div>
+                        <p className="text-xs text-[var(--text-muted)] font-mono">
+                          In: {todayAttendance.check_in_time} | Out: {todayAttendance.check_out_time}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                          Checked In at {todayAttendance.check_in_time}
+                        </div>
+                        <p className="text-xs text-[var(--text-muted)]">Working actively</p>
+                      </div>
+                    )
+                  ) : (
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">Not Checked In Today</p>
+                      <p className="text-xs text-[var(--text-muted)]">Record your arrival for today</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] flex items-center gap-3">
+                {!todayAttendance?.checked_in && (
+                  <button
+                    onClick={handleCheckIn}
+                    disabled={clockActionLoading}
+                    className="btn-primary w-full text-xs py-2 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  >
+                    <ClockIcon className="w-4 h-4" />
+                    {clockActionLoading ? "Recording..." : "Check In Now"}
+                  </button>
+                )}
+                {todayAttendance?.checked_in && !todayAttendance?.checked_out && (
+                  <button
+                    onClick={handleCheckOut}
+                    disabled={clockActionLoading}
+                    className="btn-warning w-full text-xs py-2 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  >
+                    <ClockIcon className="w-4 h-4" />
+                    {clockActionLoading ? "Recording..." : "Check Out"}
+                  </button>
+                )}
+                {todayAttendance?.checked_in && todayAttendance?.checked_out && (
+                  <span className="text-xs text-[var(--text-muted)] italic text-center w-full">Shift finished for today</span>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Stats Grid */}
+            <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <StatCard icon={BriefcaseIcon} iconBg="bg-[var(--status-info-bg)]" iconColor="text-[var(--status-info-text)]" label="Total Tasks" value={tasks.length} />
+              <StatCard icon={CheckCircleIcon} iconBg="bg-[var(--status-success-bg)]" iconColor="text-[var(--status-success-text)]" label="Tasks Done" value={tasks.filter(t => t.status === 'completed').length} />
+              <StatCard icon={CalendarDaysIcon} iconBg="bg-[var(--border-subtle)]/20" iconColor="text-[var(--accent-primary)]" label="Leave Requests" value={leaves.length} />
+              <StatCard icon={ClockIcon} iconBg="bg-[var(--status-warning-bg)]" iconColor="text-[var(--status-warning-text)]" label="Pending Leaves" value={leaves.filter(l => l.status === 'pending').length} />
+            </div>
+          </div>
+
+          {/* Leave Balances Section */}
+          <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-primary)] flex items-center gap-2">
+                <CalendarDaysIcon className="w-4 h-4 text-[var(--accent-primary)]" />
+                My Leave Balances
+              </h3>
+              <button onClick={() => setShowLeaveModal(true)} className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 cursor-pointer">
+                <PlusIcon className="w-3.5 h-3.5" /> Apply Leave
+              </button>
+            </div>
+            {leaveBalances.length === 0 ? (
+              <p className="text-xs text-[var(--text-muted)] py-2">No leave balances allocated yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                {leaveBalances.map(b => (
+                  <div key={b.id} className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 flex flex-col justify-between">
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">{b.leave_type_name || b.leave_type}</span>
+                    <div className="mt-2 flex items-baseline justify-between">
+                      <span className="text-2xl font-bold text-[var(--accent-primary)] tabular-nums">{b.balance}</span>
+                      <span className="text-xs text-[var(--text-muted)]">days left</span>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-[var(--border-subtle)] flex justify-between text-[11px] text-[var(--text-muted)]">
+                      <span>Allocated: {b.allocated || 0}</span>
+                      <span>Used: {b.used || 0}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -299,7 +484,7 @@ export default function EmployeePortal() {
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-bold text-[var(--text-primary)]">Leave Applications</h2>
-                <button onClick={() => setShowLeaveModal(true)} className="btn-primary inline-flex items-center gap-2 text-sm">
+                <button onClick={() => setShowLeaveModal(true)} className="btn-primary inline-flex items-center gap-2 text-sm cursor-pointer">
                   <PlusIcon className="w-4 h-4" /> Apply Leave
                 </button>
               </div>
@@ -377,12 +562,12 @@ export default function EmployeePortal() {
                             </td>
                             <td className="px-5 py-3 text-right">
                               {t.status === 'pending' && (
-                                <button onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(t.id, 'in_progress'); }} className="btn-warning text-xs px-3 py-1.5 rounded-lg">
+                                <button onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(t.id, 'in_progress'); }} className="btn-warning text-xs px-3 py-1.5 rounded-lg cursor-pointer">
                                   Start Task
                                 </button>
                               )}
                               {t.status === 'in_progress' && (
-                                <button onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(t.id, 'completed'); }} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg hover:bg-green-500/30 transition font-medium">
+                                <button onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(t.id, 'completed'); }} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg hover:bg-green-500/30 transition font-medium cursor-pointer">
                                   Mark Done
                                 </button>
                               )}
@@ -400,7 +585,7 @@ export default function EmployeePortal() {
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-bold text-[var(--text-primary)]">HR Queries</h2>
-                <button onClick={() => setShowQueryModal(true)} className="btn-primary inline-flex items-center gap-2 text-sm">
+                <button onClick={() => setShowQueryModal(true)} className="btn-primary inline-flex items-center gap-2 text-sm cursor-pointer">
                   <PlusIcon className="w-4 h-4" /> Raise Query
                 </button>
               </div>
@@ -435,25 +620,32 @@ export default function EmployeePortal() {
               </div>
             </div>
 
-            {/* ATTENDANCE */}
+            {/* ATTENDANCE HISTORY (Excludes future dates) */}
             <div className="space-y-6">
               <div className="flex justify-between items-center h-9">
                 <h2 className="text-lg font-bold text-[var(--text-primary)]">Attendance History</h2>
               </div>
               <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
                 {attendance.length === 0 ? (
-                  <div className="p-8 text-center text-[var(--text-muted)] text-sm">No attendance records found.</div>
+                  <div className="p-8 text-center text-[var(--text-muted)] text-sm">No past attendance records found.</div>
                 ) : (
                   <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
                     <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] font-semibold border-b border-[var(--border-subtle)]">
-                      <tr><th className="px-5 py-3">Date</th><th className="px-5 py-3">Status</th></tr>
+                      <tr><th className="px-5 py-3">Date</th><th className="px-5 py-3">Timings</th><th className="px-5 py-3">Status</th></tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border-subtle)]">
                       {attendance.map(a => (
                         <tr key={a.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                           <td className="px-5 py-3 text-[var(--text-primary)] font-medium">{a.date}</td>
+                          <td className="px-5 py-3 text-xs text-[var(--text-muted)] font-mono">
+                            {a.check_in_time ? `${a.check_in_time} - ${a.check_out_time || 'In Progress'}` : '—'}
+                          </td>
                           <td className="px-5 py-3 capitalize">
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${a.status === 'present' ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]' : 'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)]'}`}>
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                              a.status === 'present' ? 'bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]' : 
+                              a.status === 'holiday' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' :
+                              'bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)]'
+                            }`}>
                               {a.status.replace('_', ' ')}
                             </span>
                           </td>
@@ -468,6 +660,150 @@ export default function EmployeePortal() {
         </>
       )}
 
+      {/* PAYSLIPS TAB */}
+      {tab === "payslips" && (
+        <div className="space-y-6 animate-fade-up">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+                <BanknotesIcon className="w-6 h-6 text-[var(--accent-primary)]" />
+                My Payslips & Compensation
+              </h2>
+              <p className="text-sm text-[var(--text-muted)] mt-1">
+                View your monthly salary breakdown and download your signed monthly payslip PDFs.
+              </p>
+            </div>
+            <div className="text-xs text-[var(--text-muted)] font-mono">
+              Total {payslips.length} record{payslips.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
+            {payslips.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <BanknotesIcon className="w-12 h-12 text-[var(--text-muted)] mx-auto opacity-50" />
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">No Payslips Generated Yet</h3>
+                <p className="text-sm text-[var(--text-muted)] max-w-md mx-auto">
+                  Your monthly payslips will appear here as soon as HR runs and finalises the payroll for your cycle.
+                </p>
+              </div>
+            ) : (
+              <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
+                <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] font-semibold border-b border-[var(--border-subtle)]">
+                  <tr>
+                    <th className="px-5 py-3">Pay Period</th>
+                    <th className="px-5 py-3">Gross Earnings</th>
+                    <th className="px-5 py-3">Deductions</th>
+                    <th className="px-5 py-3">Net Pay</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3 text-right">Download</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-subtle)]">
+                  {payslips.map(ps => (
+                    <tr key={ps.id} className="hover:bg-[var(--bg-primary)] transition-colors">
+                      <td className="px-5 py-3.5 font-semibold text-[var(--text-primary)]">
+                        {ps.month_display || `${ps.month}/${ps.year}`}
+                      </td>
+                      <td className="px-5 py-3.5 text-[var(--text-primary)] font-mono font-medium">
+                        {formatINR(ps.gross_salary)}
+                      </td>
+                      <td className="px-5 py-3.5 text-rose-400 font-mono">
+                        {formatINR(ps.total_deductions)}
+                      </td>
+                      <td className="px-5 py-3.5 font-mono font-bold text-emerald-400">
+                        {formatINR(ps.net_salary)}
+                      </td>
+                      <td className="px-5 py-3.5 capitalize">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                          ps.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                          'bg-[var(--status-info-bg)] text-[var(--status-info-text)] border border-[var(--border-subtle)]'
+                        }`}>
+                          {ps.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <button
+                          onClick={() => handleDownloadPayslip(ps)}
+                          className="btn-secondary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1.5 cursor-pointer hover:border-[var(--accent-primary)]"
+                          title="Download Payslip PDF"
+                        >
+                          <ArrowDownTrayIcon className="w-4 h-4 text-[var(--accent-primary)]" />
+                          <span>PDF</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* HOLIDAYS TAB */}
+      {tab === "holidays" && (
+        <div className="space-y-6 animate-fade-up">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+                <CalendarIcon className="w-6 h-6 text-[var(--accent-primary)]" />
+                Company Holiday Calendar
+              </h2>
+              <p className="text-sm text-[var(--text-muted)] mt-1">
+                Official company-wide declared holidays and festive non-working days.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-sm overflow-hidden">
+            {holidays.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <CalendarIcon className="w-12 h-12 text-[var(--text-muted)] mx-auto opacity-50" />
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">No Holidays Listed</h3>
+                <p className="text-sm text-[var(--text-muted)] max-w-md mx-auto">
+                  Company holidays configured by your HR department will be displayed here.
+                </p>
+              </div>
+            ) : (
+              <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm text-left text-[var(--text-secondary)]">
+                <thead className="text-xs uppercase bg-[var(--bg-primary)] text-[var(--text-muted)] font-semibold border-b border-[var(--border-subtle)]">
+                  <tr>
+                    <th className="px-5 py-3">Date</th>
+                    <th className="px-5 py-3">Holiday Name</th>
+                    <th className="px-5 py-3">Day</th>
+                    <th className="px-5 py-3">Type</th>
+                    <th className="px-5 py-3">Description</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-subtle)]">
+                  {holidays.map(h => {
+                    const d = new Date(h.date + 'T00:00:00');
+                    const dayName = !Number.isNaN(d.getTime()) ? d.toLocaleDateString(undefined, { weekday: 'long' }) : '—';
+                    return (
+                      <tr key={h.id} className="hover:bg-[var(--bg-primary)] transition-colors">
+                        <td className="px-5 py-3.5 font-mono font-medium text-[var(--text-primary)]">{h.date}</td>
+                        <td className="px-5 py-3.5 font-semibold text-[var(--text-primary)]">{h.name}</td>
+                        <td className="px-5 py-3.5 text-[var(--text-secondary)]">{dayName}</td>
+                        <td className="px-5 py-3.5">
+                          <span className={`px-2.5 py-0.5 rounded text-xs font-semibold ${
+                            h.is_optional ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          }`}>
+                            {h.is_optional ? 'Optional' : 'Mandatory'}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-xs text-[var(--text-muted)]">{h.description || '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ANNOUNCEMENTS TAB */}
       {tab === "announcements" && (
         <div className="space-y-6 animate-fade-up">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -573,12 +909,19 @@ export default function EmployeePortal() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-[var(--text-secondary)] mb-1">Reason</label>
-                <textarea value={leaveForm.reason} onChange={(e) => setLeaveForm({...leaveForm, reason: e.target.value})} rows={2} className={ic + " resize-none"} />
+                <label className="block text-sm text-[var(--text-secondary)] mb-1">Reason *</label>
+                <textarea
+                  required
+                  placeholder="Reason for leave is required"
+                  value={leaveForm.reason}
+                  onChange={(e) => setLeaveForm({...leaveForm, reason: e.target.value})}
+                  rows={2}
+                  className={ic + " resize-none"}
+                />
               </div>
               <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-default)]">
-                <button type="button" onClick={() => setShowLeaveModal(false)} className="btn-secondary !text-sm">Cancel</button>
-                <button type="submit" disabled={saving} className="btn-primary !text-sm">{saving ? "Submitting..." : "Apply"}</button>
+                <button type="button" onClick={() => setShowLeaveModal(false)} className="btn-secondary !text-sm cursor-pointer">Cancel</button>
+                <button type="submit" disabled={saving} className="btn-primary !text-sm cursor-pointer">{saving ? "Submitting..." : "Apply"}</button>
               </div>
             </form>
           </div>
@@ -600,8 +943,8 @@ export default function EmployeePortal() {
                 <textarea required value={queryForm.message} onChange={(e) => setQueryForm({...queryForm, message: e.target.value})} rows={4} className={ic + " resize-none"} placeholder="Describe your query..." />
               </div>
               <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-default)]">
-                <button type="button" onClick={() => setShowQueryModal(false)} className="btn-secondary !text-sm">Cancel</button>
-                <button type="submit" disabled={saving} className="btn-primary !text-sm">{saving ? "Submitting..." : "Submit"}</button>
+                <button type="button" onClick={() => setShowQueryModal(false)} className="btn-secondary !text-sm cursor-pointer">Cancel</button>
+                <button type="submit" disabled={saving} className="btn-primary !text-sm cursor-pointer">{saving ? "Submitting..." : "Submit"}</button>
               </div>
             </form>
           </div>

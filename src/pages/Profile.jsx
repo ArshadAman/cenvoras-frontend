@@ -444,15 +444,27 @@ const Profile = ({ onLogout }) => {
   useEffect(() => {
     if (userProfile && userProfile.profile) {
       const profile = userProfile.profile;
+      const emp = employeeData;
+      const isEmp = role === 'employee';
+      const firstName = profile.first_name || (isEmp && emp?.full_name ? emp.full_name.split(' ')[0] : '');
+      const lastName = profile.last_name || (isEmp && emp?.full_name ? emp.full_name.split(' ').slice(1).join(' ') : '');
+      const phone = (isEmp ? (emp?.personal_phone || profile.phone) : profile.phone) || '';
+      const address = (isEmp ? (emp?.address || profile.business_address) : profile.business_address) || '';
+      const bankName = (isEmp ? (emp?.bank_name || profile.bank_name) : profile.bank_name) || '';
+      const bankAcc = (isEmp ? (emp?.bank_account_number || profile.bank_account_number) : profile.bank_account_number) || '';
+      const bankIfsc = (isEmp ? (emp?.bank_ifsc || profile.bank_ifsc_code) : profile.bank_ifsc_code) || '';
+      const holderName = (isEmp ? (emp?.account_holder_name || emp?.full_name) : '') || '';
+      const upiId = (isEmp ? (emp?.upi_id || profile.bank_upi_id) : profile.bank_upi_id) || '';
+
       setFormData(prev => ({
         ...prev,
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
+        first_name: firstName,
+        last_name: lastName,
         email: profile.email || '',
         current_password: '',
-        phone: profile.phone || '',
+        phone: phone,
         business_name: profile.business_name || '',
-        business_address: profile.business_address || '',
+        business_address: address,
         gstin: profile.gstin || '',
         gst_status: profile.gst_status || '',
         auto_round_off: profile.auto_round_off !== false,
@@ -464,16 +476,19 @@ const Profile = ({ onLogout }) => {
         dl_number: profile.dl_number || '',
         state: profile.state || '',
         city: profile.city || '',
-        bank_name: profile.bank_name || '',
-        bank_account_number: profile.bank_account_number || '',
-        bank_ifsc_code: profile.bank_ifsc_code || '',
+        bank_name: bankName,
+        bank_account_number: bankAcc,
+        bank_ifsc_code: bankIfsc,
+        account_holder_name: holderName,
         bank_branch: profile.bank_branch || '',
-        bank_upi_id: profile.bank_upi_id || '',
+        bank_upi_id: upiId,
+        emergency_contact_name: emp?.emergency_contact_name || '',
+        emergency_contact_phone: emp?.emergency_contact_phone || '',
         bank_qr_code: profile.bank_qr_code || '',
         bank_accounts: normalizeAccounts(profile.bank_accounts, profile)
       }));
     }
-  }, [userProfile]);
+  }, [userProfile, employeeData, role]);
 
   useEffect(() => {
     const currentCode = String(subscriptionData?.data?.plan?.code || userProfile?.profile?.plan_code || 'free').toLowerCase();
@@ -743,8 +758,38 @@ const Profile = ({ onLogout }) => {
     handleBankAccountChange('qr_code', '');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e?.preventDefault?.();
+    if (role === 'employee') {
+      try {
+        if (employeeData?.id) {
+          await hrApi.updateEmployee(employeeData.id, {
+            personal_phone: formData.phone,
+            address: formData.business_address,
+            bank_name: formData.bank_name,
+            bank_account_number: formData.bank_account_number,
+            bank_ifsc: formData.bank_ifsc_code,
+            account_holder_name: formData.account_holder_name,
+            upi_id: formData.bank_upi_id,
+            emergency_contact_name: formData.emergency_contact_name,
+            emergency_contact_phone: formData.emergency_contact_phone,
+          });
+        }
+        await patchUserProfile({
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone: formData.phone,
+        });
+        toast.success("Profile and bank details updated successfully");
+        setIsEditing(false);
+        queryClient.invalidateQueries(['userProfile']);
+        queryClient.invalidateQueries(['employeeProfile']);
+      } catch (err) {
+        toast.error(err.response?.data?.detail || "Failed to update profile");
+      }
+      return;
+    }
+
     console.log('Submitting profile update...', formData);
     const originalEmail = String(profile.email || '').trim().toLowerCase();
     const updatedEmail = String(formData.email || '').trim().toLowerCase();
@@ -806,15 +851,27 @@ const Profile = ({ onLogout }) => {
     // Reset form data
     if (userProfile && userProfile.profile) {
       const p = userProfile.profile;
+      const emp = employeeData;
+      const isEmp = role === 'employee';
+      const firstName = p.first_name || (isEmp && emp?.full_name ? emp.full_name.split(' ')[0] : '');
+      const lastName = p.last_name || (isEmp && emp?.full_name ? emp.full_name.split(' ').slice(1).join(' ') : '');
+      const phone = (isEmp ? (emp?.personal_phone || p.phone) : p.phone) || '';
+      const address = (isEmp ? (emp?.address || p.business_address) : p.business_address) || '';
+      const bankName = (isEmp ? (emp?.bank_name || p.bank_name) : p.bank_name) || '';
+      const bankAcc = (isEmp ? (emp?.bank_account_number || p.bank_account_number) : p.bank_account_number) || '';
+      const bankIfsc = (isEmp ? (emp?.bank_ifsc || p.bank_ifsc_code) : p.bank_ifsc_code) || '';
+      const holderName = (isEmp ? (emp?.account_holder_name || emp?.full_name) : '') || '';
+      const upiId = (isEmp ? (emp?.upi_id || p.bank_upi_id) : p.bank_upi_id) || '';
+
       setActiveBankIndex(0);
       setFormData({
-        first_name: p.first_name || '',
-        last_name: p.last_name || '',
+        first_name: firstName,
+        last_name: lastName,
         email: p.email || '',
         current_password: '',
-        phone: p.phone || '',
+        phone: phone,
         business_name: p.business_name || '',
-        business_address: p.business_address || '',
+        business_address: address,
         country: p.country || 'IN',
         gstin: p.gstin || '',
         gst_status: p.gst_status || '',
@@ -825,11 +882,14 @@ const Profile = ({ onLogout }) => {
         dl_number: p.dl_number || '',
         state: p.state || '',
         city: p.city || '',
-        bank_name: p.bank_name || '',
-        bank_account_number: p.bank_account_number || '',
-        bank_ifsc_code: p.bank_ifsc_code || '',
+        bank_name: bankName,
+        bank_account_number: bankAcc,
+        bank_ifsc_code: bankIfsc,
+        account_holder_name: holderName,
         bank_branch: p.bank_branch || '',
-        bank_upi_id: p.bank_upi_id || '',
+        bank_upi_id: upiId,
+        emergency_contact_name: emp?.emergency_contact_name || '',
+        emergency_contact_phone: emp?.emergency_contact_phone || '',
         bank_qr_code: p.bank_qr_code || '',
         bank_accounts: normalizeAccounts(p.bank_accounts, p)
       });
@@ -978,7 +1038,7 @@ const Profile = ({ onLogout }) => {
     );
   }
 
-  const fullName = `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || 'Your Name';
+  const fullName = `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || employeeData?.full_name || 'Your Name';
   const initials = fullName
     .split(' ')
     .filter(Boolean)
@@ -1113,7 +1173,7 @@ const Profile = ({ onLogout }) => {
                     <KeyIcon className="h-4 w-4 text-[var(--accent-primary)]" />
                     Change Password
                   </button>
-                  {!isEditing && role !== 'employee' && (
+                  {!isEditing && (
                     <button
                       onClick={() => setIsEditing(true)}
                       className="btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl"
@@ -1411,27 +1471,235 @@ const Profile = ({ onLogout }) => {
                       </div>
                       </>
                     ) : (
-                      <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-6">
-                        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Employee Information</h3>
-                        <div className="space-y-3 text-sm">
-                          <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
-                            <span className="text-[var(--text-muted)]">Employee Code</span>
-                            <span className="text-[var(--text-primary)] font-medium">{employeeData?.employee_code || "—"}</span>
+                      !isEditing ? (
+                        <div className="space-y-6">
+                          {/* Employee Organization Details */}
+                          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-6">
+                            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                              <BuildingOfficeIcon className="h-5 w-5 text-[var(--accent-primary)]" />
+                              Employee Information
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                                <span className="text-[var(--text-muted)]">Employee Code</span>
+                                <span className="text-[var(--text-primary)] font-medium font-mono">{employeeData?.employee_code || "—"}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                                <span className="text-[var(--text-muted)]">Date of Joining</span>
+                                <span className="text-[var(--text-primary)] font-medium">{employeeData?.date_of_joining || "—"}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                                <span className="text-[var(--text-muted)]">Department</span>
+                                <span className="text-[var(--text-primary)] font-medium">{employeeData?.department_name || "—"}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                                <span className="text-[var(--text-muted)]">Designation</span>
+                                <span className="text-[var(--text-primary)] font-medium">{employeeData?.designation_name || "—"}</span>
+                              </div>
+                              <div className="flex justify-between pb-2">
+                                <span className="text-[var(--text-muted)]">Employment Type</span>
+                                <span className="text-[var(--text-primary)] font-medium capitalize">{(employeeData?.employment_type || "—").replace('_', ' ')}</span>
+                              </div>
+                              <div className="flex justify-between pb-2">
+                                <span className="text-[var(--text-muted)]">Work State (PT)</span>
+                                <span className="text-[var(--text-primary)] font-medium">{employeeData?.work_state || "—"}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
-                            <span className="text-[var(--text-muted)]">Department</span>
-                            <span className="text-[var(--text-primary)] font-medium">{employeeData?.department_name || "—"}</span>
+
+                          {/* Contact Information */}
+                          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-6">
+                            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                              <PhoneIcon className="h-5 w-5 text-[var(--accent-primary)]" />
+                              Contact Information
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                                <span className="text-[var(--text-muted)]">Personal Phone</span>
+                                <span className="text-[var(--text-primary)] font-medium">{formData.phone || "—"}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                                <span className="text-[var(--text-muted)]">Email</span>
+                                <span className="text-[var(--text-primary)] font-medium">{formData.email || "—"}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2 md:col-span-2">
+                                <span className="text-[var(--text-muted)]">Residential Address</span>
+                                <span className="text-[var(--text-primary)] font-medium">{formData.business_address || "—"}</span>
+                              </div>
+                              <div className="flex justify-between pb-2">
+                                <span className="text-[var(--text-muted)]">Emergency Contact</span>
+                                <span className="text-[var(--text-primary)] font-medium">{formData.emergency_contact_name || employeeData?.emergency_contact_name || "—"}</span>
+                              </div>
+                              <div className="flex justify-between pb-2">
+                                <span className="text-[var(--text-muted)]">Emergency Phone</span>
+                                <span className="text-[var(--text-primary)] font-medium">{formData.emergency_contact_phone || employeeData?.emergency_contact_phone || "—"}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
-                            <span className="text-[var(--text-muted)]">Designation</span>
-                            <span className="text-[var(--text-primary)] font-medium">{employeeData?.designation_name || "—"}</span>
-                          </div>
-                          <div className="flex justify-between pb-2">
-                            <span className="text-[var(--text-muted)]">Employment Type</span>
-                            <span className="text-[var(--text-primary)] font-medium capitalize">{(employeeData?.employment_type || "—").replace('_', ' ')}</span>
+
+                          {/* Bank Details */}
+                          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-6">
+                            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                              <BuildingLibraryIcon className="h-5 w-5 text-[var(--accent-primary)]" />
+                              Bank & Salary Account Details
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                                <span className="text-[var(--text-muted)]">Bank Name</span>
+                                <span className="text-[var(--text-primary)] font-medium">{formData.bank_name || "—"}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                                <span className="text-[var(--text-muted)]">Account Number</span>
+                                <span className="text-[var(--text-primary)] font-mono font-medium">
+                                  {formData.bank_account_number ? `•••• •••• ${formData.bank_account_number.slice(-4)}` : "—"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                                <span className="text-[var(--text-muted)]">IFSC Code</span>
+                                <span className="text-[var(--text-primary)] font-mono font-medium">{formData.bank_ifsc_code || "—"}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-[var(--border-subtle)] pb-2">
+                                <span className="text-[var(--text-muted)]">Account Holder</span>
+                                <span className="text-[var(--text-primary)] font-medium">{formData.account_holder_name || fullName}</span>
+                              </div>
+                              <div className="flex justify-between pb-2">
+                                <span className="text-[var(--text-muted)]">UPI ID</span>
+                                <span className="text-[var(--text-primary)] font-medium">{formData.bank_upi_id || "—"}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="space-y-6">
+                          {/* Contact Information Edit */}
+                          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-6">
+                            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                              <PhoneIcon className="h-5 w-5 text-[var(--accent-primary)]" />
+                              Edit Contact Information
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Personal Phone</label>
+                                <input
+                                  type="tel"
+                                  name="phone"
+                                  value={formData.phone}
+                                  onChange={handleInputChange}
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
+                                  placeholder="10-digit mobile number"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Email (Read Only)</label>
+                                <input
+                                  type="email"
+                                  value={formData.email}
+                                  disabled
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-[var(--text-muted)] text-sm opacity-60 cursor-not-allowed"
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Residential Address</label>
+                                <textarea
+                                  name="business_address"
+                                  value={formData.business_address}
+                                  onChange={handleInputChange}
+                                  rows={2}
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm resize-none"
+                                  placeholder="Enter residential address"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Emergency Contact Name</label>
+                                <input
+                                  type="text"
+                                  name="emergency_contact_name"
+                                  value={formData.emergency_contact_name || ''}
+                                  onChange={handleInputChange}
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
+                                  placeholder="e.g. Ramesh Kumar"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Emergency Contact Phone</label>
+                                <input
+                                  type="tel"
+                                  name="emergency_contact_phone"
+                                  value={formData.emergency_contact_phone || ''}
+                                  onChange={handleInputChange}
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
+                                  placeholder="Emergency phone"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Bank Details Edit */}
+                          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]/50 p-6">
+                            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                              <BuildingLibraryIcon className="h-5 w-5 text-[var(--accent-primary)]" />
+                              Edit Bank & Salary Account Details
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Bank Name</label>
+                                <input
+                                  type="text"
+                                  name="bank_name"
+                                  value={formData.bank_name || ''}
+                                  onChange={handleInputChange}
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
+                                  placeholder="e.g. State Bank of India"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Account Number</label>
+                                <input
+                                  type="text"
+                                  name="bank_account_number"
+                                  value={formData.bank_account_number || ''}
+                                  onChange={handleInputChange}
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm font-mono"
+                                  placeholder="Account number"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">IFSC Code</label>
+                                <input
+                                  type="text"
+                                  name="bank_ifsc_code"
+                                  value={formData.bank_ifsc_code || ''}
+                                  onChange={(e) => setFormData(prev => ({ ...prev, bank_ifsc_code: e.target.value.toUpperCase() }))}
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm font-mono uppercase"
+                                  placeholder="e.g. SBIN0001234"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Account Holder Name</label>
+                                <input
+                                  type="text"
+                                  name="account_holder_name"
+                                  value={formData.account_holder_name || ''}
+                                  onChange={handleInputChange}
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
+                                  placeholder="Name as per bank passbook"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">UPI ID (Optional)</label>
+                                <input
+                                  type="text"
+                                  name="bank_upi_id"
+                                  value={formData.bank_upi_id || ''}
+                                  onChange={handleInputChange}
+                                  className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-[var(--text-primary)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
+                                  placeholder="username@bank"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
                     )}
 
                     {isAdmin && (
@@ -1847,7 +2115,7 @@ const Profile = ({ onLogout }) => {
                     </div>
                     )}
 
-                    {isEditing && role !== 'employee' && (
+                    {isEditing && (
                       <div className="flex flex-wrap items-center justify-end gap-3 border-t border-[var(--border-subtle)] pt-6">
                         <button
                           type="button"

@@ -149,13 +149,17 @@ function App() {
         <Route element={isAuthenticated ? <AppLayout onLogout={handleLogout} /> : <Navigate to="/" replace />}>
         <Route
           path="/dashboard"
-          element={isAuthenticated ? <Dashboard onLogout={() => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('refresh');
-            localStorage.removeItem('role');
-            localStorage.removeItem('activeSession');
-            window.location.href = '/';
-          }} /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? (
+            <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'salesman', 'hr']}>
+              <Dashboard onLogout={() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('refresh');
+                localStorage.removeItem('role');
+                localStorage.removeItem('activeSession');
+                window.location.href = '/';
+              }} />
+            </ProtectedRoute>
+          ) : <Navigate to="/" replace />}
         />
         <Route
           path="/purchase"
@@ -235,44 +239,44 @@ function App() {
         />
         <Route
           path="/ledger"
-          element={isAuthenticated ? <Ledger /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant']}><Ledger /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports"
-          element={isAuthenticated ? <ReportsDashboard /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'hr']}><ReportsDashboard /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/stock-valuation"
-          element={isAuthenticated ? <StockValuation /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'hr']}><StockValuation /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/expiry"
-          element={isAuthenticated ? <ExpiryReport /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'hr']}><ExpiryReport /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/profit-loss"
-          element={isAuthenticated ? <ProfitLossReport /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'hr']}><ProfitLossReport /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/shortage"
-          element={isAuthenticated ? <ShortageReport /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'hr']}><ShortageReport /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/stock-ledger"
-          element={isAuthenticated ? <StockLedgerReport /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'hr']}><StockLedgerReport /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         {/* Critical Gap Routes */}
         <Route
           path="/gst"
-          element={isAuthenticated ? <GSTDashboard /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant']}><GSTDashboard /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/tax-register"
-          element={isAuthenticated ? <TaxRegister /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'hr']}><TaxRegister /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/gst-shield"
-          element={isAuthenticated ? <GSTShieldPage /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant']}><GSTShieldPage /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/credit-notes"
@@ -284,39 +288,39 @@ function App() {
         />
         <Route
           path="/reports/profit-loss-statement"
-          element={isAuthenticated ? <ProfitLossStatement /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'hr']}><ProfitLossStatement /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/balance-sheet"
-          element={isAuthenticated ? <BalanceSheet /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'hr']}><BalanceSheet /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/trial-balance"
-          element={isAuthenticated ? <TrialBalance /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'hr']}><TrialBalance /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/trial-balance"
-          element={isAuthenticated ? <TrialBalance /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant', 'hr']}><TrialBalance /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/reports/gstr-3b"
-          element={isAuthenticated ? <GSTR3B /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant']}><GSTR3B /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/gstr-3b"
-          element={isAuthenticated ? <GSTR3B /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant']}><GSTR3B /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/gst/gstr-3b"
-          element={isAuthenticated ? <GSTR3B /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant']}><GSTR3B /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/bank-reconciliation"
-          element={isAuthenticated ? <BankReconciliation /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant']}><BankReconciliation /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/ledger/manual-journal"
-          element={isAuthenticated ? <ManualJournal /> : <Navigate to="/" replace />}
+          element={isAuthenticated ? <ProtectedRoute allowedRoles={['admin', 'manager', 'accountant']}><ManualJournal /></ProtectedRoute> : <Navigate to="/" replace />}
         />
         <Route
           path="/warranty"
