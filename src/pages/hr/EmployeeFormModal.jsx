@@ -59,6 +59,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [activeTab, setActiveTab] = useState(initialTab || 'personal');
   const [loading, setLoading] = useState(false);
   const [calcBusy, setCalcBusy] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [errorMessage, setErrorMessage] = useState('');
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [salaryConfig, setSalaryConfig] = useState(null);
   const [salaryEdited, setSalaryEdited] = useState(false);
@@ -99,6 +101,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       setActiveTab(initialTab || 'personal');
       setSalaryConfig(null);
       setSalaryEdited(false);
+      setFieldErrors({});
+      setErrorMessage('');
       setFormData({ ...EMPTY_FORM, work_state: companyWorkState });
       return;
     }
@@ -113,6 +117,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
     formSessionRef.current += 1;
     setActiveTab(initialTab || 'personal');
     setSalaryEdited(false);
+    setFieldErrors({});
+    setErrorMessage('');
     setCalculatorKey((k) => k + 1);
     fetchDropdowns();
     setAadhaarFile(null);
@@ -143,7 +149,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         reporting_manager_id: employee.reporting_manager || '',
         pan_number: employee.pan_number || '',
         uan_number: employee.uan_number || '',
-        pf_number: employee.pf_number || '',
+        pf_number: employee.pf_number || employee.pf_member_id || '',
         esi_number: employee.esi_number || '',
         bank_name: employee.bank_name || '',
         bank_account_number: employee.bank_account_number || '',
@@ -246,12 +252,22 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   };
 
   const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[name];
+        return copy;
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (calcBusy) return;  // safety net: the breakdown is still updating
+    setErrorMessage('');
+    setFieldErrors({});
 
     // 1. Mandatory phone number check (10 to 11 digits, e.g. 9876543210 or 09876543210)
     const rawPhone = (formData.personal_phone || '').trim();
@@ -282,6 +298,18 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       return;
     }
 
+    // Client-side future DOJ check (Issue 7)
+    if (formData.date_of_joining) {
+      const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+      if (formData.date_of_joining > todayStr) {
+        setActiveTab('employment');
+        setFieldErrors({ date_of_joining: 'Date of joining cannot be in the future.' });
+        setErrorMessage('Date of joining cannot be in the future.');
+        toast.error('Date of joining cannot be in the future.');
+        return;
+      }
+    }
+
     // 3. Department & Designation mandatory check
     if (!formData.department_id) {
       toast.error('Please select or add a Department.');
@@ -292,6 +320,26 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       toast.error('Please select or add a Designation.');
       setActiveTab('employment');
       return;
+    }
+
+    // Client-side PAN check (Issue 5)
+    if (formData.pan_number && formData.pan_number.trim()) {
+      const cleanPan = formData.pan_number.trim().toUpperCase();
+      const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+      if (!panRegex.test(cleanPan)) {
+        setActiveTab('statutory');
+        setFieldErrors({ pan_number: 'Enter a valid PAN (5 letters, 4 digits, 1 letter, e.g. ABCPE1234F).' });
+        setErrorMessage('Invalid PAN: Please enter a valid 10-character PAN.');
+        toast.error('Enter a valid PAN (5 letters, 4 digits, 1 letter, e.g. ABCPE1234F).');
+        return;
+      }
+      if (cleanPan[3] !== 'P') {
+        setActiveTab('statutory');
+        setFieldErrors({ pan_number: "An employee's PAN must be an individual PAN (4th character 'P')." });
+        setErrorMessage("Invalid PAN: 4th character must be 'P' for individual employee.");
+        toast.error("An employee's PAN must be an individual PAN (4th character 'P').");
+        return;
+      }
     }
 
     // 4. Mandatory bank details check
@@ -311,6 +359,15 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
     if (isContract && (!formData.contract_fee || Number(formData.contract_fee) <= 0)) {
       toast.error('Please specify the agreed monthly contract fee for this contract personnel.');
       setActiveTab('compensation');
+      return;
+    }
+
+    // Allowances exceeding CTC check (Issue 6)
+    if (!isContract && salaryConfig?.exceedsCtc) {
+      setActiveTab('compensation');
+      const excess = salaryConfig.excessAmount || 0;
+      setErrorMessage(`Total fixed earnings and allowances exceed monthly CTC by ₹${excess.toLocaleString('en-IN')}. Fixed earnings cannot exceed monthly CTC.`);
+      toast.error(`Total fixed earnings and allowances exceed monthly CTC by ₹${excess.toLocaleString('en-IN')}.`);
       return;
     }
 
@@ -362,7 +419,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           hra_pct: salaryConfig.hra_pct,
           ...(Array.isArray(salaryConfig.pf_wage_components) ? { pf_wage_components: salaryConfig.pf_wage_components } : {}),
         };
-        if (!employee && formData.date_of_joining) {
+        // Always pass effective_from from date_of_joining so updates move the salary start date (High 4)
+        if (formData.date_of_joining) {
           payload.salary.effective_from = formData.date_of_joining;
         }
       }
@@ -420,12 +478,35 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
     } catch (err) {
       const errors = err.response?.data;
       if (errors && typeof errors === 'object') {
-        const messages = Object.entries(errors)
-          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs[0] : msgs}`)
-          .join('\n');
-        toast.error(messages);
+        const fieldErrorMap = {};
+        let topMsg = '';
+        Object.entries(errors).forEach(([field, msgs]) => {
+          const m = Array.isArray(msgs) ? msgs[0] : (typeof msgs === 'object' ? JSON.stringify(msgs) : String(msgs));
+          fieldErrorMap[field] = m;
+          if (!topMsg) topMsg = `${field}: ${m}`;
+        });
+        setFieldErrors(fieldErrorMap);
+        setErrorMessage(topMsg || 'Failed to save employee. Please check the highlighted fields.');
+
+        const statutoryFields = ['pan_number', 'pan', 'uan_number', 'uan', 'pf_number', 'pf_member_id', 'esi_number', 'esi_ip_number', 'bank_name', 'bank_account_number', 'bank_ifsc'];
+        const employmentFields = ['date_of_joining', 'employment_type', 'department_id', 'designation_id', 'status'];
+        const compensationFields = ['salary', 'contract_fee', 'monthly_ctc'];
+
+        const errorKeys = Object.keys(fieldErrorMap);
+        if (errorKeys.some(k => statutoryFields.includes(k))) {
+          setActiveTab('statutory');
+        } else if (errorKeys.some(k => employmentFields.includes(k))) {
+          setActiveTab('employment');
+        } else if (errorKeys.some(k => compensationFields.includes(k))) {
+          setActiveTab('compensation');
+        } else if (errorKeys.some(k => ['personal_email', 'personal_phone', 'full_name'].includes(k))) {
+          setActiveTab('personal');
+        }
+        toast.error(topMsg || 'Validation error');
       } else {
-        toast.error('Failed to save employee');
+        const msg = err.response?.data?.message || err.response?.data?.detail || 'Failed to save employee';
+        setErrorMessage(msg);
+        toast.error(msg);
       }
     } finally {
       setLoading(false);
@@ -490,6 +571,18 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {errorMessage && (
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-red-400">
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-red-300">Action Required</p>
+                <p className="text-xs text-red-200 mt-1 whitespace-pre-line">{errorMessage}</p>
+              </div>
+              <button type="button" onClick={() => setErrorMessage('')} className="text-red-400 hover:text-red-200">
+                <XMarkIcon className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {/* TAB 1: PERSONAL */}
           {activeTab === 'personal' && (
             <div className="space-y-4">
@@ -501,7 +594,17 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Personal Email</label>
-                  <input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} className={inputCls} placeholder="john@example.com" />
+                  <input
+                    type="email"
+                    name="personal_email"
+                    value={formData.personal_email}
+                    onChange={handleChange}
+                    className={`${inputCls} ${fieldErrors.personal_email ? '!border-red-500 !ring-1 !ring-red-500/50' : ''}`}
+                    placeholder="john@example.com"
+                  />
+                  {fieldErrors.personal_email && (
+                    <p className="text-xs text-red-400 mt-1">{fieldErrors.personal_email}</p>
+                  )}
                 </div>
                 <div>
                   <label className={labelCls}>Personal Phone *</label>
@@ -555,7 +658,16 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Date of Joining *</label>
-                  <DateInputField required name="date_of_joining" value={formData.date_of_joining} onChange={handleChange} />
+                  <DateInputField
+                    required
+                    name="date_of_joining"
+                    value={formData.date_of_joining}
+                    onChange={handleChange}
+                    max={new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())}
+                  />
+                  {fieldErrors.date_of_joining && (
+                    <p className="text-xs text-red-400 mt-1">{fieldErrors.date_of_joining}</p>
+                  )}
                 </div>
                 <div>
                   <label className={labelCls}>Gender *</label>
@@ -683,22 +795,66 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>PAN Number</label>
-                  <input type="text" name="pan_number" value={formData.pan_number} onChange={handleChange} className={inputCls} placeholder="ABCDE1234F" maxLength={10} />
+                  <input
+                    type="text"
+                    name="pan_number"
+                    value={formData.pan_number}
+                    onChange={handleChange}
+                    className={`${inputCls} ${fieldErrors.pan_number || fieldErrors.pan ? '!border-red-500 !ring-1 !ring-red-500/50' : ''}`}
+                    placeholder="ABCPE1234F"
+                    maxLength={10}
+                  />
+                  {(fieldErrors.pan_number || fieldErrors.pan) && (
+                    <p className="text-xs text-red-400 mt-1">{fieldErrors.pan_number || fieldErrors.pan}</p>
+                  )}
                 </div>
                 <div>
                   <label className={labelCls}>UAN (Universal Account No.)</label>
-                  <input type="text" name="uan_number" value={formData.uan_number} onChange={handleChange} className={inputCls} placeholder="12 digits" maxLength={12} />
+                  <input
+                    type="text"
+                    name="uan_number"
+                    value={formData.uan_number}
+                    onChange={handleChange}
+                    className={`${inputCls} ${fieldErrors.uan_number || fieldErrors.uan ? '!border-red-500 !ring-1 !ring-red-500/50' : ''}`}
+                    placeholder="12 digits"
+                    maxLength={12}
+                  />
+                  {(fieldErrors.uan_number || fieldErrors.uan) && (
+                    <p className="text-xs text-red-400 mt-1">{fieldErrors.uan_number || fieldErrors.uan}</p>
+                  )}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>PF Account Number</label>
-                  <input type="text" name="pf_number" value={formData.pf_number} onChange={handleChange} className={inputCls} placeholder="e.g. MH/BAN/12345/678" />
+                  <input
+                    type="text"
+                    name="pf_number"
+                    value={formData.pf_number}
+                    onChange={handleChange}
+                    className={`${inputCls} ${fieldErrors.pf_number || fieldErrors.pf_member_id ? '!border-red-500 !ring-1 !ring-red-500/50' : ''}`}
+                    placeholder="e.g. MH/BAN/0012345/000/0001234 or MHBAN00123450000001234"
+                  />
+                  {(fieldErrors.pf_number || fieldErrors.pf_member_id) && (
+                    <p className="text-xs text-red-400 mt-1">{fieldErrors.pf_number || fieldErrors.pf_member_id}</p>
+                  )}
                 </div>
                 <div>
                   <label className={labelCls}>ESI IP Number</label>
-                  <input type="text" name="esi_number" value={formData.esi_number} onChange={handleChange} className={inputCls} placeholder="10-digit ESI IP number" maxLength={10} inputMode="numeric" />
+                  <input
+                    type="text"
+                    name="esi_number"
+                    value={formData.esi_number}
+                    onChange={handleChange}
+                    className={`${inputCls} ${fieldErrors.esi_number || fieldErrors.esi_ip_number ? '!border-red-500 !ring-1 !ring-red-500/50' : ''}`}
+                    placeholder="10-digit ESI IP number"
+                    maxLength={10}
+                    inputMode="numeric"
+                  />
+                  {(fieldErrors.esi_number || fieldErrors.esi_ip_number) && (
+                    <p className="text-xs text-red-400 mt-1">{fieldErrors.esi_number || fieldErrors.esi_ip_number}</p>
+                  )}
                 </div>
               </div>
             </div>

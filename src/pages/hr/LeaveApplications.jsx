@@ -35,6 +35,7 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
   };
 
   const selectedLt = leaveTypes.find((lt) => String(lt.id) === String(form.leave_type));
+  const selectedEmp = employees.find((e) => String(e.id) === String(form.employee));
   const currentYear = form.start_date ? new Date(form.start_date).getFullYear() : new Date().getFullYear();
   const matchedBalance = balances.find((b) =>
     String(b.employee) === String(form.employee) &&
@@ -49,6 +50,10 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (selectedEmp?.date_of_joining && form.start_date && form.start_date < selectedEmp.date_of_joining) {
+      showErrorToast(`Leave cannot be applied before employee joining date (${selectedEmp.date_of_joining})`);
+      return;
+    }
     if (isQuotaExhausted) {
       showErrorToast("Paid leave quota is fully exhausted. Additional paid leave cannot be taken.");
       return;
@@ -134,11 +139,28 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Start Date *</label>
-                <DateInputField required name="start_date" value={form.start_date} onChange={handleChange} />
+                <DateInputField
+                  required
+                  name="start_date"
+                  min={selectedEmp?.date_of_joining || ''}
+                  value={form.start_date}
+                  onChange={handleChange}
+                />
+                {selectedEmp?.date_of_joining && (
+                  <p className="text-xs text-[var(--accent-primary)] mt-1 font-medium">
+                    Joined: {selectedEmp.date_of_joining}
+                  </p>
+                )}
               </div>
               <div>
                 <label className={labelCls}>End Date *</label>
-                <DateInputField required name="end_date" value={form.end_date} onChange={handleChange} />
+                <DateInputField
+                  required
+                  name="end_date"
+                  min={form.start_date || selectedEmp?.date_of_joining || ''}
+                  value={form.end_date}
+                  onChange={handleChange}
+                />
               </div>
             </div>
             <div>

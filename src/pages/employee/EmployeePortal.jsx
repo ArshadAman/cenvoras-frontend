@@ -165,6 +165,10 @@ export default function EmployeePortal() {
 
   const handleApplyLeave = async (e) => {
     e.preventDefault();
+    if (profile?.date_of_joining && leaveForm.start_date && leaveForm.start_date < profile.date_of_joining) {
+      toast.error(`Leave cannot be applied before your joining date (${profile.date_of_joining})`);
+      return;
+    }
     setSaving(true);
     try {
       // Backend automatically maps 'employee' to current user if not provided, or we can pass profile.id
@@ -173,7 +177,9 @@ export default function EmployeePortal() {
       setShowLeaveModal(false);
       fetchAll();
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to apply leave");
+      const data = err.response?.data;
+      const msg = data?.start_date?.[0] || data?.end_date?.[0] || data?.non_field_errors?.[0] || data?.detail || "Failed to apply leave";
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -542,11 +548,28 @@ export default function EmployeePortal() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm text-[var(--text-secondary)] mb-1">Start Date *</label>
-                  <DateInputField required name="start_date" value={leaveForm.start_date} onChange={(e) => setLeaveForm({...leaveForm, start_date: e.target.value})} />
+                  <DateInputField
+                    required
+                    name="start_date"
+                    min={profile?.date_of_joining || ''}
+                    value={leaveForm.start_date}
+                    onChange={(e) => setLeaveForm({...leaveForm, start_date: e.target.value})}
+                  />
+                  {profile?.date_of_joining && (
+                    <p className="text-xs text-[var(--accent-primary)] mt-1 font-medium">
+                      Joined: {profile.date_of_joining}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm text-[var(--text-secondary)] mb-1">End Date *</label>
-                  <DateInputField required name="end_date" value={leaveForm.end_date} onChange={(e) => setLeaveForm({...leaveForm, end_date: e.target.value})} />
+                  <DateInputField
+                    required
+                    name="end_date"
+                    min={leaveForm.start_date || profile?.date_of_joining || ''}
+                    value={leaveForm.end_date}
+                    onChange={(e) => setLeaveForm({...leaveForm, end_date: e.target.value})}
+                  />
                 </div>
               </div>
               <div>

@@ -150,6 +150,8 @@ export default function DojCorrectionModal({ isOpen, onClose, employee, onSucces
   const doPreview = async () => {
     setErrors([]); setPreview(null);
     if (!newDoj) { setErrors(['Pick the corrected date of joining.']); return; }
+    const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    if (newDoj > todayStr) { setErrors(['Date of joining cannot be in the future.']); return; }
     setBusy(true);
     try {
       const res = await hrApi.previewDojCorrection(employee.id, newDoj);
@@ -161,6 +163,8 @@ export default function DojCorrectionModal({ isOpen, onClose, employee, onSucces
     e.preventDefault();
     setErrors([]);
     if (!newDoj) { setErrors(['Pick the corrected date of joining.']); return; }
+    const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    if (newDoj > todayStr) { setErrors(['Date of joining cannot be in the future.']); return; }
     if (!reason.trim()) { setErrors(['A reason is required for a DOJ correction.']); return; }
     setBusy(true);
     try {
@@ -195,7 +199,13 @@ export default function DojCorrectionModal({ isOpen, onClose, employee, onSucces
           <form onSubmit={doApply} className="space-y-3">
             <div>
               <label className="block text-sm text-[var(--text-secondary)] mb-1">Corrected date of joining *</label>
-              <DateInputField name="corrected_doj" required value={newDoj} onChange={(e) => { setNewDoj(e.target.value); setPreview(null); }} />
+              <DateInputField
+                name="corrected_doj"
+                required
+                value={newDoj}
+                max={new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())}
+                onChange={(e) => { setNewDoj(e.target.value); setPreview(null); }}
+              />
             </div>
             <div>
               <label className="block text-sm text-[var(--text-secondary)] mb-1">Reason *</label>
