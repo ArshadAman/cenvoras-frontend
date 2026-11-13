@@ -376,7 +376,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
   // Forced document footer: always show Made with Cenvora branding regardless of plan/settings
   effectiveBusinessInfo.show_cenvora_footer = true;
 
-  const baseTitle = isQuotation ? "QUOTATION" : isDeliveryChallan ? "DELIVERY CHALLAN" : isSalesOrder ? "PROFORMA INVOICE" : documentTitle(template?.content?.invoiceTitle, effectiveBusinessInfo);
+  const baseTitle = isQuotation ? "QUOTATION" : isDeliveryChallan ? "DELIVERY CHALLAN" : isSalesOrder ? "PROFORMA INVOICE" : documentTitle(template?.content?.invoiceTitle, effectiveBusinessInfo, enrichedInvoice);
   const previewTemplate = {
     ...template,
     content: {
@@ -560,8 +560,9 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         ? 'Quotation'
         : isSalesOrder
         ? 'Proforma Invoice'
-        : (documentTitle('', effectiveBusinessInfo) === 'TAX INVOICE' ? 'Tax Invoice'
-          : documentTitle('', effectiveBusinessInfo) === 'BILL OF SUPPLY' ? 'Bill of Supply' : 'Invoice');
+        : (documentTitle('', effectiveBusinessInfo, enrichedInvoice) === 'DRAFT INVOICE' ? 'Draft Invoice'
+          : documentTitle('', effectiveBusinessInfo, enrichedInvoice) === 'TAX INVOICE' ? 'Tax Invoice'
+          : documentTitle('', effectiveBusinessInfo, enrichedInvoice) === 'BILL OF SUPPLY' ? 'Bill of Supply' : 'Invoice');
       const fileNum =
         enrichedInvoice.invoice_number ||
         invoiceDetails.order_number ||

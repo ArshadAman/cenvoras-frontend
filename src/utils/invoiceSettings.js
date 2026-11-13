@@ -445,6 +445,9 @@ export const resetToDefaults = (sectionKey = 'sales_invoice') => {
   }
 };
 
+export const naturalCompare = (a, b) =>
+  String(a || '').localeCompare(String(b || ''), undefined, { numeric: true, sensitivity: 'base' });
+
 export const formatLinkedChallanEntries = (invoice) => {
   const formatDate = (value) => {
     if (!value) return '';
@@ -454,9 +457,14 @@ export const formatLinkedChallanEntries = (invoice) => {
       return String(value);
     }
   };
-  const raw = invoice?.delivery_challans || invoice?.challans;
+  const raw = invoice?.delivery_challans || invoice?.challans || invoice?.meta?.linked_challans;
   if (Array.isArray(raw) && raw.length > 0) {
-    return raw
+    const sorted = [...raw].sort((a, b) => {
+      const numA = (typeof a === 'string' ? a : (a?.challan_number || a?.number || a?.delivery_challan_number || '')).trim();
+      const numB = (typeof b === 'string' ? b : (b?.challan_number || b?.number || b?.delivery_challan_number || '')).trim();
+      return naturalCompare(numA, numB);
+    });
+    return sorted
       .map((c) => {
         const num = c?.challan_number || c?.number || c?.delivery_challan_number || '';
         const date = formatDate(c?.challan_date || c?.date);
@@ -467,6 +475,12 @@ export const formatLinkedChallanEntries = (invoice) => {
   }
   const number = invoice?.challan_number || invoice?.delivery_challan_number || '';
   if (!number) return [];
+  // If string contains multiple entries separated by semicolon or comma
+  if (number.includes(';') || number.includes(',')) {
+    const sep = number.includes(';') ? ';' : ',';
+    const parts = number.split(sep).map((s) => s.trim()).filter(Boolean);
+    return parts.sort(naturalCompare);
+  }
   const date = formatDate(invoice?.challan_date);
   return [date ? `${number} - ${date}` : number];
 };
@@ -595,6 +609,7 @@ export default {
   resetToDefaults,
   numberToWords,
   amountInWords,
+  naturalCompare,
   formatLinkedChallanEntries,
   formatLinkedChallanList,
   resolveTypography,
