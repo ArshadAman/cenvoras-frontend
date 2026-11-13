@@ -11,6 +11,10 @@ const INVOICE_PRINT_PAGE_RULES = `
   }
 `;
 
+/**
+ * Shared A4 invoice layout used by browser print, vector PDF HTML, and
+ * on-screen preview chrome so page 1 matches across all three paths.
+ */
 export const INVOICE_PRINT_DOCUMENT_RULES = `
   *, *::before, *::after {
     box-sizing: border-box !important;
@@ -130,6 +134,80 @@ export const INVOICE_PRINT_DOCUMENT_RULES = `
     background: #ffffff !important;
     transform: none !important;
     -webkit-transform: none !important;
+  }
+`;
+
+/** Google Fonts URL — Inter matches template defaults; mono for tabular figures. */
+export const INVOICE_GOOGLE_FONTS_HREF =
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap';
+
+/** Body stack for vector PDF / print HTML — Inter first so it matches invoice templates. */
+export const INVOICE_DOCUMENT_FONT_FAMILY =
+  "'Inter', 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', 'Noto Sans', 'Liberation Sans', sans-serif";
+
+export const INVOICE_MONO_FONT_FAMILY =
+  "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'DejaVu Sans', 'Noto Sans', monospace, sans-serif";
+
+/**
+ * Layout CSS injected into vector PDF HTML (always on, not only @media print)
+ * so Chromium printToPDF uses the same geometry as browser print.
+ */
+export const INVOICE_VECTOR_LAYOUT_CSS = `
+  ${INVOICE_PRINT_PAGE_RULES}
+  ${INVOICE_PRINT_DOCUMENT_RULES}
+  .font-mono, [class*="font-mono"], code, pre {
+    font-family: ${INVOICE_MONO_FONT_FAMILY} !important;
+  }
+`;
+
+/**
+ * Screen-only rules that mirror print geometry on the preview sheet without
+ * undoing the modal scale transform on [data-print-wrapper].
+ */
+export const INVOICE_PREVIEW_LAYOUT_STYLE = `
+  [data-print-target] .invoice-sheet {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 210mm;
+    max-width: 100%;
+    min-height: 297mm;
+    margin: 0 auto;
+    box-sizing: border-box;
+    background: #ffffff;
+    overflow: visible;
+  }
+  [data-print-target] .invoice-sheet:has(.invoice-print-shell[data-print-theme="classic"]) {
+    padding: 0 0 10mm 0;
+  }
+  [data-print-target] .invoice-sheet-body {
+    flex: 0 0 auto;
+    flex-grow: 0;
+  }
+  [data-print-target] .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header {
+    display: table-row;
+  }
+  [data-print-target] .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td {
+    padding: 0 0 3mm 0;
+    border: none;
+    overflow: visible;
+  }
+  [data-print-target] .invoice-print-shell {
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+    margin: 0;
+  }
+  [data-print-target] .invoice-print-shell[data-print-theme="classic"] .invoice-print-shell-row > td {
+    padding: 0 7mm;
+    border: none;
+    overflow: visible;
+  }
+  [data-print-target] .invoice-page-footer {
+    position: static;
+    bottom: auto;
+    left: auto;
+    right: auto;
   }
 `;
 

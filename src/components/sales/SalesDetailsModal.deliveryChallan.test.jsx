@@ -207,8 +207,10 @@ describe('SalesDetailsModal Delivery Challan print & PDF parity', () => {
     const target = document.querySelector('[data-print-target]');
     const html = serializeInvoiceHtml(target);
 
+    expect(html).toContain('family=Inter');
     expect(html).toContain('family=DM+Sans');
     expect(html).toContain('family=JetBrains+Mono');
+    expect(html).toContain("'Inter'");
     expect(html).toContain("'JetBrains Mono'");
     expect(html).not.toContain('.invoice-sheet .flex-1');
     expect(html).toContain('.invoice-sheet-body');
