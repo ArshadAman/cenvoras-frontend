@@ -373,27 +373,6 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
     staleTime: 5 * 60 * 1000,
   });
 
-  // Forced document footer: always show Made with Cenvora branding regardless of plan/settings
-  effectiveBusinessInfo.show_cenvora_footer = true;
-
-  const baseTitle = isQuotation ? "QUOTATION" : isDeliveryChallan ? "DELIVERY CHALLAN" : isSalesOrder ? "PROFORMA INVOICE" : documentTitle(template?.content?.invoiceTitle, effectiveBusinessInfo, enrichedInvoice);
-  const previewTemplate = {
-    ...template,
-    content: {
-      ...(template?.content || {}),
-      invoiceTitle: baseTitle,
-      hideBankDetails: selectedBankAccountId === 'none',
-      bankDetails: activeBankAcc ? {
-        bankName: activeBankAcc.bank_name || '',
-        accountNumber: activeBankAcc.account_number || '',
-        ifscCode: activeBankAcc.ifsc_code || '',
-        accountHolder: activeBankAcc.account_holder || '',
-        branch: activeBankAcc.branch || '',
-        upiId: activeBankAcc.upi_id || '',
-      } : { bankName: '', accountNumber: '', ifscCode: '', accountHolder: '', branch: '' },
-    },
-  };
-
   const enrichedInvoice = {
     ...invoiceDetails,
     document_type: documentType,
@@ -452,6 +431,27 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
         : (Array.isArray(invoice?.items) && invoice?.items.length > 0)
         ? invoice.items
         : invoiceDetails.items || invoice?.items || [],
+  };
+
+  // Forced document footer: always show Made with Cenvora branding regardless of plan/settings
+  effectiveBusinessInfo.show_cenvora_footer = true;
+
+  const baseTitle = isQuotation ? "QUOTATION" : isDeliveryChallan ? "DELIVERY CHALLAN" : isSalesOrder ? "PROFORMA INVOICE" : documentTitle(template?.content?.invoiceTitle, effectiveBusinessInfo, enrichedInvoice);
+  const previewTemplate = {
+    ...template,
+    content: {
+      ...(template?.content || {}),
+      invoiceTitle: baseTitle,
+      hideBankDetails: selectedBankAccountId === 'none',
+      bankDetails: activeBankAcc ? {
+        bankName: activeBankAcc.bank_name || '',
+        accountNumber: activeBankAcc.account_number || '',
+        ifscCode: activeBankAcc.ifsc_code || '',
+        accountHolder: activeBankAcc.account_holder || '',
+        branch: activeBankAcc.branch || '',
+        upiId: activeBankAcc.upi_id || '',
+      } : { bankName: '', accountNumber: '', ifscCode: '', accountHolder: '', branch: '' },
+    },
   };
 
   // Print functionality with anti-slicing CSS rules matching on-screen preview
