@@ -486,13 +486,21 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                         className="rounded border-[var(--border-default)] accent-[var(--accent-primary)]"
                       />
                     </td>
-                    <td className={`${LIST_TD} font-semibold text-[var(--text-primary)]`}>
-                      {bill.bill_number}
+                    <td className={LIST_TD}>
+                      <div className="text-xs font-mono font-semibold text-[var(--text-primary)] tracking-tight truncate" title={bill.bill_number}>
+                        {bill.bill_number}
+                      </div>
                     </td>
-                    <td className={`${LIST_TD} text-[var(--text-secondary)]`}>
-                      {bill.bill_date ? format(parseDateOnly(bill.bill_date), 'dd/MM/yyyy') : '-'}
+                    <td className={LIST_TD}>
+                      <div className="text-xs font-mono text-[var(--text-muted)] truncate">
+                        {bill.bill_date ? format(parseDateOnly(bill.bill_date), 'dd/MM/yyyy') : '-'}
+                      </div>
                     </td>
-                    <td className={`${LIST_TD} text-[var(--text-primary)] font-medium`}>{bill.vendor_name}</td>
+                    <td className={LIST_TD}>
+                      <div className="text-sm font-semibold text-[var(--text-primary)] truncate" title={bill.vendor_name}>
+                        {bill.vendor_name}
+                      </div>
+                    </td>
                     <td className={LIST_TD}>
                       {bill.items && bill.items.length > 0 ? (
                         <div className="flex items-center gap-2">
@@ -525,11 +533,13 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
                         <span className="text-[var(--text-muted)] text-xs italic">No items</span>
                       )}
                     </td>
-                    <td className={`${LIST_TD_AMOUNT} font-bold text-[var(--text-primary)] tabular-nums`}>
-                      {getCurrencySymbol()}{Number(bill.total_amount).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                    <td className={LIST_TD_AMOUNT}>
+                      <div className="text-xs font-mono font-bold text-[var(--text-primary)] font-tabular truncate">
+                        {getCurrencySymbol()}{Number(bill.total_amount).toLocaleString('en-IN', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
                     </td>
                     <td className={LIST_TD}>
                       <div className="flex items-center justify-center gap-1.5">

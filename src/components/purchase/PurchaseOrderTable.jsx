@@ -174,26 +174,30 @@ export default function PurchaseOrderTable({ onEdit, onDelete, onConvert, orders
               filteredOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-[var(--bg-primary)] transition-colors group">
                   <td className={LIST_TD}>
-                    <div className="font-semibold text-[var(--text-primary)]">{order.po_number || "Draft"}</div>
-                    <div className="text-xs text-[var(--text-muted)] mt-1">
+                    <div className="text-xs font-mono font-semibold text-[var(--text-primary)] tracking-tight truncate" title={order.po_number || "Draft"}>
+                      {order.po_number || "Draft"}
+                    </div>
+                    <div className="text-xs font-mono text-[var(--text-muted)] truncate">
                       {order.created_at ? format(new Date(order.created_at), "dd/MM/yyyy") : "N/A"}
                     </div>
                   </td>
                   <td className={LIST_TD}>
-                    <div className="font-medium text-[var(--text-primary)]">{order.vendor_display_name || order.vendor_name || "Unknown"}</div>
+                    <div className="text-sm font-semibold text-[var(--text-primary)] truncate" title={order.vendor_display_name || order.vendor_name || "Unknown"}>
+                      {order.vendor_display_name || order.vendor_name || "Unknown"}
+                    </div>
                     {order.expected_date && (
-                      <div className="text-xs text-[var(--text-muted)] mt-1">
+                      <div className="text-xs text-[var(--text-muted)] truncate">
                         Expected: {format(new Date(order.expected_date), "dd/MM/yyyy")}
                       </div>
                     )}
                   </td>
                   <td className={LIST_TD_AMOUNT}>
-                    <div className="font-bold text-[var(--text-primary)] tabular-nums">
+                    <div className="text-xs font-mono font-bold text-[var(--text-primary)] font-tabular truncate">
                       {getCurrencySymbol()}{parseFloat(order.total_amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </td>
                   <td className={LIST_TD}>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs uppercase font-semibold tracking-wider ${
                       order.status === 'received' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' :
                       order.status === 'cancelled' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' :
                       order.status === 'sent' ? 'bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30' :

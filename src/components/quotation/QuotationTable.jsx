@@ -237,12 +237,31 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {sortedRows.map((q) => (
                   <tr key={q.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-primary)] transition-colors">
-                    <td className={`${LIST_TD} text-[var(--text-primary)] font-mono font-medium`}>{q.quotation_number || q.invoice_number}</td>
-                    <td className={`${LIST_TD} text-[var(--text-secondary)]`}>{q.quotation_date || q.invoice_date}</td>
-                    <td className={`${LIST_TD} text-[var(--text-primary)]`}>{q.customer_name}</td>
-                    <td className={`${LIST_TD_AMOUNT} text-[var(--text-primary)] font-mono font-semibold`}>{getCurrencySymbol()}{Number(q.total_amount || 0).toFixed(2)}</td>
                     <td className={LIST_TD}>
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
+                      <div className="text-xs font-mono font-semibold text-[var(--text-primary)] tracking-tight truncate" title={q.quotation_number || q.invoice_number}>
+                        {q.quotation_number || q.invoice_number}
+                      </div>
+                    </td>
+                    <td className={LIST_TD}>
+                      <div className="text-xs font-mono text-[var(--text-muted)] truncate">
+                        {q.quotation_date || q.invoice_date || '-'}
+                      </div>
+                    </td>
+                    <td className={LIST_TD}>
+                      <div className="text-sm font-semibold text-[var(--text-primary)] truncate" title={q.customer_name}>
+                        {q.customer_name}
+                      </div>
+                    </td>
+                    <td className={LIST_TD_AMOUNT}>
+                      <div className="text-xs font-mono font-bold text-[var(--text-primary)] font-tabular truncate">
+                        {getCurrencySymbol()}{Number(q.total_amount || 0).toLocaleString('en-IN', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
+                      </div>
+                    </td>
+                    <td className={LIST_TD}>
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs uppercase font-semibold tracking-wider ${
                         q.status === 'approved' || q.status === 'converted' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' :
                         q.status === 'rejected' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' :
                         q.status === 'partially_converted' ? 'bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30' :

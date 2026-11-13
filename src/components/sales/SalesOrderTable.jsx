@@ -195,30 +195,45 @@ export default function SalesOrderTable({
                         }`}
                       >
                           <td className={LIST_TD}>
-                            <div className="text-[var(--text-primary)] font-medium flex items-center justify-center gap-2">
-                              <span>{order.order_number}</span>
+                            <div className="text-xs font-mono font-semibold text-[var(--text-primary)] tracking-tight flex items-center justify-center gap-1.5 truncate" title={order.order_number}>
+                              <span className="truncate">{order.order_number}</span>
                               {isHighlighted && (
-                                <span className="px-2 py-0.5 text-xs font-bold uppercase bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/40 rounded-full">
+                                <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/40 rounded-full shrink-0">
                                   Referenced
                                 </span>
                               )}
                             </div>
                             {order.po_number && (
-                              <div className="text-xs text-[var(--text-secondary)] font-mono mt-0.5 flex items-center gap-1.5">
-                                <span className="font-semibold">PO: {order.po_number}</span>
+                              <div className="text-xs text-[var(--text-secondary)] font-mono mt-0.5 flex items-center justify-center gap-1 truncate" title={`PO: ${order.po_number}`}>
+                                <span className="font-semibold truncate">PO: {order.po_number}</span>
                                 {order.po_date && (
-                                  <span className="text-[var(--text-muted)] font-normal">
+                                  <span className="text-[var(--text-muted)] font-normal shrink-0">
                                     ({format(new Date(order.po_date), 'dd/MM/yyyy')})
                                   </span>
                                 )}
                               </div>
                             )}
                           </td>
-                          <td className={`${LIST_TD} text-[var(--text-secondary)]`}>{order.date ? format(new Date(order.date), 'dd/MM/yyyy') : '-'}</td>
-                          <td className={`${LIST_TD} text-[var(--text-primary)]`}>{order.customer_display_name || order.customer_name}</td>
-                          <td className={`${LIST_TD_AMOUNT} text-[var(--text-primary)] font-bold`}>{getCurrencySymbol()}{Number(order.total_amount).toLocaleString()}</td>
+                          <td className={LIST_TD}>
+                            <div className="text-xs font-mono text-[var(--text-muted)] truncate">
+                              {order.date ? format(new Date(order.date), 'dd/MM/yyyy') : '-'}
+                            </div>
+                          </td>
+                          <td className={LIST_TD}>
+                            <div className="text-sm font-semibold text-[var(--text-primary)] truncate" title={order.customer_display_name || order.customer_name}>
+                              {order.customer_display_name || order.customer_name}
+                            </div>
+                          </td>
+                          <td className={LIST_TD_AMOUNT}>
+                            <div className="text-xs font-mono font-bold text-[var(--text-primary)] font-tabular truncate">
+                              {getCurrencySymbol()}{Number(order.total_amount || 0).toLocaleString('en-IN', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              })}
+                            </div>
+                          </td>
                            <td className={LIST_TD}>
-                              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border ${
+                              <span className={`px-2 py-0.5 rounded text-xs uppercase font-semibold tracking-wider border ${
                                 order.stage === 'completed' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border-[var(--status-success)]/30' : 
                                 order.stage === 'shipped' ? 'bg-[var(--status-info)]/15 text-[var(--status-info)] border-[var(--status-info)]/30' : 
                                 order.stage === 'cancelled' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border-[var(--status-danger)]/30' : 
