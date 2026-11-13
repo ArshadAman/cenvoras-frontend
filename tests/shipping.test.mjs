@@ -4,6 +4,7 @@ import {
   normalizeAddressText,
   hasShippingBillingDifference,
   shouldAutoSelectBillToShipToOnInit,
+  isGstinStateMatch,
 } from '../src/utils/shipping.js';
 
 test('normalizeAddressText trims, lowercases, and collapses whitespace', () => {
@@ -45,6 +46,34 @@ test('shouldAutoSelectBillToShipToOnInit respects direct inter-state goods overr
     }),
     false
   );
+  // Normalizes full state names, numeric GST codes and 2-letter codes
+  assert.equal(
+    shouldAutoSelectBillToShipToOnInit({
+      billingAddress: 'Bengaluru, KA',
+      deliveryAddress: 'Paradip, Odisha',
+      placeOfSupply: 'Odisha',
+      defaultPos: 'KA',
+    }),
+    false
+  );
+  assert.equal(
+    shouldAutoSelectBillToShipToOnInit({
+      billingAddress: 'Bengaluru, KA',
+      deliveryAddress: 'Paradip, Odisha',
+      placeOfSupply: 'OR',
+      defaultPos: 'Karnataka',
+    }),
+    false
+  );
+  assert.equal(
+    shouldAutoSelectBillToShipToOnInit({
+      billingAddress: 'Bengaluru, KA',
+      deliveryAddress: 'Paradip, Odisha',
+      placeOfSupply: 'Karnataka',
+      defaultPos: 'KA',
+    }),
+    true
+  );
   // Same address does not auto-select
   assert.equal(
     shouldAutoSelectBillToShipToOnInit({
@@ -55,4 +84,18 @@ test('shouldAutoSelectBillToShipToOnInit respects direct inter-state goods overr
     }),
     false
   );
+});
+
+test('isGstinStateMatch accurately matches POS with GSTIN state code', () => {
+  assert.equal(isGstinStateMatch('OR', '21AABCU9603R1ZM'), true);
+  assert.equal(isGstinStateMatch('Odisha', '21AABCU9603R1ZM'), true);
+  assert.equal(isGstinStateMatch('21', '21AABCU9603R1ZM'), true);
+  // Karnataka customer with Odisha POS should NOT match
+  assert.equal(isGstinStateMatch('OR', '29AAKCG6382L1ZU'), false);
+  assert.equal(isGstinStateMatch('Odisha', '29AAKCG6382L1ZU'), false);
+  assert.equal(isGstinStateMatch('KA', '29AAKCG6382L1ZU'), true);
+  assert.equal(isGstinStateMatch('Karnataka', '29AAKCG6382L1ZU'), true);
+  assert.equal(isGstinStateMatch('', '29AAKCG6382L1ZU'), false);
+  assert.equal(isGstinStateMatch('KA', ''), false);
+  assert.equal(isGstinStateMatch(null, null), false);
 });

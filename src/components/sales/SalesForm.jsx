@@ -4,13 +4,13 @@ import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createSalesInvoice, updateSalesInvoice, getProducts, getNextInvoiceNumber } from "../../api/sales";
 import { getCustomers, patchCustomer } from "../../api/customers";
-import { hasShippingBillingDifference, normalizeAddressText, shouldAutoSelectBillToShipToOnInit } from "../../utils/shipping";
+import { hasShippingBillingDifference, normalizeAddressText, shouldAutoSelectBillToShipToOnInit, isGstinStateMatch } from "../../utils/shipping";
 import { createProduct, patchProduct } from "../../api/inventory";
 import { getWarehouses, getStockPoints, getSchemes } from "../../api/inventory"; // Added imports
 import { getInvoiceSettings, updateInvoiceSettings } from "../../api/invoice_settings";
 import { getSubscriptionEntitlements } from "../../api/subscription";
 import { getUserProfile } from "../../api/users";
-import { INDIAN_STATES, GST_STATE_CODE_MAP, customerPosCode } from "../../utils/constants"; // Added imports
+import { INDIAN_STATES, GST_STATE_CODE_MAP, customerPosCode, stateToCode } from "../../utils/constants"; // Added imports
 import { getTaxType } from "../../utils/taxUtils";
 import { toast } from "react-toastify";
 import { formError, clearFormErrors } from "../../utils/formToasts";
@@ -53,6 +53,8 @@ function getSavedShippingList(customer) {
  * Automatically selects Bill-to-ship-to when billing and shipping details differ,
  * and unselects when they match or shipping is cleared — while respecting manual user overrides
  * until the billing/shipping pair changes again (e.g. for IGST s.10(1)(a) inter-state goods POS).
+ * Under IGST s.10(1)(b), if POS is already explicitly an inter-state override differing
+ * from the bill-to customer's state, auto-enabling is avoided to prevent blocking saves.
  */
 function BillToShipToSync({ values, setFieldValue, editId, manualOverrideRef }) {
   const prevPairRef = useRef(
@@ -76,11 +78,23 @@ function BillToShipToSync({ values, setFieldValue, editId, manualOverrideRef }) 
         values.customer_address,
         values.delivery_address
       );
-      if (Boolean(values.bill_to_ship_to) !== shouldCheck) {
-        setFieldValue("bill_to_ship_to", shouldCheck);
+      const posCode = stateToCode(values.place_of_supply);
+      const defCode = stateToCode(values.default_pos);
+      // If POS has already been set/chosen to differ from the bill-to customer's state,
+      // this represents direct inter-state goods delivery (IGST s.10(1)(a)).
+      // Auto-enabling bill_to_ship_to here would violate s.10(1)(b) and block saving.
+      const hasInterStateOverride = Boolean(posCode && defCode && posCode !== defCode);
+      const targetCheck = shouldCheck && !hasInterStateOverride;
+
+      if (Boolean(values.bill_to_ship_to) !== targetCheck) {
+        setFieldValue("bill_to_ship_to", targetCheck);
+      }
+      // If auto-enabling bill_to_ship_to, ensure POS aligns with customer's state (s.10(1)(b))
+      if (targetCheck && defCode && (!posCode || posCode !== defCode)) {
+        setFieldValue("place_of_supply", defCode);
       }
     }
-  }, [editId, values.customer_address, values.delivery_address, values.bill_to_ship_to, setFieldValue, manualOverrideRef]);
+  }, [editId, values.customer_address, values.delivery_address, values.bill_to_ship_to, values.place_of_supply, values.default_pos, setFieldValue, manualOverrideRef]);
 
   return null;
 }
@@ -1624,7 +1638,8 @@ export default function SalesForm({
     const parsedInvoiceDate = safeDateStr(rawInvoiceDate) || getTodayKolkata();
     const editBillingAddr = editData?.customer_address || aiDraftData?.customer_address || "";
     const editShippingAddr = editData?.delivery_address || aiDraftData?.delivery_address || "";
-    const editPos = editData?.place_of_supply || aiDraftData?.place_of_supply || "";
+    const rawEditPos = editData?.place_of_supply || aiDraftData?.place_of_supply || "";
+    const editPos = stateToCode(rawEditPos) || rawEditPos;
     const editCustId = editData?.customer_details?.id || editData?.customer?.id || editData?.customer || null;
     const matchedInitCust = (customers || []).find(
       (c) =>
@@ -1635,8 +1650,9 @@ export default function SalesForm({
     const editDefaultPos =
       customerPosCode(
         matchedInitCust || {
-          gstin: editData?.customer_gstin || aiDraftData?.customer_gstin || "",
+          gstin: editData?.customer_details?.gstin || editData?.customer_gstin || aiDraftData?.customer_gstin || "",
           address: editBillingAddr,
+          state: editData?.customer_details?.state,
         }
       ) || "";
 
@@ -1652,7 +1668,7 @@ export default function SalesForm({
       customer_email: editData?.customer_email || aiDraftData?.customer_email || "",
       customer_phone: editData?.customer_phone || aiDraftData?.customer_phone || "",
       customer_address: editBillingAddr,
-      customer_gstin: editData?.customer_gstin || aiDraftData?.customer_gstin || "",
+      customer_gstin: editData?.customer_details?.gstin || editData?.customer_gstin || aiDraftData?.customer_gstin || "",
       delivery_address: editShippingAddr,
       vehicle_number: editData?.vehicle_number || "",
       transport_mode: editData?.transport_mode || "",
@@ -1989,6 +2005,18 @@ export default function SalesForm({
                   setSubmitting(false);
                   return;
                 }
+              }
+
+              // Rudra CA (s.10/s.12 IGST Act): Bill-to-ship-to requires POS = customer state
+              const defCode = stateToCode(values.default_pos);
+              const posCode = stateToCode(values.place_of_supply);
+              if (values.bill_to_ship_to && defCode && posCode && defCode !== posCode) {
+                toast.error(
+                  `Bill-to-ship-to supply: place of supply must be the bill-to customer's state (${values.default_pos}). Please align Place of Supply or uncheck Bill-to-ship-to.`,
+                  { autoClose: 6000 }
+                );
+                setSubmitting(false);
+                return;
               }
 
               const processedItems = itemsForSave.map((item, index) => {
@@ -2663,7 +2691,7 @@ export default function SalesForm({
                           <label className="block text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
                             Place of Supply
                           </label>
-                          {values.place_of_supply && values.customer_gstin && (
+                          {isGstinStateMatch(values.place_of_supply, values.customer_gstin) && (
                             <span className="text-xs text-[var(--status-success)] font-mono">
                               Auto-detected from GSTIN
                             </span>
@@ -2673,6 +2701,20 @@ export default function SalesForm({
                           name="place_of_supply"
                           as="select"
                           className={`w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl px-4 py-2.5 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all text-sm ${HEADER_FIELD_FOCUS}`}
+                          onChange={(e) => {
+                            const newPos = e.target.value;
+                            setFieldValue('place_of_supply', newPos);
+                            // Rudra CA (s.10 / s.12 IGST Act):
+                            // If POS is changed to a state differing from bill-to customer's state,
+                            // this represents direct goods delivery under s.10(1)(a).
+                            // Automatically uncheck bill_to_ship_to because s.10(1)(b) prohibits POS != customer state.
+                            const defCode = stateToCode(values.default_pos);
+                            const newCode = stateToCode(newPos);
+                            if (newCode && defCode && newCode !== defCode && values.bill_to_ship_to) {
+                              billToShipToManualRef.current = true;
+                              setFieldValue('bill_to_ship_to', false);
+                            }
+                          }}
                         >
                           <option value="">Select State</option>
                           {INDIAN_STATES.map(s => (
@@ -2685,15 +2727,26 @@ export default function SalesForm({
                             checked={values.bill_to_ship_to === true}
                             onChange={(e) => {
                               billToShipToManualRef.current = true;
-                              setFieldValue('bill_to_ship_to', e.target.checked);
+                              const checked = e.target.checked;
+                              setFieldValue('bill_to_ship_to', checked);
+                              // Under IGST s.10(1)(b), checking Bill-to-ship-to legally requires Place of Supply
+                              // to be the bill-to customer's state. Auto-align POS to customer's state.
+                              if (checked && values.default_pos) {
+                                const defCode = stateToCode(values.default_pos) || values.default_pos;
+                                if (stateToCode(values.place_of_supply) !== defCode) {
+                                  setFieldValue('place_of_supply', defCode);
+                                }
+                              }
                             }}
                           />
                           Bill-to-ship-to (goods delivered to a third party on the customer's order)
                         </label>
                         {(() => {
                           // Rudra CA: s.10 / s.12 IGST Act POS rules
-                          const def = values.default_pos;
-                          const pos = values.place_of_supply;
+                          const def = stateToCode(values.default_pos);
+                          const pos = stateToCode(values.place_of_supply);
+                          const defDisplay = values.default_pos;
+                          const posDisplay = values.place_of_supply;
                           const lines = (values.items || []).filter((it) => it && it.row_type !== 'note' && String(it.hsn_sac_code || '').trim());
                           const services = lines.length > 0 && lines.every((it) => String(it.hsn_sac_code).trim().startsWith('99'));
                           const mixed = lines.some((it) => String(it.hsn_sac_code).trim().startsWith('99')) && !services;
@@ -2703,18 +2756,41 @@ export default function SalesForm({
                           if (!def || !pos || def === pos) return mixedNote;
                           if (services || values.bill_to_ship_to === true) {
                             return (
-                              <p className="mt-1.5 text-xs text-[var(--status-error)]">
-                                {services
-                                  ? `Place of supply for services must be the customer's state (${def}). Saving will be blocked.`
-                                  : `Bill-to-ship-to: place of supply must be the bill-to customer's state (${def}). Saving will be blocked.`}
-                              </p>
+                              <div className="mt-2 p-2.5 rounded-lg border border-[var(--status-error)]/30 bg-[var(--status-error)]/10 space-y-2">
+                                <p className="text-xs text-[var(--status-error)] font-medium">
+                                  {services
+                                    ? `Place of supply for services must be the customer's state (${defDisplay}). Saving will be blocked.`
+                                    : `Bill-to-ship-to: place of supply must be the bill-to customer's state (${defDisplay}). Saving will be blocked.`}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2 pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => setFieldValue('place_of_supply', def)}
+                                    className="text-[11px] px-2.5 py-1 rounded bg-[var(--status-error)] text-white hover:opacity-90 font-medium transition-opacity"
+                                  >
+                                    Align POS to {defDisplay}
+                                  </button>
+                                  {!services && values.bill_to_ship_to && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        billToShipToManualRef.current = true;
+                                        setFieldValue('bill_to_ship_to', false);
+                                      }}
+                                      className="text-[11px] px-2.5 py-1 rounded border border-[var(--status-error)] text-[var(--status-error)] hover:bg-[var(--status-error)]/10 font-medium transition-colors"
+                                    >
+                                      Uncheck Bill-to-Ship-to (Direct delivery to {posDisplay})
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             );
                           }
                           return (
                             <>
                             {mixedNote}
                             <p className="mt-1.5 text-xs text-[var(--status-warning)]">
-                              Place of supply ({pos}) differs from the customer's state ({def}). Allowed for goods shipped to another state; check the ship-to address.
+                              Place of supply ({posDisplay}) differs from the customer's state ({defDisplay}). Allowed for goods shipped to another state (s.10(1)(a) IGST Act); check the ship-to address.
                             </p>
                             </>
                           );
