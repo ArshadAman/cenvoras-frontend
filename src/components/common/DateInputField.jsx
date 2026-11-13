@@ -266,6 +266,10 @@ export default function DateInputField({
       if (input.length === 10) {
         const iso = displayToIso(input);
         if (iso) {
+          if ((minIso && iso < minIso) || (maxIso && iso > maxIso)) {
+            // Out of bounds: do not emit invalid value to parent
+            return;
+          }
           onChange?.({ target: { name, value: iso } });
           const [y, m] = iso.split("-").map(Number);
           setViewYear(y);
@@ -275,6 +279,18 @@ export default function DateInputField({
         onChange?.({ target: { name, value: "" } });
       }
     }
+  };
+
+  const handleBlur = (e) => {
+    if (displayValue && displayValue.length === 10) {
+      const iso = displayToIso(displayValue);
+      if (iso && ((minIso && iso < minIso) || (maxIso && iso > maxIso))) {
+        setDisplayValue(normalizedIso ? isoToDisplay(normalizedIso) : "");
+      }
+    } else if (displayValue && displayValue.length < 10) {
+      setDisplayValue(normalizedIso ? isoToDisplay(normalizedIso) : "");
+    }
+    onBlur?.(e);
   };
 
   const handleHiddenPickerChange = (e) => {
@@ -303,21 +319,25 @@ export default function DateInputField({
   };
 
   const handlePrevMonth = () => {
-    if (viewMonth === 0) {
-      setViewMonth(11);
-      setViewYear((y) => y - 1);
-    } else {
-      setViewMonth((m) => m - 1);
+    const prevM = viewMonth === 0 ? 11 : viewMonth - 1;
+    const prevY = viewMonth === 0 ? viewYear - 1 : viewYear;
+    if (minIso) {
+      const [minY, minM] = minIso.split("-").map(Number);
+      if (prevY < minY || (prevY === minY && prevM + 1 < minM)) return;
     }
+    setViewMonth(prevM);
+    setViewYear(prevY);
   };
 
   const handleNextMonth = () => {
-    if (viewMonth === 11) {
-      setViewMonth(0);
-      setViewYear((y) => y + 1);
-    } else {
-      setViewMonth((m) => m + 1);
+    const nextM = viewMonth === 11 ? 0 : viewMonth + 1;
+    const nextY = viewMonth === 11 ? viewYear + 1 : viewYear;
+    if (maxIso) {
+      const [maxY, maxM] = maxIso.split("-").map(Number);
+      if (nextY > maxY || (nextY === maxY && nextM + 1 > maxM)) return;
     }
+    setViewMonth(nextM);
+    setViewYear(nextY);
   };
 
   const handleSelectDay = (cell) => {
@@ -338,13 +358,27 @@ export default function DateInputField({
   };
 
   const currentYear = Number(todayIso.split("-")[0]) || new Date().getFullYear();
-  const minYearOpt = Math.min(1940, viewYear - 5, currentYear - 80);
-  const maxYearOpt = Math.max(currentYear + 15, viewYear + 5);
+  const minYearLimit = minIso ? Number(minIso.split("-")[0]) : Math.min(1940, viewYear - 5, currentYear - 80);
+  const maxYearLimit = maxIso ? Number(maxIso.split("-")[0]) : Math.max(currentYear + 15, viewYear + 5);
   const yearOptions = useMemo(() => {
     const arr = [];
-    for (let y = minYearOpt; y <= maxYearOpt; y++) arr.push(y);
+    const startY = Math.max(1940, minYearLimit);
+    const endY = Math.max(startY, maxYearLimit);
+    for (let y = startY; y <= endY; y++) arr.push(y);
     return arr;
-  }, [minYearOpt, maxYearOpt]);
+  }, [minYearLimit, maxYearLimit]);
+
+  const isMonthDisabled = (mIdx) => {
+    if (minIso) {
+      const [minY, minM] = minIso.split("-").map(Number);
+      if (viewYear < minY || (viewYear === minY && mIdx + 1 < minM)) return true;
+    }
+    if (maxIso) {
+      const [maxY, maxM] = maxIso.split("-").map(Number);
+      if (viewYear > maxY || (viewYear === maxY && mIdx + 1 > maxM)) return true;
+    }
+    return false;
+  };
 
   const calendarCells = useMemo(
     () => buildCalendarDays(viewYear, viewMonth, normalizedIso, todayIso, minIso, maxIso),
@@ -377,7 +411,7 @@ export default function DateInputField({
         name={name}
         value={displayValue}
         onChange={handleTextChange}
-        onBlur={onBlur}
+        onBlur={handleBlur}
         onKeyDown={(e) => {
           if (e.altKey && e.key === "ArrowDown" && !disabled && !readOnly) {
             e.preventDefault();
@@ -456,7 +490,7 @@ export default function DateInputField({
                   className="no-field-highlight bg-[var(--bg-primary)] border border-[var(--input-border)] rounded-lg px-2 py-1 text-xs font-semibold text-[var(--text-primary)] cursor-pointer focus:border-[var(--border-focus)] outline-none"
                 >
                   {MONTHS.map((mName, idx) => (
-                    <option key={mName} value={idx}>
+                    <option key={mName} value={idx} disabled={isMonthDisabled(idx)}>
                       {mName}
                     </option>
                   ))}

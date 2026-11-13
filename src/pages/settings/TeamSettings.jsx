@@ -90,8 +90,9 @@ export default function TeamSettings() {
   const profile = profileData?.profile || {};
   
   // Read dynamic limits directly from plan — differentiate staff seats from portal employees (Medium 11)
-  const staffCount = teamMembersList.filter((m) => m.role !== 'employee').length;
-  const employeeCount = teamMembersList.filter((m) => m.role === 'employee').length;
+  const isPortalEmployee = (m) => (m.role || '').toLowerCase() === 'employee' || Boolean(m.is_portal_employee);
+  const staffCount = teamMembersList.filter((m) => !isPortalEmployee(m)).length;
+  const employeeCount = teamMembersList.filter(isPortalEmployee).length;
   const maxLimit = Number(profile?.max_managers) || 0;
   const isVip = Boolean(
     profile?.is_lifetime_free
@@ -255,7 +256,6 @@ export default function TeamSettings() {
                             {member.role}
                           </span>
                         </td>
-                      </td>
                       <td className="p-4 text-sm text-[var(--text-secondary)]">
                         {member.date_joined ? (() => {
                           try {
