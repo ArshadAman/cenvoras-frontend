@@ -66,6 +66,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [salaryEdited, setSalaryEdited] = useState(false);
   const [calculatorKey, setCalculatorKey] = useState(0);
   const formSessionRef = useRef(0);
+  const modalContainerRef = useRef(null);
   /** Prevents profile/companyWorkState reload from wiping CTC / Basic-HRA edits mid-session */
   const hydratedForRef = useRef(null);
 
@@ -487,6 +488,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         });
         setFieldErrors(fieldErrorMap);
         setErrorMessage(topMsg || 'Failed to save employee. Please check the highlighted fields.');
+        modalContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 
         const statutoryFields = ['pan_number', 'pan', 'uan_number', 'uan', 'pf_number', 'pf_member_id', 'esi_number', 'esi_ip_number', 'bank_name', 'bank_account_number', 'bank_ifsc'];
         const employmentFields = ['date_of_joining', 'employment_type', 'department_id', 'designation_id', 'status'];
@@ -506,6 +508,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       } else {
         const msg = err.response?.data?.message || err.response?.data?.detail || 'Failed to save employee';
         setErrorMessage(msg);
+        modalContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         toast.error(msg);
       }
     } finally {
@@ -531,7 +534,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const labelCls = 'block text-sm font-medium text-[var(--text-secondary)] mb-1';
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+    <div ref={modalContainerRef} className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
       <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl w-full max-w-4xl shadow-2xl my-8">
         <div className="flex justify-between items-center p-5 border-b border-[var(--border-subtle)] sticky top-0 bg-[var(--bg-surface)] z-10 rounded-t-2xl">
           <h2 className="text-xl font-semibold text-[var(--text-primary)]">
@@ -1025,51 +1028,59 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   </div>
                 </div>
               ) : (
-                <SalaryBreakdownCalculator
-                  key={`salary-calc-${calculatorKey}-${employee?.id || 'new'}`}
-                  initialMonthlyCtc={
-                    salaryConfig?.monthly_ctc ||
-                    Number(employee?.current_ctc || employee?.salary_details?.monthly_ctc || 50000)
-                  }
-                  initialTaxRegime={salaryConfig?.tax_regime || formData.tax_regime || 'new'}
-                  initialWorkState={formData.work_state || companyWorkState}
-                  onWorkStateChange={(ws) => {
-                    setFormData((prev) => ({ ...prev, work_state: ws }));
-                    setSalaryConfig((prev) => (prev ? { ...prev, work_state: ws } : prev));
-                  }}
-                  initialPfWageComponents={employee?.salary_details?.pf_wage_components || []}
-                  structureComponents={employee?.salary_details?.structure_components || null}
-                  initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
-                  initialBasicPct={
-                    salaryConfig?.basic_pct ??
-                    (employee?.salary_details?.basic_pct != null
-                      ? Number(employee.salary_details.basic_pct)
-                      : null)
-                  }
-                  initialHraPct={
-                    salaryConfig?.hra_pct ??
-                    (employee?.salary_details?.hra_pct != null
-                      ? Number(employee.salary_details.hra_pct)
-                      : null)
-                  }
-                  dateOfJoining={formData.date_of_joining || employee?.date_of_joining || null}
-                  onBusyChange={setCalcBusy}
-                  onChange={(calcData) => {
-                    const session = formSessionRef.current;
-                    // Ignore stale calculator responses from a previous open session
-                    if (session !== formSessionRef.current) return;
-                    setSalaryEdited(true);
-                    setSalaryConfig(calcData);
-                    setFormData((prev) => ({
-                      ...prev,
-                      tax_regime: calcData.tax_regime,
-                      // formData.work_state is the single source of truth (set by
-                      // onWorkStateChange / the Employment tab); a breakdown response must not
-                      // overwrite it with the calculator's initial state.
-                      work_state: prev.work_state || calcData.work_state,
-                    }));
-                  }}
-                />
+                <>
+                  {fieldErrors.salary && (
+                    <div className="p-3.5 mb-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-400 font-medium flex items-center gap-2 animate-fade-in">
+                      <span className="font-bold">⚠️</span>
+                      <span className="flex-1 leading-relaxed">{fieldErrors.salary}</span>
+                    </div>
+                  )}
+                  <SalaryBreakdownCalculator
+                    key={`salary-calc-${calculatorKey}-${employee?.id || 'new'}`}
+                    initialMonthlyCtc={
+                      salaryConfig?.monthly_ctc ||
+                      Number(employee?.current_ctc || employee?.salary_details?.monthly_ctc || 50000)
+                    }
+                    initialTaxRegime={salaryConfig?.tax_regime || formData.tax_regime || 'new'}
+                    initialWorkState={formData.work_state || companyWorkState}
+                    onWorkStateChange={(ws) => {
+                      setFormData((prev) => ({ ...prev, work_state: ws }));
+                      setSalaryConfig((prev) => (prev ? { ...prev, work_state: ws } : prev));
+                    }}
+                    initialPfWageComponents={employee?.salary_details?.pf_wage_components || []}
+                    structureComponents={employee?.salary_details?.structure_components || null}
+                    initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
+                    initialBasicPct={
+                      salaryConfig?.basic_pct ??
+                      (employee?.salary_details?.basic_pct != null
+                        ? Number(employee.salary_details.basic_pct)
+                        : null)
+                    }
+                    initialHraPct={
+                      salaryConfig?.hra_pct ??
+                      (employee?.salary_details?.hra_pct != null
+                        ? Number(employee.salary_details.hra_pct)
+                        : null)
+                    }
+                    dateOfJoining={formData.date_of_joining || employee?.date_of_joining || null}
+                    onBusyChange={setCalcBusy}
+                    onChange={(calcData) => {
+                      const session = formSessionRef.current;
+                      // Ignore stale calculator responses from a previous open session
+                      if (session !== formSessionRef.current) return;
+                      setSalaryEdited(true);
+                      setSalaryConfig(calcData);
+                      setFormData((prev) => ({
+                        ...prev,
+                        tax_regime: calcData.tax_regime,
+                        // formData.work_state is the single source of truth (set by
+                        // onWorkStateChange / the Employment tab); a breakdown response must not
+                        // overwrite it with the calculator's initial state.
+                        work_state: prev.work_state || calcData.work_state,
+                      }));
+                    }}
+                  />
+                </>
               )}
             </div>
           )}

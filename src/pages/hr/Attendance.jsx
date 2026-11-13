@@ -26,23 +26,51 @@ const MONTH_NAMES = [
 function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
   const [form, setForm] = useState({ employee: '', date: '', status: 'present' });
   const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [overwritePrompt, setOverwritePrompt] = useState(null);
 
   useEffect(() => {
-    if (isOpen) setForm({ employee: '', date: getTodayKolkata(), status: 'present' });
+    if (isOpen) {
+      setForm({ employee: '', date: getTodayKolkata(), status: 'present' });
+      setErrorMessage('');
+      setOverwritePrompt(null);
+    }
   }, [isOpen]);
 
-  const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setErrorMessage('');
+    setOverwritePrompt(null);
+    setForm((prev) => {
+      const next = { ...prev, [name]: value };
+      if (name === 'employee') {
+        const emp = employees.find((empItem) => String(empItem.id) === String(value));
+        if (emp?.date_of_joining && next.date && next.date < emp.date_of_joining) {
+          next.date = emp.date_of_joining;
+        }
+      }
+      return next;
+    });
+  };
+
   const selectedEmp = employees.find((e) => String(e.id) === String(form.employee));
 
   const handleSubmit = async (e, forceOverwrite = false) => {
     if (e) e.preventDefault();
+    setErrorMessage('');
+    if (!forceOverwrite) setOverwritePrompt(null);
+
     if (selectedEmp?.date_of_joining && form.date < selectedEmp.date_of_joining) {
-      toast.error(`Attendance cannot be marked before joining date (${selectedEmp.date_of_joining})`);
+      const msg = `Attendance cannot be marked before joining date (${selectedEmp.date_of_joining})`;
+      setErrorMessage(msg);
+      toast.error(msg);
       return;
     }
     const today = getTodayKolkata();
     if (form.date > today) {
-      toast.error('Attendance cannot be marked for future dates.');
+      const msg = 'Attendance cannot be marked for future dates.';
+      setErrorMessage(msg);
+      toast.error(msg);
       return;
     }
     setSaving(true);
@@ -57,14 +85,33 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
       onClose();
     } catch (err) {
       const data = err.response?.data;
-      const msg = data?.date?.[0] || data?.date || data?.detail || data?.non_field_errors?.[0] || "Failed to log attendance";
-      if (typeof msg === 'string' && msg.includes('Confirm overwrite to replace')) {
-        const confirmReplace = window.confirm(`${msg}\n\nDo you want to overwrite and replace the existing attendance record?`);
-        if (confirmReplace) {
-          handleSubmit(null, true);
-          return;
-        }
+      const isConflict =
+        err.response?.status === 409 ||
+        data?.error_code === 'ATTENDANCE_EXISTS' ||
+        (typeof data?.date?.[0] === 'string' && data.date[0].includes('Confirm overwrite to replace')) ||
+        (typeof data?.detail === 'string' && data.detail.includes('Confirm overwrite to replace'));
+
+      if (isConflict) {
+        const existingStatus = data?.existing_status_display || data?.existing_status;
+        const promptMsg = data?.detail ||
+          (data?.date ? (Array.isArray(data.date) ? data.date[0] : data.date) : null) ||
+          `An attendance entry${existingStatus ? ` (${existingStatus})` : ''} already exists for this date. Do you want to overwrite it?`;
+
+        setOverwritePrompt({
+          message: promptMsg,
+          existing_status: existingStatus,
+        });
+        return;
       }
+
+      let msg = "Failed to log attendance";
+      if (typeof data === 'string') {
+        msg = data;
+      } else if (data && typeof data === 'object') {
+        const firstVal = data.date || data.detail || data.non_field_errors || Object.values(data)[0];
+        msg = Array.isArray(firstVal) ? firstVal[0] : (typeof firstVal === 'string' ? firstVal : JSON.stringify(firstVal));
+      }
+      setErrorMessage(msg);
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -85,6 +132,46 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {errorMessage && (
+            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-start gap-2 animate-fade-in">
+              <span className="font-bold">⚠️</span>
+              <span className="flex-1 leading-relaxed">{errorMessage}</span>
+            </div>
+          )}
+
+          {overwritePrompt && (
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-2.5 animate-fade-in">
+              <div className="flex items-start gap-2">
+                <span className="font-bold text-sm">⚠️</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-amber-200">Attendance Already Recorded</p>
+                  <p className="mt-1 leading-relaxed text-amber-300/90">{overwritePrompt.message}</p>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => setOverwritePrompt(null)}
+                  className="px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-lg hover:text-[var(--text-primary)] transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const prompt = overwritePrompt;
+                    setOverwritePrompt(null);
+                    handleSubmit(null, true);
+                  }}
+                  disabled={saving}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-600 text-black transition shadow-sm"
+                >
+                  {saving ? 'Overwriting...' : 'Overwrite & Save'}
+                </button>
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Employee *</label>
             <select required name="employee" value={form.employee} onChange={handleChange} className={inputCls}>
@@ -99,16 +186,19 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
             <DateInputField
               required
               name="date"
+              disabled={!form.employee}
               min={selectedEmp?.date_of_joining || ''}
               max={getTodayKolkata()}
               value={form.date}
               onChange={handleChange}
             />
-            {selectedEmp?.date_of_joining && (
+            {!form.employee ? (
+              <p className="text-xs text-[var(--text-muted)] mt-1">Select employee first</p>
+            ) : selectedEmp?.date_of_joining ? (
               <p className="text-xs text-[var(--accent-primary)] mt-1 font-medium">
                 Joining Date: {selectedEmp.date_of_joining} (only from this date)
               </p>
-            )}
+            ) : null}
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Status *</label>

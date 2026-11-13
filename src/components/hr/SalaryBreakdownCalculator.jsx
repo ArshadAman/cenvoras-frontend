@@ -390,9 +390,13 @@ export default function SalaryBreakdownCalculator({
   const annualNet = (breakdown && !isNaN(Number(breakdown.annual_net_take_home || breakdown.net_take_home_annual)))
     ? Number(breakdown.annual_net_take_home || breakdown.net_take_home_annual)
     : monthlyNet * 12;
-  const monthlyGross = (breakdown && !isNaN(Number(breakdown.monthly_gross || breakdown.gross_salary)))
+  const rawMonthlyGross = (breakdown && !isNaN(Number(breakdown.monthly_gross || breakdown.gross_salary)))
     ? Number(breakdown.monthly_gross || breakdown.gross_salary)
     : 0;
+  // If fixed earnings exceed CTC, contracted gross cannot exceed CTC
+  const monthlyGross = (renderExceedsCtc && monthlyCtc > 0)
+    ? Math.min(rawMonthlyGross, monthlyCtc)
+    : rawMonthlyGross;
   // Annual Gross = contracted monthly gross × 12. The calculate endpoint's `annual_gross` is the
   // TDS projection for the current FY (only the months from DOJ), so it is shown separately.
   const annualGross = monthlyGross * 12;
@@ -916,6 +920,19 @@ export default function SalaryBreakdownCalculator({
       {/* Live Calculated Breakdown Cards */}
       {breakdown && (
         <div className="space-y-4">
+          {/* Exceeds CTC Warning Banner */}
+          {renderExceedsCtc && (
+            <div className="p-4 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 text-xs font-semibold flex items-start gap-2.5 animate-fade-in shadow-sm">
+              <span className="text-base leading-none">⚠️</span>
+              <div className="flex-1 space-y-1">
+                <p className="text-red-200 font-bold text-sm">Allowances Exceed Monthly CTC</p>
+                <p className="text-red-300/90 leading-relaxed font-normal">
+                  Fixed salary components (₹{renderTotalFixed.toLocaleString('en-IN')}) exceed monthly CTC (₹{Number(monthlyCtc).toLocaleString('en-IN')}) by ₹{renderExcessAmount.toLocaleString('en-IN')}. Reduce Basic, HRA, or custom allowances to save.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Top Level Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Take-Home Net Pay */}

@@ -11,18 +11,37 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
   const [saving, setSaving] = useState(false);
   const [showAddLeaveType, setShowAddLeaveType] = useState(false);
   const [balances, setBalances] = useState([]);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     if (isOpen) {
       setForm({ employee: '', leave_type: '', start_date: '', end_date: '', reason: '' });
       setShowAddLeaveType(false);
+      setErrorMessage('');
+      setFieldErrors({});
       hrApi.getLeaveBalances().then(res => setBalances(res.data?.results || res.data || [])).catch(() => {});
     }
   }, [isOpen]);
 
   const handleChange = (e) => {
+    setErrorMessage('');
+    setFieldErrors((prev) => ({ ...prev, [e.target.name]: undefined }));
     if (e.target.name === 'leave_type' && e.target.value === '__add_new__') {
       setShowAddLeaveType(true);
+      return;
+    }
+    if (e.target.name === 'employee') {
+      const empId = e.target.value;
+      const emp = employees.find((x) => String(x.id) === String(empId));
+      setForm((prev) => {
+        const next = { ...prev, employee: empId };
+        if (emp?.date_of_joining && next.start_date && next.start_date < emp.date_of_joining) {
+          next.start_date = '';
+          next.end_date = '';
+        }
+        return next;
+      });
       return;
     }
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -50,12 +69,25 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage('');
+    setFieldErrors({});
+
+    if (!form.employee) {
+      setErrorMessage("Please select an employee first.");
+      setFieldErrors({ employee: "Employee is required." });
+      return;
+    }
     if (selectedEmp?.date_of_joining && form.start_date && form.start_date < selectedEmp.date_of_joining) {
-      showErrorToast(`Leave cannot be applied before employee joining date (${selectedEmp.date_of_joining})`);
+      const msg = `Leave cannot be applied before employee joining date (${selectedEmp.date_of_joining})`;
+      setErrorMessage(msg);
+      setFieldErrors({ start_date: msg });
+      showErrorToast(msg);
       return;
     }
     if (isQuotaExhausted) {
-      showErrorToast("Paid leave quota is fully exhausted. Additional paid leave cannot be taken.");
+      const msg = "Paid leave quota is fully exhausted. Additional paid leave cannot be taken.";
+      setErrorMessage(msg);
+      showErrorToast(msg);
       return;
     }
     setSaving(true);
@@ -65,6 +97,31 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
       onSuccess();
       onClose();
     } catch (err) {
+      const data = err.response?.data;
+      let msg = '';
+      const fErrors = {};
+      if (data && typeof data === 'object') {
+        if (Array.isArray(data.non_field_errors)) {
+          msg = data.non_field_errors[0];
+        } else if (data.detail) {
+          msg = data.detail;
+        } else if (data.start_date) {
+          msg = Array.isArray(data.start_date) ? data.start_date[0] : String(data.start_date);
+          fErrors.start_date = msg;
+        } else if (data.end_date) {
+          msg = Array.isArray(data.end_date) ? data.end_date[0] : String(data.end_date);
+          fErrors.end_date = msg;
+        } else {
+          const firstEntry = Object.entries(data)[0];
+          if (firstEntry) {
+            const [k, v] = firstEntry;
+            msg = Array.isArray(v) ? v[0] : (typeof v === 'object' ? JSON.stringify(v) : String(v));
+            fErrors[k] = msg;
+          }
+        }
+      }
+      setErrorMessage(msg || 'Failed to submit leave application');
+      setFieldErrors(fErrors);
       showErrorToast(err, "Failed to submit leave application");
     } finally {
       setSaving(false);
@@ -87,6 +144,12 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
             </button>
           </div>
           <form onSubmit={handleSubmit} className="p-5 space-y-4">
+            {errorMessage && (
+              <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-start gap-2 animate-fade-in">
+                <span className="font-bold">⚠️</span>
+                <span className="flex-1 leading-relaxed">{errorMessage}</span>
+              </div>
+            )}
             <div>
               <label className={labelCls}>Employee *</label>
               <select required name="employee" value={form.employee} onChange={handleChange} className={inputCls}>
@@ -142,14 +205,20 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
                 <DateInputField
                   required
                   name="start_date"
+                  disabled={!form.employee}
                   min={selectedEmp?.date_of_joining || ''}
                   value={form.start_date}
                   onChange={handleChange}
                 />
-                {selectedEmp?.date_of_joining && (
+                {!form.employee ? (
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Select employee first</p>
+                ) : selectedEmp?.date_of_joining ? (
                   <p className="text-xs text-[var(--accent-primary)] mt-1 font-medium">
                     Joined: {selectedEmp.date_of_joining}
                   </p>
+                ) : null}
+                {fieldErrors.start_date && (
+                  <p className="text-xs text-red-400 mt-1">{fieldErrors.start_date}</p>
                 )}
               </div>
               <div>
@@ -157,10 +226,17 @@ function LeaveApplicationModal({ isOpen, onClose, onSuccess, employees, leaveTyp
                 <DateInputField
                   required
                   name="end_date"
+                  disabled={!form.employee}
                   min={form.start_date || selectedEmp?.date_of_joining || ''}
                   value={form.end_date}
                   onChange={handleChange}
                 />
+                {!form.employee ? (
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Select employee first</p>
+                ) : null}
+                {fieldErrors.end_date && (
+                  <p className="text-xs text-red-400 mt-1">{fieldErrors.end_date}</p>
+                )}
               </div>
             </div>
             <div>
