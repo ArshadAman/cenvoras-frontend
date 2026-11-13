@@ -12,10 +12,10 @@ import { jsPDF } from 'jspdf';
  * 5. Interactive text selection overlay for copying and searching text
  */
 
-/** White-space (CSS px) between stamped continuation letterhead and page body on page 2+. */
-const CONTINUATION_CONTENT_GAP_PX = 12;
-/** Extra gap when a page opens on bank/totals (no item rows) so text clears the curved header. */
-const CONTINUATION_TOTALS_GAP_PX = 18;
+/** Match print/vector CSS: 3mm under continuation letterhead (96dpi CSS px). */
+const CONTINUATION_CONTENT_GAP_PX = Math.round((3 / 25.4) * 96);
+/** Same 3mm gap when a page opens on bank/totals (parity with print CSS). */
+const CONTINUATION_TOTALS_GAP_PX = Math.round((3 / 25.4) * 96);
 
 export async function generatePixelPerfectPDF(element, options = {}) {
   if (!element) {
@@ -182,6 +182,14 @@ export async function generatePixelPerfectPDF(element, options = {}) {
       logging: false,
       imageTimeout: 15000,
       onclone: (clonedDoc) => {
+        // Undo modal preview scale so capture matches unscaled A4 geometry
+        clonedDoc.querySelectorAll('[data-print-wrapper]').forEach((el) => {
+          el.style.transform = 'none';
+          el.style.webkitTransform = 'none';
+          el.style.width = '210mm';
+          el.style.margin = '0';
+          el.style.marginBottom = '0';
+        });
         const clonedTarget = clonedDoc.querySelector('[data-print-target]') || clonedDoc.body.firstChild;
         if (clonedTarget) {
           clonedTarget.style.transform = 'none';

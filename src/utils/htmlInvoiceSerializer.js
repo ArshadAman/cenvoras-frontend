@@ -1,13 +1,14 @@
 import compiledTailwindStyles from '../index.css?inline';
+import {
+  INVOICE_GOOGLE_FONTS_HREF,
+  INVOICE_DOCUMENT_FONT_FAMILY,
+  INVOICE_VECTOR_LAYOUT_CSS,
+} from './invoicePrintStyles';
 
 /**
- * htmlInvoiceSerializer.js
- * 
- * Serializes the rendered invoice preview into a complete, standalone HTML document
- * containing all embedded Tailwind CSS and theme styles.
- * 
- * When processed by Headless Chromium on the backend, this guarantees a 100% pixel-perfect
- * vector PDF replica with 0 pixel difference from the on-screen preview.
+ * Serializes the rendered invoice preview into a standalone HTML document
+ * for headless Chromium vector PDF — same layout CSS and Inter font stack
+ * as on-screen preview / browser print.
  */
 
 export function serializeInvoiceHtml(element) {
@@ -17,7 +18,7 @@ export function serializeInvoiceHtml(element) {
   let collectedStyles = '';
 
   try {
-    const styleElements = document.querySelectorAll('style:not([data-modal-print-style]), link[rel="stylesheet"]');
+    const styleElements = document.querySelectorAll('style:not([data-modal-print-style]):not([data-preview-layout-style]), link[rel="stylesheet"]');
     styleElements.forEach((el) => {
       if (el.tagName.toLowerCase() === 'style' && el.innerHTML) {
         collectedStyles += `\n${el.innerHTML}`;
@@ -93,7 +94,7 @@ export function serializeInvoiceHtml(element) {
     el.style.marginTop = '';
   });
 
-  // 3. Assemble complete standalone HTML with compile-time embedded Tailwind CSS
+  // 3. Assemble complete standalone HTML with shared print layout + Inter
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,12 +103,8 @@ export function serializeInvoiceHtml(element) {
   <title>Invoice</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="${INVOICE_GOOGLE_FONTS_HREF}" rel="stylesheet">
   <style>
-    @page {
-      size: A4 portrait;
-      margin: 0;
-    }
     *, *::before, *::after {
       box-sizing: border-box;
       -webkit-print-color-adjust: exact !important;
@@ -118,107 +115,11 @@ export function serializeInvoiceHtml(element) {
       padding: 0;
       background-color: #ffffff !important;
       color: #1f2937;
-      font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'DejaVu Sans', 'Noto Sans', 'Liberation Sans', sans-serif;
+      font-family: ${INVOICE_DOCUMENT_FONT_FAMILY};
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    /* A4 sheet; Classic thead letterhead repeats every page; footer flows under totals */
-    [data-print-target] {
-      width: 210mm !important;
-      max-width: 100% !important;
-      min-height: 297mm !important;
-      margin: 0 auto !important;
-      padding: 0 !important;
-      box-shadow: none !important;
-      background-color: #ffffff !important;
-      transform: none !important;
-    }
-    .invoice-sheet {
-      position: relative !important;
-      display: flex !important;
-      flex-direction: column !important;
-      box-shadow: none !important;
-      transform: none !important;
-      width: 210mm !important;
-      max-width: 100% !important;
-      min-height: 297mm !important;
-      margin: 0 auto !important;
-      box-sizing: border-box !important;
-      background-color: #ffffff !important;
-      overflow: visible !important;
-    }
-    .invoice-sheet:has(.invoice-print-shell[data-print-theme="classic"]) {
-      padding: 0 0 10mm 0 !important;
-      padding-top: 0 !important;
-    }
-    .invoice-sheet-body {
-      flex: 0 0 auto !important;
-      flex-grow: 0 !important;
-    }
-    thead {
-      display: table-header-group !important;
-    }
-    thead tr {
-      page-break-before: avoid !important;
-      break-before: avoid !important;
-    }
-    tr:not(.invoice-print-shell-row) {
-      break-inside: avoid !important;
-      page-break-inside: avoid !important;
-    }
-    .invoice-print-shell,
-    .invoice-print-shell > tbody,
-    .invoice-print-shell-row,
-    .invoice-print-shell-row > td {
-      break-inside: auto !important;
-      page-break-inside: auto !important;
-      page-break-before: avoid !important;
-      break-before: avoid !important;
-    }
-    .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header {
-      display: table-row !important;
-    }
-    .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td {
-      /* Slight white gap under letterhead before body (items or bank/totals on page break) */
-      padding: 0 0 3mm 0 !important;
-      border: none !important;
-      overflow: visible !important;
-    }
-    .invoice-print-shell {
-      border-collapse: collapse !important;
-      border-spacing: 0 !important;
-      width: 100% !important;
-      margin: 0 !important;
-    }
-    .invoice-continuation-letterhead-classic {
-      display: block !important;
-      margin: 0 !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
-    }
-    .invoice-print-shell[data-print-theme="classic"] .invoice-print-shell-row > td {
-      padding: 0 7mm !important;
-      border: none !important;
-      overflow: visible !important;
-    }
-    /* Bank + totals (+ amount in words): never split across pages */
-    .invoice-totals-block {
-      break-inside: avoid !important;
-      page-break-inside: avoid !important;
-      break-before: auto !important;
-      page-break-before: auto !important;
-    }
-    .invoice-page-footer {
-      position: static !important;
-      bottom: auto !important;
-      left: auto !important;
-      right: auto !important;
-      break-inside: avoid !important;
-      page-break-inside: avoid !important;
-    }
-    .font-mono, [class*="font-mono"], code, pre {
-      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'DejaVu Sans', 'Noto Sans', monospace, sans-serif !important;
-    }
+    ${INVOICE_VECTOR_LAYOUT_CSS}
     /* Compiled project Tailwind CSS */
     ${compiledTailwindStyles}
     /* Runtime captured styles */
