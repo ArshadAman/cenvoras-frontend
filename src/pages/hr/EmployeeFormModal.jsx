@@ -409,16 +409,16 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       if (formData.personal_phone) payload.personal_phone = formData.personal_phone;
 
       // Edit: always persist compensation when we have a CTC snapshot (Revise Salary
-      // is not required). Create: send when user touched compensation this session.
-      const ctcNum = Number(salaryConfig?.monthly_ctc || 0);
-      const shouldPersistSalary = !isContract && salaryConfig && ctcNum > 0 && (salaryEdited || !!employee);
+      // is not required). Create: always send standard or configured compensation from DOJ.
+      const ctcNum = Number(salaryConfig?.monthly_ctc || 50000);
+      const shouldPersistSalary = !isContract && (salaryConfig || !employee || salaryEdited);
       if (shouldPersistSalary) {
         payload.salary = {
           monthly_ctc: ctcNum,
-          components: salaryConfig.components || {},
-          basic_pct: salaryConfig.basic_pct,
-          hra_pct: salaryConfig.hra_pct,
-          ...(Array.isArray(salaryConfig.pf_wage_components) ? { pf_wage_components: salaryConfig.pf_wage_components } : {}),
+          components: salaryConfig?.components || {},
+          basic_pct: salaryConfig?.basic_pct ?? 50,
+          hra_pct: salaryConfig?.hra_pct ?? 50,
+          ...(Array.isArray(salaryConfig?.pf_wage_components) ? { pf_wage_components: salaryConfig.pf_wage_components } : {}),
         };
         // Always pass effective_from from date_of_joining so updates move the salary start date (High 4)
         if (formData.date_of_joining) {
