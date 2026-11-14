@@ -123,6 +123,71 @@ function RecalcPreviewModal({ run, onClose, onConfirm }) {
   );
 }
 
+function ExceptionAction({ exc, runId, onDone, onResolve }) {
+  if (exc.is_resolved) {
+    return <span className="text-xs text-[var(--status-success)] font-medium">Resolved</span>;
+  }
+  if (exc.code === 'SALARY_EXCEEDS_CTC') {
+    return <CtcScalingConfirm runId={runId} employeeId={exc.employee} onDone={onDone} />;
+  }
+  if (exc.severity === 'critical') {
+    if (exc.code === 'NO_SALARY_STRUCTURE') {
+      return (
+        <div className="flex flex-col items-end gap-1">
+          <Link
+            to="/hr/employees"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--accent-primary)] text-white hover:opacity-90 whitespace-nowrap transition inline-flex items-center gap-1 shadow-sm"
+          >
+            Assign Salary
+          </Link>
+          <span className="text-[10px] text-[var(--status-danger)] font-medium">Recalculate required</span>
+        </div>
+      );
+    }
+    if (exc.code === 'MISSING_BANK_INFO') {
+      return (
+        <div className="flex flex-col items-end gap-1">
+          <Link
+            to="/hr/employees"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--accent-primary)] text-white hover:opacity-90 whitespace-nowrap transition inline-flex items-center gap-1 shadow-sm"
+          >
+            Update Bank Info
+          </Link>
+          <span className="text-[10px] text-[var(--status-danger)] font-medium">Recalculate required</span>
+        </div>
+      );
+    }
+    if (exc.code === 'PAN_REQUIRED_FOR_TDS') {
+      return (
+        <div className="flex flex-col items-end gap-1">
+          <Link
+            to="/hr/employees"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--accent-primary)] text-white hover:opacity-90 whitespace-nowrap transition inline-flex items-center gap-1 shadow-sm"
+          >
+            Add PAN
+          </Link>
+          <span className="text-[10px] text-[var(--status-danger)] font-medium">Recalculate required</span>
+        </div>
+      );
+    }
+    return (
+      <span className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[var(--status-danger)]/20 text-[var(--status-danger)] whitespace-nowrap">
+        Fix record & Recalculate
+      </span>
+    );
+  }
+
+  // Warnings can still be acknowledged and resolved
+  return (
+    <button
+      onClick={() => onResolve(exc.id)}
+      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] whitespace-nowrap transition"
+    >
+      Acknowledge & Resolve
+    </button>
+  );
+}
+
 function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh }) {
   const [activeTab, setActiveTab] = useState('audit'); // 'audit', 'employees', 'exceptions'
   const [payslips, setPayslips] = useState([]);
@@ -565,11 +630,11 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                     if (parseFloat(selectedPayslip.employee_esi || 0) > 0 && !deductionsMap['ESI']) {
                       deductionsMap['State Insurance (ESI)'] = selectedPayslip.employee_esi;
                     }
-                    if (parseFloat(selectedPayslip.tds || 0) > 0 && !deductionsMap['TDS'] && !deductionsMap['Income Tax (TDS)']) {
-                      deductionsMap['Income Tax (TDS)'] = selectedPayslip.tds;
+                    if (!deductionsMap['TDS'] && !deductionsMap['Income Tax (TDS)']) {
+                      deductionsMap['Income Tax (TDS)'] = selectedPayslip.tds || 0;
                     }
-                    if (parseFloat(selectedPayslip.professional_tax || 0) > 0 && !deductionsMap['PT'] && !deductionsMap['Professional Tax (PT)']) {
-                      deductionsMap['Professional Tax (PT)'] = selectedPayslip.professional_tax;
+                    if (!deductionsMap['PT'] && !deductionsMap['Professional Tax (PT)']) {
+                      deductionsMap['Professional Tax (PT)'] = selectedPayslip.professional_tax || 0;
                     }
                     if (parseFloat(selectedPayslip.advance_recovery || 0) > 0 && !deductionsMap['Salary Advance Recovery']) {
                       deductionsMap['Salary Advance Recovery'] = selectedPayslip.advance_recovery;
@@ -577,8 +642,9 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                     if (parseFloat(selectedPayslip.loan_recovery || 0) > 0 && !deductionsMap['Loan Recovery']) {
                       deductionsMap['Loan Recovery'] = selectedPayslip.loan_recovery;
                     }
-                    delete deductionsMap['Loss of Pay (LOP)'];
-                    delete deductionsMap['LOP'];
+                    if (parseFloat(selectedPayslip.lop_days || 0) > 0 && !deductionsMap['Loss of Pay (LOP)']) {
+                      deductionsMap['Loss of Pay (LOP)'] = selectedPayslip.lop_amount || 0;
+                    }
                     if (Object.keys(deductionsMap).length === 0 && parseFloat(selectedPayslip.total_deductions || 0) > 0) {
                       deductionsMap['Statutory & Other Deductions'] = selectedPayslip.total_deductions;
                     }
@@ -721,18 +787,12 @@ function PayrollCycleDetailsModal({ isOpen, onClose, payrollRun, onActionRefresh
                       <p className="text-xs text-[var(--text-muted)] mt-1 italic">Resolution: {exc.resolution_note}</p>
                     )}
                   </div>
-                  {!exc.is_resolved && exc.code === 'SALARY_EXCEEDS_CTC' ? (
-                    <CtcScalingConfirm runId={payrollRun.id} employeeId={exc.employee} onDone={() => { if (onActionRefresh) onActionRefresh(); }} />
-                  ) : !exc.is_resolved ? (
-                    <button
-                      onClick={() => handleResolveException(exc.id)}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] whitespace-nowrap transition"
-                    >
-                      Acknowledge & Resolve
-                    </button>
-                  ) : (
-                    <span className="text-xs text-[var(--status-success)] font-medium">Resolved</span>
-                  )}
+                  <ExceptionAction
+                    exc={exc}
+                    runId={payrollRun.id}
+                    onDone={() => { if (onActionRefresh) onActionRefresh(); }}
+                    onResolve={handleResolveException}
+                  />
                 </div>
               ))
             )}
@@ -813,18 +873,12 @@ function ExceptionsModal({ isOpen, onClose, payrollRunId, onResolved }) {
                   </div>
                   <p className="text-xs text-[var(--text-secondary)] mt-1">{exc.message}</p>
                 </div>
-                {!exc.is_resolved && exc.code === 'SALARY_EXCEEDS_CTC' ? (
-                  <CtcScalingConfirm runId={payrollRunId} employeeId={exc.employee} onDone={() => { if (onResolved) onResolved(); onClose(); }} />
-                ) : !exc.is_resolved ? (
-                  <button
-                    onClick={() => handleResolve(exc.id)}
-                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] whitespace-nowrap transition"
-                  >
-                    Acknowledge & Resolve
-                  </button>
-                ) : (
-                  <span className="text-xs text-[var(--status-success)] font-medium">Resolved</span>
-                )}
+                <ExceptionAction
+                  exc={exc}
+                  runId={payrollRunId}
+                  onDone={() => { if (onResolved) onResolved(); onClose(); }}
+                  onResolve={handleResolve}
+                />
               </div>
             ))
           )}
@@ -1054,7 +1108,9 @@ function ReopenModal({ isOpen, onClose, payrollRun, onSuccess }) {
 // ─── New Payroll Modal ────────────────────────────────────────────────────────
 function PayrollRunModal({ isOpen, onClose, onSuccess }) {
   const now = new Date();
-  const [form, setForm] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const [form, setForm] = useState({ month: currentMonth, year: currentYear });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -1066,6 +1122,10 @@ function PayrollRunModal({ isOpen, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (form.year > currentYear || (form.year === currentYear && form.month > currentMonth)) {
+      showErrorToast(`Cannot create payroll cycle ahead of time for future months (current period: ${MONTHS[currentMonth - 1]} ${currentYear}).`);
+      return;
+    }
     setSaving(true);
     try {
       await hrApi.createPayrollRun(form);
@@ -1095,14 +1155,36 @@ function PayrollRunModal({ isOpen, onClose, onSuccess }) {
           <div>
             <label className="block text-sm text-[var(--text-secondary)] mb-1">Month *</label>
             <select required name="month" value={form.month} onChange={e => setForm(p => ({ ...p, month: Number(e.target.value) }))} className={ic}>
-              {MONTHS.map((m, i) => (
-                <option key={i + 1} value={i + 1}>{m}</option>
-              ))}
+              {MONTHS.map((m, i) => {
+                const monthNum = i + 1;
+                const isFuture = form.year > currentYear || (form.year === currentYear && monthNum > currentMonth);
+                return (
+                  <option key={monthNum} value={monthNum} disabled={isFuture}>
+                    {m} {isFuture ? '(Future)' : ''}
+                  </option>
+                );
+              })}
             </select>
           </div>
           <div>
             <label className="block text-sm text-[var(--text-secondary)] mb-1">Year *</label>
-            <input required type="number" min={2020} max={2099} value={form.year} onChange={e => setForm(p => ({ ...p, year: Number(e.target.value) }))} className={ic} />
+            <input
+              required
+              type="number"
+              min={2020}
+              max={currentYear}
+              value={form.year}
+              onChange={e => {
+                const y = Number(e.target.value);
+                setForm(p => ({
+                  ...p,
+                  year: y,
+                  month: y === currentYear && p.month > currentMonth ? currentMonth : p.month
+                }));
+              }}
+              className={ic}
+            />
+            <p className="text-xs text-[var(--text-muted)] mt-1">Payroll cycles cannot be created ahead of time for future periods.</p>
           </div>
 
           <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-subtle)]">

@@ -113,11 +113,11 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
             if (parseFloat(payslip.employee_esi || 0) > 0 && !deductionsMap['ESI']) {
               deductionsMap['State Insurance (ESI)'] = payslip.employee_esi;
             }
-            if (parseFloat(payslip.tds || 0) > 0 && !deductionsMap['TDS'] && !deductionsMap['Income Tax (TDS)']) {
-              deductionsMap['Income Tax (TDS)'] = payslip.tds;
+            if (!deductionsMap['TDS'] && !deductionsMap['Income Tax (TDS)']) {
+              deductionsMap['Income Tax (TDS)'] = payslip.tds || 0;
             }
-            if (parseFloat(payslip.professional_tax || 0) > 0 && !deductionsMap['PT'] && !deductionsMap['Professional Tax (PT)']) {
-              deductionsMap['Professional Tax (PT)'] = payslip.professional_tax;
+            if (!deductionsMap['PT'] && !deductionsMap['Professional Tax (PT)']) {
+              deductionsMap['Professional Tax (PT)'] = payslip.professional_tax || 0;
             }
             if (parseFloat(payslip.advance_recovery || 0) > 0 && !deductionsMap['Salary Advance Recovery']) {
               deductionsMap['Salary Advance Recovery'] = payslip.advance_recovery;
@@ -125,8 +125,9 @@ function PayslipQuickViewModal({ isOpen, onClose, payslip, onDownloadPdf }) {
             if (parseFloat(payslip.loan_recovery || 0) > 0 && !deductionsMap['Loan Recovery']) {
               deductionsMap['Loan Recovery'] = payslip.loan_recovery;
             }
-            delete deductionsMap['Loss of Pay (LOP)'];
-            delete deductionsMap['LOP'];
+            if (parseFloat(payslip.lop_days || 0) > 0 && !deductionsMap['Loss of Pay (LOP)']) {
+              deductionsMap['Loss of Pay (LOP)'] = payslip.lop_amount || 0;
+            }
             if (Object.keys(deductionsMap).length === 0 && parseFloat(payslip.total_deductions || 0) > 0) {
               deductionsMap['Statutory & Other Deductions'] = payslip.total_deductions;
             }
