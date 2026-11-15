@@ -96,6 +96,21 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [newDesigName, setNewDesigName] = useState('');
   const [addingDesig, setAddingDesig] = useState(false);
 
+  // Memoize raw employee salary baseline strictly on employee.id so calculator live output
+  // (salaryConfig) never feeds back into initial props to cause an infinite re-render loop.
+  const initialSalaryProps = useMemo(() => {
+    return {
+      components: employee?.salary_details?.earnings || employee?.salary_details?.components || null,
+      basicPct: employee?.salary_details?.basic_pct != null
+        ? Number(employee.salary_details.basic_pct)
+        : null,
+      hraPct: employee?.salary_details?.hra_pct != null
+        ? Number(employee.salary_details.hra_pct)
+        : null,
+      monthlyCtc: Number(employee?.current_ctc || employee?.salary_details?.monthly_ctc || 50000),
+    };
+  }, [employee?.id]);
+
   useEffect(() => {
     if (!isOpen) {
       hydratedForRef.current = null;
@@ -1037,11 +1052,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   )}
                   <SalaryBreakdownCalculator
                     key={`salary-calc-${calculatorKey}-${employee?.id || 'new'}`}
-                    initialMonthlyCtc={
-                      salaryConfig?.monthly_ctc ||
-                      Number(employee?.current_ctc || employee?.salary_details?.monthly_ctc || 50000)
-                    }
-                    initialTaxRegime={salaryConfig?.tax_regime || formData.tax_regime || 'new'}
+                    initialMonthlyCtc={initialSalaryProps.monthlyCtc}
+                    initialTaxRegime={formData.tax_regime || 'new'}
                     initialWorkState={formData.work_state || companyWorkState}
                     onWorkStateChange={(ws) => {
                       setFormData((prev) => ({ ...prev, work_state: ws }));
@@ -1049,19 +1061,9 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     }}
                     initialPfWageComponents={employee?.salary_details?.pf_wage_components || []}
                     structureComponents={employee?.salary_details?.structure_components || null}
-                    initialComponents={salaryConfig?.components || employee?.salary_details?.earnings || employee?.salary_details?.components}
-                    initialBasicPct={
-                      salaryConfig?.basic_pct ??
-                      (employee?.salary_details?.basic_pct != null
-                        ? Number(employee.salary_details.basic_pct)
-                        : null)
-                    }
-                    initialHraPct={
-                      salaryConfig?.hra_pct ??
-                      (employee?.salary_details?.hra_pct != null
-                        ? Number(employee.salary_details.hra_pct)
-                        : null)
-                    }
+                    initialComponents={initialSalaryProps.components}
+                    initialBasicPct={initialSalaryProps.basicPct}
+                    initialHraPct={initialSalaryProps.hraPct}
                     dateOfJoining={formData.date_of_joining || employee?.date_of_joining || null}
                     onBusyChange={setCalcBusy}
                     onChange={(calcData) => {

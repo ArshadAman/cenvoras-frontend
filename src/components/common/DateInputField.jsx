@@ -7,6 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import useEscKey from "../../hooks/useEscStack";
 import { getTodayKolkata } from "../../utils/date";
+import { toast } from "react-toastify";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTHS = [
@@ -131,6 +132,9 @@ export default function DateInputField({
   ariaInvalid: ariaInvalidProp,
   "aria-invalid": ariaInvalidAttr,
   "aria-label": ariaLabel,
+  onError,
+  maxMessage,
+  minMessage,
 }) {
   const ariaInvalid = ariaInvalidAttr ?? ariaInvalidProp;
   const isoToDisplay = (isoStr) => {
@@ -285,8 +289,16 @@ export default function DateInputField({
       if (input.length === 10) {
         const iso = displayToIso(input);
         if (iso) {
-          if ((minIso && iso < minIso) || (maxIso && iso > maxIso)) {
-            // Out of bounds: do not emit invalid value to parent
+          if (maxIso && iso > maxIso) {
+            const msg = maxMessage || `Date cannot be after ${isoToDisplay(maxIso)}`;
+            toast.warning(msg);
+            onError?.(msg);
+            return;
+          }
+          if (minIso && iso < minIso) {
+            const msg = minMessage || `Date cannot be before ${isoToDisplay(minIso)}`;
+            toast.warning(msg);
+            onError?.(msg);
             return;
           }
           onChange?.({ target: { name, value: iso } });
@@ -303,7 +315,15 @@ export default function DateInputField({
   const handleBlur = (e) => {
     if (displayValue && displayValue.length === 10) {
       const iso = displayToIso(displayValue);
-      if (iso && ((minIso && iso < minIso) || (maxIso && iso > maxIso))) {
+      if (iso && maxIso && iso > maxIso) {
+        const msg = maxMessage || `Date cannot be after ${isoToDisplay(maxIso)}`;
+        toast.warning(msg);
+        onError?.(msg);
+        setDisplayValue(normalizedIso ? isoToDisplay(normalizedIso) : "");
+      } else if (iso && minIso && iso < minIso) {
+        const msg = minMessage || `Date cannot be before ${isoToDisplay(minIso)}`;
+        toast.warning(msg);
+        onError?.(msg);
         setDisplayValue(normalizedIso ? isoToDisplay(normalizedIso) : "");
       } else if (!iso) {
         setDisplayValue(normalizedIso ? isoToDisplay(normalizedIso) : "");

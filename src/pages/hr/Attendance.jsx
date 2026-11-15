@@ -191,6 +191,8 @@ function AttendanceModal({ isOpen, onClose, onSuccess, employees }) {
               max={getTodayKolkata()}
               value={form.date}
               onChange={handleChange}
+              maxMessage="Attendance cannot be marked for future dates."
+              minMessage={selectedEmp?.date_of_joining ? `Attendance cannot be marked before employee joining date (${selectedEmp.date_of_joining}).` : undefined}
             />
             {!form.employee ? (
               <p className="text-xs text-[var(--text-muted)] mt-1">Select employee first</p>
