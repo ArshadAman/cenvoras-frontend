@@ -156,10 +156,12 @@ export default function SalaryBreakdownCalculator({
 
   useEffect(() => {
     if (initialBasicPct != null && !isNaN(Number(initialBasicPct))) {
-      setBasicPct(Math.min(90, Math.max(40, Math.round(Number(initialBasicPct)))));
+      const targetBasic = Math.min(90, Math.max(40, Math.round(Number(initialBasicPct))));
+      setBasicPct((prev) => (prev !== targetBasic ? targetBasic : prev));
     }
     if (initialHraPct != null && !isNaN(Number(initialHraPct))) {
-      setHraPctOfBasic(Math.min(50, Math.max(0, Math.round(Number(initialHraPct)))));
+      const targetHra = Math.min(50, Math.max(0, Math.round(Number(initialHraPct))));
+      setHraPctOfBasic((prev) => (prev !== targetHra ? targetHra : prev));
     }
     if (initialComponents) {
       const derived = derivePctsFromComponents(
@@ -168,8 +170,12 @@ export default function SalaryBreakdownCalculator({
         initialBasicPct != null ? Number(initialBasicPct) : basicPct,
         initialHraPct != null ? Number(initialHraPct) : hraPctOfBasic,
       );
-      setBasicPct(derived.basicPct);
-      setHraPctOfBasic(derived.hraPct);
+      if (derived.basicPct != null) {
+        setBasicPct((prev) => (prev !== derived.basicPct ? derived.basicPct : prev));
+      }
+      if (derived.hraPct != null) {
+        setHraPctOfBasic((prev) => (prev !== derived.hraPct ? derived.hraPct : prev));
+      }
     }
     // Intentionally sync when employee/salary props change (open modal)
     // eslint-disable-next-line react-hooks/exhaustive-deps
