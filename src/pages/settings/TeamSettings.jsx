@@ -287,7 +287,8 @@ export default function TeamSettings() {
                         </button>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
