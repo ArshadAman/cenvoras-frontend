@@ -85,7 +85,7 @@ const ProfessionalTemplate = forwardRef(({
       case 'serial': return '30px';
       case 'description': return 'auto';
       case 'batch': return '65px';
-      case 'hsn': return '75px';
+      case 'hsn': return '85px';
       case 'quantity': return '55px';
       case 'free_qty': return '50px';
       case 'unit': return '50px';
@@ -352,6 +352,7 @@ const ProfessionalTemplate = forwardRef(({
                     val = `${getCurrencySymbol()}${(lineBase - (lineBase * disc) / 100).toFixed(2)}`;
                   }
                   else if(col.id==='hsn') val = item.hsn_sac_code || '-';
+                  const isHsn = col.id === 'hsn';
                   return (
                     <td 
                       key={col.id} 
@@ -359,13 +360,13 @@ const ProfessionalTemplate = forwardRef(({
                       style={{ 
                         paddingTop: '0.6px',
                         paddingBottom: '0.6px',
-                        paddingLeft: isDesc ? '8px' : '6px', 
-                        paddingRight: isDesc ? '8px' : '6px',
+                        paddingLeft: isDesc ? '8px' : isHsn ? '4px' : '6px', 
+                        paddingRight: isDesc ? '8px' : isHsn ? '4px' : '6px',
                         margin: 0, 
                         lineHeight: 1.2, 
                         fontSize: `${type.tableBodySize}px`, 
                         textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
-                        fontVariantNumeric: isNum ? 'tabular-nums' : 'normal',
+                        fontVariantNumeric: (isNum || isHsn) ? 'tabular-nums' : 'normal',
                         overflow: 'hidden',
                         verticalAlign: 'middle' 
                       }}

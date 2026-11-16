@@ -211,7 +211,7 @@ const LegendTemplate = forwardRef(({
                   const isLast = idx === visibleColumns.length - 1;
                   const isNum = ['price', 'amount'].includes(col.id);
                   const isDesc = col.id === 'description';
-                  const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '30%' : col.id === 'batch' ? '10%' : col.id === 'hsn' ? '10%' : col.id === 'quantity' ? '8%' : col.id === 'free_qty' ? '7%' : col.id === 'unit' ? '7%' : col.id === 'make' ? '10%' : col.id === 'pack_size' ? '10%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '7%' : col.id === 'tax' ? '8%' : '16%';
+                  const colWidth = col.id === 'serial' ? '6%' : col.id === 'description' ? '28.5%' : col.id === 'batch' ? '10%' : col.id === 'hsn' ? '11.5%' : col.id === 'quantity' ? '8%' : col.id === 'free_qty' ? '7%' : col.id === 'unit' ? '7%' : col.id === 'make' ? '10%' : col.id === 'pack_size' ? '10%' : col.id === 'price' ? '14%' : col.id === 'discount' ? '7%' : col.id === 'tax' ? '8%' : '16%';
                   return (
                     <th 
                       key={col.id} 
@@ -314,6 +314,7 @@ const LegendTemplate = forwardRef(({
                     val = (lineBase - (lineBase * disc) / 100).toLocaleString('en-IN', {minimumFractionDigits:2});
                   }
                   else if(col.id==='hsn') val = item.hsn_sac_code || '-';
+                  const isHsn = col.id === 'hsn';
                   return (
                     <td 
                       key={col.id} 
@@ -321,13 +322,13 @@ const LegendTemplate = forwardRef(({
                       style={{ 
                         paddingTop: '0.6px',
                         paddingBottom: '0.6px',
-                        paddingLeft: isDesc ? '8px' : '6px',
-                        paddingRight: isDesc ? '8px' : '6px',
+                        paddingLeft: isDesc ? '8px' : isHsn ? '4px' : '6px',
+                        paddingRight: isDesc ? '8px' : isHsn ? '4px' : '6px',
                         margin: 0, 
                         lineHeight: 1.2, 
                         fontSize: `${type.tableBodySize}px`, 
                         textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
-                        fontVariantNumeric: isNum ? 'tabular-nums' : 'normal',
+                        fontVariantNumeric: (isNum || isHsn) ? 'tabular-nums' : 'normal',
                         overflow: 'hidden',
                         verticalAlign: 'middle' 
                       }}
