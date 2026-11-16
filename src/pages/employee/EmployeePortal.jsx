@@ -383,21 +383,21 @@ export default function EmployeePortal() {
                   </span>
                 </div>
                 <div className="mt-1">
-                  {todayAttendance?.checked_in ? (
+                  {(todayAttendance?.checked_in || (todayAttendance?.is_marked && ['present', 'half_day'].includes(todayAttendance?.status))) ? (
                     todayAttendance.checked_out ? (
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-emerald-500 font-semibold text-sm">
                           <CheckCircleIcon className="w-5 h-5" /> Completed for Today
                         </div>
                         <p className="text-xs text-[var(--text-muted)] font-mono">
-                          In: {todayAttendance.check_in_time} | Out: {todayAttendance.check_out_time}
+                          In: {todayAttendance.check_in_time || 'Recorded'} | Out: {todayAttendance.check_out_time || 'Recorded'}
                         </p>
                       </div>
                     ) : (
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
                           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                          Checked In at {todayAttendance.check_in_time}
+                          Checked In at {todayAttendance.check_in_time || 'Today'}
                         </div>
                         <p className="text-xs text-[var(--text-muted)]">Working actively</p>
                       </div>
@@ -412,7 +412,7 @@ export default function EmployeePortal() {
               </div>
 
               <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] flex items-center gap-3">
-                {!todayAttendance?.checked_in && (
+                {!(todayAttendance?.checked_in || (todayAttendance?.is_marked && ['present', 'half_day'].includes(todayAttendance?.status))) && (
                   <button
                     onClick={handleCheckIn}
                     disabled={clockActionLoading}
@@ -422,7 +422,7 @@ export default function EmployeePortal() {
                     {clockActionLoading ? "Recording..." : "Check In Now"}
                   </button>
                 )}
-                {todayAttendance?.checked_in && !todayAttendance?.checked_out && (
+                {(todayAttendance?.checked_in || (todayAttendance?.is_marked && ['present', 'half_day'].includes(todayAttendance?.status))) && !todayAttendance?.checked_out && (
                   <button
                     onClick={handleCheckOut}
                     disabled={clockActionLoading}
@@ -432,7 +432,7 @@ export default function EmployeePortal() {
                     {clockActionLoading ? "Recording..." : "Check Out"}
                   </button>
                 )}
-                {todayAttendance?.checked_in && todayAttendance?.checked_out && (
+                {(todayAttendance?.checked_in || (todayAttendance?.is_marked && ['present', 'half_day'].includes(todayAttendance?.status))) && todayAttendance?.checked_out && (
                   <span className="text-xs text-[var(--text-muted)] italic text-center w-full">Shift finished for today</span>
                 )}
               </div>
@@ -470,8 +470,8 @@ export default function EmployeePortal() {
                       <span className="text-xs text-[var(--text-muted)]">days left</span>
                     </div>
                     <div className="mt-2 pt-2 border-t border-[var(--border-subtle)] flex justify-between text-[11px] text-[var(--text-muted)]">
-                      <span>Allocated: {b.allocated || 0}</span>
-                      <span>Used: {b.used || 0}</span>
+                      <span>Allocated: {b.allocated ?? b.annual_entitlement ?? 0}</span>
+                      <span>Used: {b.used ?? (b.allocated != null && b.balance != null ? Math.max(0, b.allocated - b.balance) : 0)}</span>
                     </div>
                   </div>
                 ))}
