@@ -1535,7 +1535,6 @@ export default function SalesForm({
       } else {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} created successfully!`);
       }
-      if (data?.pos_warning) toast.warn(data.pos_warning, { autoClose: false, toastId: 'pos-warning' });
       if (typeof onSaved === 'function') {
         const savedStatus = submitActionRef.current === 'draft' ? 'draft' : (data?.status || finalSubmitStatus);
         onSaved({ ...(data || {}), status: savedStatus });
@@ -1575,7 +1574,6 @@ export default function SalesForm({
       } else {
         toast.success(`${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Sales bill'} updated successfully!`);
       }
-      if (data?.pos_warning) toast.warn(data.pos_warning, { autoClose: false, toastId: 'pos-warning' });
       if (typeof onSaved === 'function') {
         const savedStatus = submitActionRef.current === 'draft' ? 'draft' : (data?.status || finalSubmitStatus);
         onSaved({ ...(data || {}), status: savedStatus });
