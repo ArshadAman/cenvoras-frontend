@@ -13,6 +13,7 @@ import { EyeIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline"
 import PurchaseDetailsModal from "../purchase/PurchaseDetailsModal";
 import useEscKey from "../../hooks/useEscStack";
 import { parseDateOnly } from '../../utils/date';
+import { STATEMENT_PRINT_PAGE_STYLE, prepareClonedStatementElementForPdf } from "../../utils/statementPrintStyles";
 
 export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
   useEscKey(onClose, isOpen, 15);
@@ -102,22 +103,8 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
   // Print functionality
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: `Vendor Details - ${vendorDetails?.name || vendor?.id}`,
-    pageStyle: `
-      @page {
-        size: A4;
-        margin: 20mm;
-      }
-      @media print {
-        body {
-          -webkit-print-color-adjust: exact;
-          color-adjust: exact;
-        }
-        .print-hidden {
-          display: none !important;
-        }
-      }
-    `,
+    documentTitle: `Vendor-Statement-${vendorDetails?.name || vendor?.id}`,
+    pageStyle: STATEMENT_PRINT_PAGE_STYLE,
   });
 
   // PDF Download functionality
@@ -136,11 +123,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
         backgroundColor: '#ffffff',
         logging: false,
         onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.querySelector('[data-print-target]');
-          if (clonedElement) {
-            clonedElement.style.height = 'auto';
-            clonedElement.style.overflow = 'visible';
-          }
+          prepareClonedStatementElementForPdf(clonedDoc, '[data-print-target]');
         }
       });
 
@@ -165,7 +148,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
         heightLeft -= pageHeight;
       }
 
-      pdf.save(`vendor-details-${vendorDetails?.name?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || vendor?.id}.pdf`);
+      pdf.save(`vendor-statement-${vendorDetails?.name?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || vendor?.id}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -268,59 +251,97 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
         </div>
 
         {/* Content */}
-        <div ref={printRef} data-print-target className="flex-1 overflow-y-auto p-5 sm:p-8">
+        <div ref={printRef} data-print-target className="statement-print-root flex-1 overflow-y-auto p-5 sm:p-8">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-4">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent-primary)]"></div>
               <div className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-wider">Loading Profile...</div>
             </div>
           ) : (
-            <div className="space-y-8">
-              {/* Vendor Header */}
-              <div className="flex flex-col items-center text-center space-y-2">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[var(--accent-primary)] rounded-2xl flex items-center justify-center text-[var(--text-on-accent)] text-2xl sm:text-3xl font-black mb-2 shadow-xl">
-                  {vendorDetails.name?.charAt(0).toUpperCase() || 'V'}
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] tracking-tight">
-                  {vendorDetails.name || 'N/A'}
-                </h1>
-                <div className="flex flex-wrap justify-center gap-2">
-                   {vendorDetails.meta?.party_category && (
-                     <span className="badge-info text-xs font-semibold uppercase tracking-wider">
-                       {vendorDetails.meta.party_category}
-                     </span>
-                   )}
-                   {vendorDetails.gstin && (
-                     <span className="badge-success text-xs font-semibold uppercase tracking-wider font-mono">
-                       GSTIN: {vendorDetails.gstin}
-                     </span>
-                   )}
+            <div className="space-y-6 sm:space-y-8">
+              {/* Executive Statement Header */}
+              <div className="border-b border-[var(--border-subtle)] pb-6 statement-no-break">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                  {/* Left: Identity & Contact Info */}
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[var(--accent-primary)] text-[var(--text-on-accent)] flex items-center justify-center text-2xl sm:text-3xl font-black shadow-md shrink-0">
+                      {vendorDetails.name?.charAt(0).toUpperCase() || vendor?.name?.charAt(0).toUpperCase() || 'V'}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] tracking-tight">
+                          {vendorDetails.name || vendor?.name || 'Vendor Profile'}
+                        </h1>
+                        {vendorDetails.meta?.party_category && (
+                          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--accent-primary)]/20 uppercase tracking-wider">
+                            {vendorDetails.meta.party_category}
+                          </span>
+                        )}
+                      </div>
+                      {vendorDetails.gstin && (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[var(--status-success-bg)] text-[var(--status-success-text)] border border-[var(--status-success-border)] text-xs font-mono font-semibold">
+                          <span>GSTIN:</span>
+                          <span>{vendorDetails.gstin}</span>
+                        </div>
+                      )}
+                      <div className="text-xs text-[var(--text-secondary)] flex flex-wrap gap-x-4 gap-y-1 pt-1">
+                        {vendorDetails.email && (
+                          <span><strong className="text-[var(--text-muted)] font-medium">Email:</strong> {vendorDetails.email}</span>
+                        )}
+                        {vendorDetails.phone && (
+                          <span><strong className="text-[var(--text-muted)] font-medium">Phone:</strong> {vendorDetails.phone}</span>
+                        )}
+                        {vendorDetails.state && (
+                          <span><strong className="text-[var(--text-muted)] font-medium">POS / State:</strong> {vendorDetails.state}</span>
+                        )}
+                      </div>
+                      {vendorDetails.address && (
+                        <p className="text-xs text-[var(--text-muted)] max-w-xl line-clamp-2 mt-0.5">
+                          {vendorDetails.address}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right: Statement Metadata */}
+                  <div className="text-left sm:text-right flex flex-col justify-between sm:items-end gap-1.5 shrink-0 bg-[var(--bg-primary)] sm:bg-transparent p-3 sm:p-0 rounded-xl sm:rounded-none border sm:border-0 border-[var(--border-subtle)]">
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--accent-primary)]/20 self-start sm:self-auto">
+                      Vendor Statement & Ledger
+                    </span>
+                    <div className="text-xs text-[var(--text-muted)] space-y-0.5">
+                      <div>Statement Date: <span className="font-semibold text-[var(--text-primary)]">{format(new Date(), 'dd MMM yyyy')}</span></div>
+                      <div>Vendor ID: <span className="font-mono text-[var(--text-secondary)]">{vendorDetails.id?.substring(0, 8) || vendor?.id?.substring(0, 8) || 'N/A'}</span></div>
+                      {vendorDetails.meta?.credit_limit && (
+                        <div>Credit Limit: <span className="font-mono font-semibold text-[var(--text-primary)]">{getCurrencySymbol()}{Number(vendorDetails.meta.credit_limit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Financial Quick Metrics */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Total Billed</span>
-                  <span className="text-lg sm:text-xl font-bold text-[var(--text-primary)] font-mono mt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 statement-no-break">
+                <div className="bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-xl p-3 sm:p-4 flex flex-col justify-between metric-card">
+                  <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Total Billed</span>
+                  <span className="text-lg sm:text-xl font-bold text-[var(--text-primary)] font-mono mt-1.5">
                     {getCurrencySymbol()}{totalBilled.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="bg-[var(--status-success-bg)] border border-[var(--status-success-border)] rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-xs font-semibold text-[var(--status-success-text)] uppercase tracking-wider">Total Paid</span>
-                  <span className="text-lg sm:text-xl font-bold text-[var(--status-success-text)] font-mono mt-2">
+                <div className="bg-[var(--status-success-bg)] border border-[var(--status-success-border)] rounded-xl p-3 sm:p-4 flex flex-col justify-between metric-card">
+                  <span className="text-[11px] font-semibold text-[var(--status-success-text)] uppercase tracking-wider">Total Paid</span>
+                  <span className="text-lg sm:text-xl font-bold text-[var(--status-success-text)] font-mono mt-1.5">
                     {getCurrencySymbol()}{totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-xs font-semibold text-[var(--status-warning-text)] uppercase tracking-wider">Outstanding Due</span>
-                  <span className="text-lg sm:text-xl font-bold text-[var(--status-warning-text)] font-mono mt-2">
+                <div className="bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] rounded-xl p-3 sm:p-4 flex flex-col justify-between metric-card">
+                  <span className="text-[11px] font-semibold text-[var(--status-warning-text)] uppercase tracking-wider">Outstanding Due</span>
+                  <span className="text-lg sm:text-xl font-bold text-[var(--status-warning-text)] font-mono mt-1.5">
                     {getCurrencySymbol()}{outstandingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-2xl p-4 flex flex-col justify-between">
-                  <span className="text-xs font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Total Documents</span>
-                  <span className="text-lg sm:text-xl font-bold text-[var(--accent-primary)] font-mono mt-2">
+                <div className="bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-xl p-3 sm:p-4 flex flex-col justify-between metric-card">
+                  <span className="text-[11px] font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Total Documents</span>
+                  <span className="text-lg sm:text-xl font-bold text-[var(--accent-primary)] font-mono mt-1.5">
                     {vendorBills.length} Bills / {vendorOrders.length} PO
                   </span>
                 </div>
@@ -385,13 +406,13 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
 
               {/* TAB 2: PURCHASE BILLS */}
               {activeTab === "bills" && (
-                <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl overflow-hidden">
-                  <div className="p-4 sm:p-6 border-b border-[var(--border-subtle)] flex items-center justify-between">
+                <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl overflow-hidden">
+                  <div className="p-4 sm:p-5 border-b border-[var(--border-subtle)] flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Purchase Bills Ledger</h3>
-                      <p className="text-xs text-[var(--text-muted)] mt-1">Detailed purchase bills & order references for {vendorDetails.name}</p>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">Detailed purchase bills & order references for {vendorDetails.name || 'Vendor'}</p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 px-3 py-1 rounded-full">
+                    <span className="text-xs font-mono font-bold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 px-3 py-1 rounded-full">
                       {vendorBills.length} Records
                     </span>
                   </div>
@@ -405,19 +426,19 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                       No purchase bills recorded for this vendor yet.
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs">
+                    <div className="overflow-x-auto print:overflow-visible">
+                      <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                          <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-semibold uppercase tracking-wider">
-                            <th className="py-3 px-4">Bill #</th>
-                            <th className="py-3 px-4">Date</th>
-                            <th className="py-3 px-4">Due Date</th>
-                            <th className="py-3 px-4">PO / Ref #</th>
-                            <th className="py-3 px-4 text-right">Total</th>
-                            <th className="py-3 px-4 text-right">Paid</th>
-                            <th className="py-3 px-4 text-right">Balance</th>
-                            <th className="py-3 px-4 text-center">Status</th>
-                            <th className="py-3 px-4 text-center print-hidden">Action</th>
+                          <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-default)] text-[var(--text-secondary)] font-bold uppercase tracking-wider">
+                            <th className="py-2.5 px-3">Bill #</th>
+                            <th className="py-2.5 px-3">Date</th>
+                            <th className="py-2.5 px-3">Due Date</th>
+                            <th className="py-2.5 px-3">PO / Ref #</th>
+                            <th className="py-2.5 px-3 text-right">Total</th>
+                            <th className="py-2.5 px-3 text-right">Paid</th>
+                            <th className="py-2.5 px-3 text-right">Balance</th>
+                            <th className="py-2.5 px-3 text-center">Status</th>
+                            <th className="py-2.5 px-3 text-center print-hidden statement-action-col">Action</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border-subtle)]">
@@ -429,28 +450,28 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                             const ref = getReferenceForBill(bill);
 
                             return (
-                              <tr key={bill.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
-                                <td className="py-3 px-4 font-mono font-bold">
+                              <tr key={bill.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors statement-no-break">
+                                <td className="py-2.5 px-3 font-mono font-bold">
                                   <button
                                     type="button"
                                     onClick={() => setPreviewBillId(bill.id)}
-                                    className="text-[var(--accent-primary)] hover:underline inline-flex items-center gap-1 group text-left cursor-pointer"
+                                    className="statement-doc-link text-[var(--accent-primary)] hover:underline inline-flex items-center gap-1 group text-left cursor-pointer"
                                     title="View Full Bill Details & Print / Download"
                                   >
                                     <span>{bill.bill_number || bill.id?.slice(0, 8)}</span>
-                                    <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+                                    <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity print-hidden" />
                                   </button>
                                 </td>
-                                <td className="py-3 px-4 text-[var(--text-secondary)]">
+                                <td className="py-2.5 px-3 text-[var(--text-secondary)] whitespace-nowrap">
                                   {bill.bill_date ? format(parseDateOnly(bill.bill_date), 'dd MMM yyyy') : '-'}
                                 </td>
-                                <td className="py-3 px-4 text-[var(--text-muted)]">
+                                <td className="py-2.5 px-3 text-[var(--text-muted)] whitespace-nowrap">
                                   {bill.due_date ? format(new Date(bill.due_date), 'dd MMM yyyy') : '-'}
                                 </td>
-                                <td className="py-3 px-4">
+                                <td className="py-2.5 px-3">
                                   {ref ? (
                                     <span
-                                      className="inline-flex items-center px-2 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] text-xs font-mono font-medium"
+                                      className="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] text-[11px] font-mono font-medium"
                                       title={`PO / Reference: ${ref}`}
                                     >
                                       #{ref}
@@ -459,17 +480,17 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                                     <span className="text-[var(--text-muted)] font-mono text-xs">—</span>
                                   )}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono font-bold text-[var(--text-primary)]">
+                                <td className="py-2.5 px-3 text-right font-mono font-bold text-[var(--text-primary)] whitespace-nowrap">
                                   {getCurrencySymbol()}{tot.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono text-[var(--status-success-text)] font-semibold">
+                                <td className="py-2.5 px-3 text-right font-mono text-[var(--status-success-text)] font-semibold whitespace-nowrap">
                                   {getCurrencySymbol()}{paid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono text-[var(--status-warning-text)] font-bold">
+                                <td className="py-2.5 px-3 text-right font-mono text-[var(--status-warning-text)] font-bold whitespace-nowrap">
                                   {getCurrencySymbol()}{bal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
-                                <td className="py-3 px-4 text-center">
-                                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                                <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                                     status === 'paid' ? 'badge-success' :
                                     status === 'partial' ? 'badge-warning' :
                                     'badge-danger'
@@ -477,7 +498,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                                     {status}
                                   </span>
                                 </td>
-                                <td className="py-3 px-4 text-center print-hidden">
+                                <td className="py-2.5 px-3 text-center print-hidden statement-action-col">
                                   <button
                                     type="button"
                                     onClick={() => setPreviewBillId(bill.id)}
@@ -492,6 +513,25 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                             );
                           })}
                         </tbody>
+                        {/* Grand Total Summary Row */}
+                        <tfoot>
+                          <tr className="bg-[var(--bg-primary)] font-bold text-[var(--text-primary)] border-t-2 border-b border-[var(--border-default)] statement-no-break">
+                            <td colSpan={4} className="py-3 px-3 uppercase tracking-wider text-xs font-bold text-[var(--text-secondary)]">
+                              Grand Total ({vendorBills.length} {vendorBills.length === 1 ? 'Record' : 'Records'})
+                            </td>
+                            <td className="py-3 px-3 text-right font-mono text-xs whitespace-nowrap">
+                              {getCurrencySymbol()}{totalBilled.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-3 px-3 text-right font-mono text-xs text-[var(--status-success-text)] whitespace-nowrap">
+                              {getCurrencySymbol()}{totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-3 px-3 text-right font-mono text-xs text-[var(--status-warning-text)] whitespace-nowrap">
+                              {getCurrencySymbol()}{outstandingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-3 px-3 text-center"></td>
+                            <td className="py-3 px-3 print-hidden statement-action-col"></td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                   )}
@@ -500,13 +540,13 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
 
               {/* TAB 3: PURCHASE ORDERS */}
               {activeTab === "orders" && (
-                <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl overflow-hidden">
-                  <div className="p-4 sm:p-6 border-b border-[var(--border-subtle)] flex items-center justify-between">
+                <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl overflow-hidden">
+                  <div className="p-4 sm:p-5 border-b border-[var(--border-subtle)] flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Purchase Orders</h3>
-                      <p className="text-xs text-[var(--text-muted)] mt-1">Orders placed to {vendorDetails.name}</p>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">Orders placed to {vendorDetails.name || 'Vendor'}</p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 px-3 py-1 rounded-full">
+                    <span className="text-xs font-mono font-bold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 px-3 py-1 rounded-full">
                       {vendorOrders.length} Records
                     </span>
                   </div>
@@ -520,14 +560,14 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                       No purchase orders recorded for this vendor yet.
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs">
+                    <div className="overflow-x-auto print:overflow-visible">
+                      <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                          <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-semibold uppercase tracking-wider">
-                            <th className="py-3 px-4">PO #</th>
-                            <th className="py-3 px-4">Date</th>
-                            <th className="py-3 px-4 text-right">Total Amount</th>
-                            <th className="py-3 px-4 text-center">Status</th>
+                          <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-default)] text-[var(--text-secondary)] font-bold uppercase tracking-wider">
+                            <th className="py-2.5 px-3">PO #</th>
+                            <th className="py-2.5 px-3">Date</th>
+                            <th className="py-2.5 px-3 text-right">Total Amount</th>
+                            <th className="py-2.5 px-3 text-center">Status</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border-subtle)]">
@@ -536,17 +576,17 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                             const status = po.status || 'draft';
 
                             return (
-                              <tr key={po.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
-                                <td className="py-3 px-4 font-mono font-bold text-[var(--accent-primary)]">
+                              <tr key={po.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors statement-no-break">
+                                <td className="py-2.5 px-3 font-mono font-bold text-[var(--accent-primary)]">
                                   {po.po_number || po.id?.slice(0, 8)}
                                 </td>
-                                <td className="py-3 px-4 text-[var(--text-secondary)]">
+                                <td className="py-2.5 px-3 text-[var(--text-secondary)] whitespace-nowrap">
                                   {po.created_at ? format(new Date(po.created_at), 'dd MMM yyyy') : '-'}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono font-bold text-[var(--text-primary)]">
+                                <td className="py-2.5 px-3 text-right font-mono font-bold text-[var(--text-primary)] whitespace-nowrap">
                                   {getCurrencySymbol()}{tot.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
-                                <td className="py-3 px-4 text-center">
+                                <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                   <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
                                     status === 'received' ? 'badge-success' :
                                     status === 'sent' ? 'badge-info' :
@@ -559,16 +599,31 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
                             );
                           })}
                         </tbody>
+                        {/* Grand Total Summary Row for Orders */}
+                        <tfoot>
+                          <tr className="bg-[var(--bg-primary)] font-bold text-[var(--text-primary)] border-t-2 border-b border-[var(--border-default)] statement-no-break">
+                            <td colSpan={2} className="py-3 px-3 uppercase tracking-wider text-xs font-bold text-[var(--text-secondary)]">
+                              Grand Total ({vendorOrders.length} {vendorOrders.length === 1 ? 'Order' : 'Orders'})
+                            </td>
+                            <td className="py-3 px-3 text-right font-mono text-xs whitespace-nowrap">
+                              {getCurrencySymbol()}{vendorOrders.reduce((sum, po) => sum + (Number(po.total_amount) || 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-3 px-3 text-center"></td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* System Note */}
-              <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] p-4 rounded-xl text-center">
-                <p className="text-xs text-[var(--text-muted)] font-medium">
-                  This profile was automatically generated on {format(new Date(), 'PPPP')}
+              {/* Executive Statement Footer */}
+              <div className="pt-4 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--text-muted)] gap-2 statement-no-break">
+                <p className="font-medium text-center sm:text-left">
+                  This is a computer-generated statement from Cenvora ERP and does not require a physical signature.
+                </p>
+                <p className="font-mono text-[11px] shrink-0">
+                  Generated on {format(new Date(), 'PPPP, p')}
                 </p>
               </div>
             </div>

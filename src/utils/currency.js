@@ -1,9 +1,17 @@
 export const getCurrencyCode = () => {
-  return localStorage.getItem('user_currency') || 'INR';
+  try {
+    return (typeof localStorage !== 'undefined' && localStorage && localStorage.getItem('user_currency')) || 'INR';
+  } catch {
+    return 'INR';
+  }
 };
 
 export const getCountryCode = () => {
-  return localStorage.getItem('user_country') || 'IN';
+  try {
+    return (typeof localStorage !== 'undefined' && localStorage && localStorage.getItem('user_country')) || 'IN';
+  } catch {
+    return 'IN';
+  }
 };
 
 export const getCurrencySymbol = () => {
