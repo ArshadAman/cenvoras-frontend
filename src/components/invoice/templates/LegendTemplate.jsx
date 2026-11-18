@@ -76,6 +76,15 @@ const LegendTemplate = forwardRef(({
     content.invoiceTitle === 'DELIVERY CHALLAN' || 
     Boolean(invoice.challan_number && !invoice.invoice_number);
 
+  const isProforma =
+    invoice.document_type === 'sales_order' ||
+    invoice.document_type === 'proforma' ||
+    content.invoiceTitle === 'PROFORMA INVOICE';
+
+  const isQuotation =
+    invoice.document_type === 'quotation' ||
+    content.invoiceTitle === 'QUOTATION';
+
   return (
     <div 
       ref={ref}
@@ -150,11 +159,11 @@ const LegendTemplate = forwardRef(({
           <div className="w-1/2 flex flex-col justify-between">
              <div className="flex border-b flex-1" style={{ borderColor }}>
                 <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
-                   <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">{isDeliveryChallan ? 'Challan #' : 'Invoice #'}</p>
+                   <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">{isDeliveryChallan ? 'Challan #' : isProforma ? 'Proforma Invoice #' : isQuotation ? 'Quotation #' : 'Invoice #'}</p>
                    <p className="font-semibold text-gray-900">{isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}</p>
                 </div>
                 <div className="w-1/2 p-2.5 flex flex-col justify-center">
-                   <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">{isDeliveryChallan ? 'Challan Date' : 'Date'}</p>
+                   <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">{isDeliveryChallan ? 'Challan Date' : isProforma ? 'Proforma Invoice Date' : isQuotation ? 'Quotation Date' : 'Date'}</p>
                    <p className="font-semibold text-gray-900">{isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}</p>
                 </div>
              </div>
@@ -311,7 +320,7 @@ const LegendTemplate = forwardRef(({
                     const price = parseFloat(item.price||0);
                     const disc = parseFloat(item.discount||0);
                     const lineBase = qty * price;
-                    val = (lineBase - (lineBase * disc) / 100).toLocaleString('en-IN', {minimumFractionDigits:2});
+                    val = (lineBase - (lineBase * disc) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                   }
                   else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                   const isHsn = col.id === 'hsn';
@@ -347,7 +356,7 @@ const LegendTemplate = forwardRef(({
                   </td>
                   <td colSpan={2} className="text-right px-3 text-xs">
                     <span className="uppercase tracking-wider font-semibold text-gray-700 mr-3">Subtotal</span>
-                    <span className="font-mono font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                    <span className="font-mono font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </td>
                 </tr>
               )}
@@ -395,22 +404,22 @@ const LegendTemplate = forwardRef(({
                <div className="p-3 space-y-1" style={{ fontSize: `${type.totalsSize}px` }}>
                  <div className="flex justify-between items-center py-0.5">
                    <span className="font-semibold text-gray-700 whitespace-nowrap">Taxable Amount</span>
-                   <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                   <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                  </div>
                  {isIGST ? (
                    <div className="flex justify-between items-center py-0.5">
                      <span className="font-semibold text-gray-700 whitespace-nowrap">IGST</span>
-                     <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                     <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                    </div>
                  ) : (
                    <>
                      <div className="flex justify-between items-center py-0.5">
                        <span className="font-semibold text-gray-700 whitespace-nowrap">CGST</span>
-                       <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                       <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                      </div>
                      <div className="flex justify-between items-center py-0.5">
                        <span className="font-semibold text-gray-700 whitespace-nowrap">SGST</span>
-                       <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                       <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                      </div>
                    </>
                  )}
@@ -422,7 +431,7 @@ const LegendTemplate = forwardRef(({
                  )}
                  <div className="flex justify-between items-center px-2 py-2 border-t-2 border-b-2 bg-gray-100 font-bold mt-1" style={{ borderColor }}>
                    <span className="text-xs uppercase tracking-wider text-gray-900 whitespace-nowrap">Total Amount</span>
-                   <span className="text-sm font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                   <span className="text-sm font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                  </div>
                </div>
             </div>

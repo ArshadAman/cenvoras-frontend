@@ -66,6 +66,15 @@ const BillShipTemplate = forwardRef(({
     content.invoiceTitle === 'DELIVERY CHALLAN' || 
     Boolean(invoice.challan_number && !invoice.invoice_number);
 
+  const isProforma =
+    invoice.document_type === 'sales_order' ||
+    invoice.document_type === 'proforma' ||
+    content.invoiceTitle === 'PROFORMA INVOICE';
+
+  const isQuotation =
+    invoice.document_type === 'quotation' ||
+    content.invoiceTitle === 'QUOTATION';
+
   const hasAnyDiscount = (items || []).some(item => Number(item?.discount || 0) > 0);
   const visibleColumns = columns
     .filter(col => col.show !== false)
@@ -135,10 +144,10 @@ const BillShipTemplate = forwardRef(({
 {!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo, invoice) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
            <p className="font-semibold text-gray-500 uppercase mt-1" style={{ fontSize: `${type.bodySize}px` }}>Original for Recipient</p>
            <p className="font-bold mt-3" style={{ fontSize: `${type.bodySize}px` }}>
-             {isDeliveryChallan ? 'Challan #:' : 'Invoice #:'} {isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}
+             {isDeliveryChallan ? 'Challan #:' : isProforma ? 'Proforma Invoice #:' : isQuotation ? 'Quotation #:' : 'Invoice #:'} {isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}
            </p>
            <p style={{ fontSize: `${type.bodySize}px` }}>
-             {isDeliveryChallan ? 'Challan Date:' : 'Invoice Date:'} {isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}
+             {isDeliveryChallan ? 'Challan Date:' : isProforma ? 'Proforma Invoice Date:' : isQuotation ? 'Quotation Date:' : 'Invoice Date:'} {isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}
            </p>
            {isDeliveryChallan ? (
              <>
@@ -291,7 +300,7 @@ const BillShipTemplate = forwardRef(({
                     const price = parseFloat(item.price||0);
                     const disc = parseFloat(item.discount||0);
                     const lineBase = qty * price;
-                    val = (lineBase - (lineBase * disc) / 100).toLocaleString('en-IN', {minimumFractionDigits:2});
+                    val = (lineBase - (lineBase * disc) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                   }
                   else if(col.id==='hsn') val = item.hsn_sac_code || '-';
                 const isHsn = col.id === 'hsn';
@@ -361,22 +370,22 @@ const BillShipTemplate = forwardRef(({
              <div>
                <div className="flex justify-between font-medium text-gray-700 mb-1.5 items-center" style={{ fontSize: `${type.totalsSize}px` }}>
                  <span>Taxable Amount</span>
-                 <span className="font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                 <span className="font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                </div>
                {isIGST ? (
                  <div className="flex justify-between text-sm font-medium text-gray-700 mb-1.5 items-center">
                    <span>IGST</span>
-                   <span className="font-bold text-gray-900">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                   <span className="font-bold text-gray-900">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                  </div>
                ) : (
                  <>
                    <div className="flex justify-between text-sm font-medium text-gray-700 mb-1.5 items-center">
                      <span>CGST</span>
-                     <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                     <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                    </div>
                    <div className="flex justify-between text-sm font-medium text-gray-700 mb-1.5 items-center">
                      <span>SGST</span>
-                     <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                     <span className="font-bold text-gray-900">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                    </div>
                  </>
                )}
@@ -388,7 +397,7 @@ const BillShipTemplate = forwardRef(({
                )}
                <div className="flex justify-between text-sm font-bold text-gray-900 py-2.5 border-t-2 border-b-2 border-gray-800 mt-2">
                  <span className="whitespace-nowrap">Grand Total</span>
-                 <span className="font-mono whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                 <span className="font-mono whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                </div>
                <div className="flex justify-end mt-2">
                   <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-extrabold uppercase">✔ Amount Due</span>

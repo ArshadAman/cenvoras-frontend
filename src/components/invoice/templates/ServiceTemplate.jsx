@@ -65,6 +65,15 @@ const ServiceTemplate = forwardRef(({
     content.invoiceTitle === 'DELIVERY CHALLAN' || 
     Boolean(invoice.challan_number && !invoice.invoice_number);
 
+  const isProforma =
+    invoice.document_type === 'sales_order' ||
+    invoice.document_type === 'proforma' ||
+    content.invoiceTitle === 'PROFORMA INVOICE';
+
+  const isQuotation =
+    invoice.document_type === 'quotation' ||
+    content.invoiceTitle === 'QUOTATION';
+
   const primaryColor = colors.primary || '#174A82';
 
   const preferredWidths = {
@@ -155,7 +164,7 @@ const ServiceTemplate = forwardRef(({
           </h2>
 {!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo, invoice) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
           <p className="text-gray-900 font-bold text-sm">
-            {isDeliveryChallan ? 'Challan #:' : 'Invoice #:'} {isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}
+            {isDeliveryChallan ? 'Challan #:' : isProforma ? 'Proforma Invoice #:' : isQuotation ? 'Quotation #:' : 'Invoice #:'} {isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}
           </p>
         </div>
       </div>
@@ -171,7 +180,7 @@ const ServiceTemplate = forwardRef(({
         <div className="w-1/2 space-y-2 pl-12 border-l border-gray-100" style={{ fontSize: `${type.bodySize}px` }}>
           <div className="flex justify-between">
             <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">
-              {isDeliveryChallan ? 'Challan Date:' : 'Invoice Date:'}
+              {isDeliveryChallan ? 'Challan Date:' : isProforma ? 'Proforma Invoice Date:' : isQuotation ? 'Quotation Date:' : 'Invoice Date:'}
             </span>{' '}
             <span className="font-semibold text-gray-900">{isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}</span>
           </div>
@@ -309,7 +318,7 @@ const ServiceTemplate = forwardRef(({
                     const disc = parseFloat(item.discount||0);
                     const lineBase = qty * price;
                     const amt = lineBase - (lineBase * disc) / 100;
-                    val = `${getCurrencySymbol()}${amt.toLocaleString('en-IN', {minimumFractionDigits:2})}`;
+                    val = `${getCurrencySymbol()}${amt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                     isNumeric = true;
                   }
                   
@@ -375,13 +384,13 @@ const ServiceTemplate = forwardRef(({
           <div className="w-[40%]">
             <table className="w-full text-right" style={{ fontSize: `${type.totalsSize}px` }}>
               <tbody>
-                <tr><td className="py-1 font-semibold text-gray-700">Taxable Amount</td><td className="py-1">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                <tr><td className="py-1 font-semibold text-gray-700">Taxable Amount</td><td className="py-1">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
                 {isIGST ? (
-                  <tr><td className="py-1 font-semibold text-gray-700">IGST</td><td className="py-1">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                  <tr><td className="py-1 font-semibold text-gray-700">IGST</td><td className="py-1">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
                 ) : (
                   <>
-                    <tr><td className="py-1 font-semibold text-gray-700">CGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
-                    <tr><td className="py-1 font-semibold text-gray-700">SGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>
+                    <tr><td className="py-1 font-semibold text-gray-700">CGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                    <tr><td className="py-1 font-semibold text-gray-700">SGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
                   </>
                 )}
                 {roundOff !== 0 && (
@@ -392,7 +401,7 @@ const ServiceTemplate = forwardRef(({
                 )}
                 <tr className="border-t-2 border-b-2 border-gray-900 text-base">
                   <td className="py-2 font-bold text-gray-900">Total</td>
-                  <td className="py-2 font-bold text-gray-900">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                  <td className="py-2 font-bold text-gray-900">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 </tr>
               </tbody>
             </table>

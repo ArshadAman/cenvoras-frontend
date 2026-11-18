@@ -113,6 +113,15 @@ const InvoicePreview = forwardRef(({
     content.invoiceTitle === 'DELIVERY CHALLAN' || 
     Boolean(invoice.challan_number && !invoice.invoice_number);
 
+  const isProforma =
+    invoice.document_type === 'sales_order' ||
+    invoice.document_type === 'proforma' ||
+    content.invoiceTitle === 'PROFORMA INVOICE';
+
+  const isQuotation =
+    invoice.document_type === 'quotation' ||
+    content.invoiceTitle === 'QUOTATION';
+
   // Dynamic styles
   const paperStyle = {
     fontFamily: type.fontFamily,
@@ -393,11 +402,11 @@ const InvoicePreview = forwardRef(({
         <div className="mb-2 space-y-1" style={{ fontSize: `${type.bodySize}px` }}>
           <div className="flex justify-between gap-4 items-baseline">
             <div>
-              <span className="font-medium">Invoice No. :</span>{' '}
+              <span className="font-medium">{isProforma ? 'Proforma Invoice #:' : isQuotation ? 'Quotation #:' : 'Invoice No. :'}</span>{' '}
               <span className="font-bold" style={{ color: colors.primary }}>{invoiceNumber}</span>
             </div>
             <div className="text-right whitespace-nowrap">
-              <span className="font-medium">Date:</span> {invoiceDate}
+              <span className="font-medium">{isProforma ? 'Proforma Invoice Date:' : isQuotation ? 'Quotation Date:' : 'Date:'}</span> {invoiceDate}
             </div>
           </div>
           {poNumber ? (

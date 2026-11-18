@@ -71,6 +71,15 @@ const ProfessionalTemplate = forwardRef(({
     content.invoiceTitle === 'DELIVERY CHALLAN' || 
     Boolean(invoice.challan_number && !invoice.invoice_number);
 
+  const isProforma =
+    invoice.document_type === 'sales_order' ||
+    invoice.document_type === 'proforma' ||
+    content.invoiceTitle === 'PROFORMA INVOICE';
+
+  const isQuotation =
+    invoice.document_type === 'quotation' ||
+    content.invoiceTitle === 'QUOTATION';
+
   const hasAnyDiscount = (items || []).some(item => Number(item?.discount || 0) > 0);
   const visibleColumns = columns
     .filter(col => col.show !== false)
@@ -180,11 +189,11 @@ const ProfessionalTemplate = forwardRef(({
 {!isDeliveryChallan && documentTitle(content.invoiceTitle, businessInfo, invoice) === 'BILL OF SUPPLY' && (<p className="text-[10px] italic text-gray-600 mt-1">{documentDeclaration(businessInfo)}</p>)}
           <div className="grid grid-cols-2 gap-3 text-left ml-auto max-w-sm border border-gray-200 p-3 bg-gray-50/50 rounded-lg" style={{ fontSize: `${type.bodySize}px` }}>
             <div>
-              <p className="text-xs text-gray-700 font-semibold mb-0.5">{isDeliveryChallan ? 'Challan No' : 'Invoice No'}</p>
+              <p className="text-xs text-gray-700 font-semibold mb-0.5">{isDeliveryChallan ? 'Challan No' : isProforma ? 'Proforma Invoice #' : isQuotation ? 'Quotation #' : 'Invoice No'}</p>
               <p className="font-bold text-gray-900">{isDeliveryChallan ? (invoice.challan_number || invoiceNumber) : invoiceNumber}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-700 font-semibold mb-0.5">{isDeliveryChallan ? 'Challan Date' : 'Date'}</p>
+              <p className="text-xs text-gray-700 font-semibold mb-0.5">{isDeliveryChallan ? 'Challan Date' : isProforma ? 'Proforma Invoice Date' : isQuotation ? 'Quotation Date' : 'Date'}</p>
               <p className="font-bold text-gray-900">{isDeliveryChallan ? (invoice.challan_date || invoiceDate) : invoiceDate}</p>
             </div>
             {isDeliveryChallan ? (
