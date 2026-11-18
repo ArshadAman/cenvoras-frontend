@@ -4,6 +4,7 @@ import PlaceOfSupplyLine from './PlaceOfSupplyLine';
 import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
+import { calculateInvoiceTotals } from '../../../utils/lineAmount';
 import InvoicePrintShell from '../InvoicePrintShell';
 
 // Service Template (LTIMindtree Style)
@@ -33,26 +34,14 @@ const ServiceTemplate = forwardRef(({
   const bankQr = businessInfo.bank_qr_code || '';
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
-  const roundOff = parseFloat(invoice.round_off || 0) || 0;
-  const subtotal = items.reduce((sum, item) => {
-    const qty = parseFloat(item.quantity || 0);
-    const price = parseFloat(item.price || 0);
-    const discount = parseFloat(item.discount || 0);
-    const lineBase = qty * price;
-    return sum + (lineBase - (lineBase * discount) / 100);
-  }, 0);
-  const taxTotal = items.reduce((sum, item) => {
-    const qty = parseFloat(item.quantity || 0);
-    const price = parseFloat(item.price || 0);
-    const discount = parseFloat(item.discount || 0);
-    const tax = parseFloat(item.tax || 0);
-    const lineBase = qty * price;
-    const taxable = lineBase - (lineBase * discount) / 100;
-    return sum + ((taxable * tax) / 100);
-  }, 0);
-  const finalTotal = invoice.total_amount != null
-    ? parseFloat(invoice.total_amount)
-    : Number((subtotal + taxTotal + roundOff).toFixed(2));
+  const {
+    subtotal,
+    taxTotal,
+    cgst,
+    sgst,
+    roundOff,
+    finalTotal,
+  } = calculateInvoiceTotals(items, invoice);
 
   const taxType = getTaxType(invoice, businessInfo);
   const isIGST = taxType === 'igst';
@@ -389,14 +378,14 @@ const ServiceTemplate = forwardRef(({
                   <tr><td className="py-1 font-semibold text-gray-700">IGST</td><td className="py-1">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
                 ) : (
                   <>
-                    <tr><td className="py-1 font-semibold text-gray-700">CGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
-                    <tr><td className="py-1 font-semibold text-gray-700">SGST</td><td className="py-1">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                    <tr><td className="py-1 font-semibold text-gray-700">CGST</td><td className="py-1">{getCurrencySymbol()}{cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                    <tr><td className="py-1 font-semibold text-gray-700">SGST</td><td className="py-1">{getCurrencySymbol()}{sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
                   </>
                 )}
                 {roundOff !== 0 && (
                   <tr>
                     <td className="py-1 font-semibold text-gray-700">Round Off</td>
-                    <td className="py-1">{roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}</td>
+                    <td className="py-1">{roundOff >= 0 ? '+' : '-'}{getCurrencySymbol()}{Math.abs(roundOff).toFixed(2)}</td>
                   </tr>
                 )}
                 <tr className="border-t-2 border-b-2 border-gray-900 text-base">
