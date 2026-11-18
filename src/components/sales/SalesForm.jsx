@@ -27,7 +27,7 @@ import useUnsavedPrompt from "../../hooks/useUnsavedPrompt";
 import { getTodayKolkata } from "../../utils/date";
 import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
 import { GST_RATES, gstRatesWithLegacy } from "../../utils/gstRates";
-import { calculateLineAmount, calculateLineGross } from "../../utils/lineAmount";
+import { calculateLineAmount, calculateLineTax, calculateLineGross } from "../../utils/lineAmount";
 import { yupGstinOptional } from "../../utils/gstin";
 
 const ITEM_CELL_FOCUS = "focus:border-[var(--border-focus)] focus:ring-2 focus:ring-[var(--focus-ring)] focus:bg-[var(--input-bg-focus)] outline-none";
@@ -2241,30 +2241,28 @@ export default function SalesForm({
           }}
         >
           {({ values, setFieldValue, isSubmitting, handleSubmit }) => {
-            // Calculate totals
-            const subtotal = values.items.reduce((sum, item) => {
+            // Calculate totals (line-rounded to match submit payload, backend, and print templates)
+            const activeItems = values.items.filter((item) => item.row_type !== 'note');
+            const subtotal = activeItems.reduce((sum, item) => {
               const quantity = Number(item.quantity) || 0;
               const price = Number(item.price) || 0;
-              return sum + (quantity * price);
+              return sum + Number((quantity * price).toFixed(2));
             }, 0);
 
-            const totalDiscount = values.items.reduce((sum, item) => {
-              const quantity = Number(item.quantity) || 0;
-              const price = Number(item.price) || 0;
-              const discount = Number(item.discount) || 0;
-              return sum + ((quantity * price * discount) / 100);
+            const taxableTotal = activeItems.reduce((sum, item) => {
+              const disc = itemSettings.show_item_discount ? item.discount : 0;
+              return sum + calculateLineAmount(item.quantity, item.price, disc);
             }, 0);
 
-            const totalTax = values.items.reduce((sum, item) => {
-              const quantity = Number(item.quantity) || 0;
-              const price = Number(item.price) || 0;
-              const discount = Number(item.discount) || 0;
-              const tax = Number(item.tax) || 0;
-              const taxableAmount = (quantity * price) - ((quantity * price * discount) / 100);
-              return sum + ((taxableAmount * tax) / 100);
+            const totalDiscount = Number((subtotal - taxableTotal).toFixed(2));
+
+            const totalTax = activeItems.reduce((sum, item) => {
+              const disc = itemSettings.show_item_discount ? item.discount : 0;
+              const tax = itemSettings.show_item_tax ? item.tax : 0;
+              return sum + calculateLineTax(item.quantity, item.price, disc, tax);
             }, 0);
 
-            const grandTotal = subtotal - totalDiscount + totalTax;
+            const grandTotal = Number((taxableTotal + totalTax).toFixed(2));
             const roundedGrandTotal = computeRoundedTotal(grandTotal);
             const roundOffDelta = Number((roundedGrandTotal - grandTotal).toFixed(2));
 
@@ -4074,7 +4072,7 @@ export default function SalesForm({
                     {roundOffApplied && (
                       <div className="flex justify-between text-[var(--status-warning)] font-mono font-tabular">
                         <span>Round Off</span>
-                        <span>{roundOffDelta >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOffDelta.toFixed(2)}</span>
+                        <span>{roundOffDelta >= 0 ? '+' : '-'}{getCurrencySymbol()}{Math.abs(roundOffDelta).toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-bold text-2xl font-mono font-tabular pt-1">

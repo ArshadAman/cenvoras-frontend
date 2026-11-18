@@ -4,6 +4,7 @@ import PlaceOfSupplyLine from './PlaceOfSupplyLine';
 import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType, splitTax } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
+import { calculateInvoiceTotals } from '../../../utils/lineAmount';
 import InvoicePrintShell from '../InvoicePrintShell';
 
 // Beautiful Invoice Preview Component
@@ -62,7 +63,6 @@ const InvoicePreview = forwardRef(({
   const challanNumber = invoice.challan_number || invoice.delivery_challan_number || '';
   const challanDate = invoice.challan_date ? new Date(invoice.challan_date).toLocaleDateString('en-IN') : '';
   const challanListText = formatLinkedChallanList(invoice);
-  const roundOff = parseFloat(invoice.round_off || 0) || 0;
   const customerAddress = billingAddress;
   const hasSeparateShipping = Boolean(
     shippingAddress && shippingAddress.trim() !== billingAddress.trim()
@@ -81,28 +81,14 @@ const InvoicePreview = forwardRef(({
   const isIGST = taxType === 'igst';
   
   // Calculate totals factoring in discounts
-  const subtotal = items.reduce((sum, item) => {
-    const qty = parseFloat(item.quantity || 0);
-    const price = parseFloat(item.price || 0);
-    const discount = parseFloat(item.discount || 0);
-    const lineBase = qty * price;
-    return sum + (lineBase - (lineBase * discount) / 100);
-  }, 0);
-  
-  const taxTotal = items.reduce((sum, item) => {
-    const qty = parseFloat(item.quantity || 0);
-    const price = parseFloat(item.price || 0);
-    const discount = parseFloat(item.discount || 0);
-    const tax = parseFloat(item.tax || 0);
-    const lineBase = qty * price;
-    const taxable = lineBase - (lineBase * discount) / 100;
-    return sum + ((taxable * tax) / 100);
-  }, 0);
-  
-  const grandTotal = subtotal + taxTotal;
-  const finalTotal = invoice.total_amount != null
-    ? parseFloat(invoice.total_amount)
-    : Number((grandTotal + roundOff).toFixed(2));
+  const {
+    subtotal,
+    taxTotal,
+    cgst,
+    sgst,
+    roundOff,
+    finalTotal,
+  } = calculateInvoiceTotals(items, invoice);
   
   // Forced footer chrome — always shown regardless of template/settings/plan
   const showWatermarkFooter = true;
@@ -674,11 +660,11 @@ const InvoicePreview = forwardRef(({
                   <>
                     <tr>
                       <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>CGST</td>
-                      <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+                      <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{cgst.toFixed(2)}</td>
                     </tr>
                     <tr>
                       <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>SGST</td>
-                      <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</td>
+                      <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>{getCurrencySymbol()}{sgst.toFixed(2)}</td>
                     </tr>
                   </>
                 )}
@@ -688,7 +674,7 @@ const InvoicePreview = forwardRef(({
                       Round Off
                     </td>
                     <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>
-                      {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                      {roundOff >= 0 ? '+' : '-'}{getCurrencySymbol()}{Math.abs(roundOff).toFixed(2)}
                     </td>
                   </tr>
                 )}

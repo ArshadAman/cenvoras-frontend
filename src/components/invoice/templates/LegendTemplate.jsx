@@ -5,6 +5,7 @@ import { posLabel } from '../../../utils/constants';
 import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
+import { calculateInvoiceTotals } from '../../../utils/lineAmount';
 import InvoicePrintShell from '../InvoicePrintShell';
 
 // Legend Template (ITC Style)
@@ -34,26 +35,14 @@ const LegendTemplate = forwardRef(({
   const bankQr = businessInfo.bank_qr_code || '';
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
-  const roundOff = parseFloat(invoice.round_off || 0) || 0;
-  const subtotal = items.reduce((sum, item) => {
-    const qty = parseFloat(item.quantity || 0);
-    const price = parseFloat(item.price || 0);
-    const discount = parseFloat(item.discount || 0);
-    const lineBase = qty * price;
-    return sum + (lineBase - (lineBase * discount) / 100);
-  }, 0);
-  const taxTotal = items.reduce((sum, item) => {
-    const qty = parseFloat(item.quantity || 0);
-    const price = parseFloat(item.price || 0);
-    const discount = parseFloat(item.discount || 0);
-    const tax = parseFloat(item.tax || 0);
-    const lineBase = qty * price;
-    const taxable = lineBase - (lineBase * discount) / 100;
-    return sum + ((taxable * tax) / 100);
-  }, 0);
-  const finalTotal = invoice.total_amount != null
-    ? parseFloat(invoice.total_amount)
-    : Number((subtotal + taxTotal + roundOff).toFixed(2));
+  const {
+    subtotal,
+    taxTotal,
+    cgst,
+    sgst,
+    roundOff,
+    finalTotal,
+  } = calculateInvoiceTotals(items, invoice);
 
   const taxType = getTaxType(invoice, businessInfo);
   const isIGST = taxType === 'igst';
@@ -415,18 +404,18 @@ const LegendTemplate = forwardRef(({
                    <>
                      <div className="flex justify-between items-center py-0.5">
                        <span className="font-semibold text-gray-700 whitespace-nowrap">CGST</span>
-                       <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                       <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                      </div>
                      <div className="flex justify-between items-center py-0.5">
                        <span className="font-semibold text-gray-700 whitespace-nowrap">SGST</span>
-                       <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(taxTotal/2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                       <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                      </div>
                    </>
                  )}
                  {roundOff !== 0 && (
                    <div className="flex justify-between items-center py-0.5">
                      <span className="font-semibold text-gray-700 whitespace-nowrap">Round Off</span>
-                     <span className="font-mono text-gray-900 whitespace-nowrap">{roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}</span>
+                     <span className="font-mono text-gray-900 whitespace-nowrap">{roundOff >= 0 ? '+' : '-'}{getCurrencySymbol()}{Math.abs(roundOff).toFixed(2)}</span>
                    </div>
                  )}
                  <div className="flex justify-between items-center px-2 py-2 border-t-2 border-b-2 bg-gray-100 font-bold mt-1" style={{ borderColor }}>

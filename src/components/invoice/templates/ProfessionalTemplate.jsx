@@ -4,6 +4,7 @@ import PlaceOfSupplyLine from './PlaceOfSupplyLine';
 import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
+import { calculateInvoiceTotals } from '../../../utils/lineAmount';
 import InvoicePrintShell from '../InvoicePrintShell';
 
 // Professional Template (Marico Style)
@@ -39,26 +40,14 @@ const ProfessionalTemplate = forwardRef(({
   const bankQr = businessInfo.bank_qr_code || '';
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
-  const roundOff = parseFloat(invoice.round_off || 0) || 0;
-  const subtotal = items.reduce((sum, item) => {
-    const qty = parseFloat(item.quantity || 0);
-    const price = parseFloat(item.price || 0);
-    const discount = parseFloat(item.discount || 0);
-    const lineBase = qty * price;
-    return sum + (lineBase - (lineBase * discount) / 100);
-  }, 0);
-  const taxTotal = items.reduce((sum, item) => {
-    const qty = parseFloat(item.quantity || 0);
-    const price = parseFloat(item.price || 0);
-    const discount = parseFloat(item.discount || 0);
-    const tax = parseFloat(item.tax || 0);
-    const lineBase = qty * price;
-    const taxable = lineBase - (lineBase * discount) / 100;
-    return sum + ((taxable * tax) / 100);
-  }, 0);
-  const finalTotal = invoice.total_amount != null
-    ? parseFloat(invoice.total_amount)
-    : Number((subtotal + taxTotal + roundOff).toFixed(2));
+  const {
+    subtotal,
+    taxTotal,
+    cgst,
+    sgst,
+    roundOff,
+    finalTotal,
+  } = calculateInvoiceTotals(items, invoice);
 
   const taxType = getTaxType(invoice, businessInfo);
   const isIGST = taxType === 'igst';
@@ -435,11 +424,11 @@ const ProfessionalTemplate = forwardRef(({
                 <>
                   <div className="flex justify-between px-3 py-1.5 border-b border-gray-100">
                     <span className="text-gray-600">CGST</span>
-                    <span className="font-bold">{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</span>
+                    <span className="font-bold">{getCurrencySymbol()}{cgst.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between px-3 py-1.5 border-b border-gray-100">
                     <span className="text-gray-600">SGST</span>
-                    <span className="font-bold">{getCurrencySymbol()}{(taxTotal / 2).toFixed(2)}</span>
+                    <span className="font-bold">{getCurrencySymbol()}{sgst.toFixed(2)}</span>
                   </div>
                 </>
               )}
@@ -447,7 +436,7 @@ const ProfessionalTemplate = forwardRef(({
                 <div className="flex justify-between px-3 py-1.5 border-b border-gray-100">
                   <span className="text-gray-600">Round Off</span>
                   <span className="font-bold text-gray-700">
-                    {roundOff >= 0 ? '+' : ''}{getCurrencySymbol()}{roundOff.toFixed(2)}
+                    {roundOff >= 0 ? '+' : '-'}{getCurrencySymbol()}{Math.abs(roundOff).toFixed(2)}
                   </span>
                 </div>
               )}
