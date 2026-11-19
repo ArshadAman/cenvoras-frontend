@@ -1,7 +1,7 @@
 import { documentTitle, documentDeclaration } from '../../../utils/gstStatus';
 import React, { forwardRef } from 'react';
 import PlaceOfSupplyLine from './PlaceOfSupplyLine';
-import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
+import { amountInWords, formatLinkedChallanList, resolveTypography, resolveItemProductAndDesc } from '../../../utils/invoiceSettings';
 import { getTaxType, splitTax } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 import { calculateInvoiceTotals } from '../../../utils/lineAmount';
@@ -488,6 +488,7 @@ const InvoicePreview = forwardRef(({
                 const discount = parseFloat(item.discount || 0);
                 const lineBase = qty * price;
                 const amount = lineBase - (lineBase * discount) / 100;
+                const { productName, desc, hasVisibleDesc } = resolveItemProductAndDesc(item, invoiceSettings);
                 
                 return (
                   <tr 
@@ -496,8 +497,8 @@ const InvoicePreview = forwardRef(({
                       backgroundColor: styles.tableStyle === 'striped' && index % 2 === 1 
                         ? colors.tableStripe 
                         : 'transparent',
-                      paddingTop: '0.6px',
-                      paddingBottom: '0.6px',
+                      paddingTop: hasVisibleDesc ? '2px' : '0.6px',
+                      paddingBottom: hasVisibleDesc ? '3px' : '0.6px',
                       margin: 0,
                       lineHeight: 1.2,
                     }}
@@ -506,7 +507,7 @@ const InvoicePreview = forwardRef(({
                       let value = '';
                       switch(col.id) {
                         case 'serial': value = items.slice(0, index).filter((row) => row.row_type !== 'note').length + 1; break;
-                        case 'description': value = item.product_detail?.name || item.product_name || item.product || ''; break;
+                        case 'description': value = productName; break;
                         case 'batch': value = item.batch_number || item.batch?.batch_number || item.batch || '-'; break;
                         case 'hsn': value = item.hsn_sac_code || item.hsn_code || ''; break;
                         case 'quantity': value = qty; break;
@@ -553,17 +554,20 @@ const InvoicePreview = forwardRef(({
                         >
                           {col.id === 'description' ? (
                             <div>
-                              <div className="font-normal text-gray-900">{item.product_detail?.name || item.product_name || item.product || ''}</div>
+                              <div className="font-normal text-gray-900" style={{ fontSize: `${type.tableBodySize}px` }}>{productName}</div>
                               {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
-                                <div className="text-xs text-gray-500 font-medium italic mt-0.5">
+                                <div 
+                                  className="text-gray-500 font-medium italic mt-0.5"
+                                  style={{ fontSize: `${type.manufacturerSize}px` }}
+                                >
                                   Mfr: {item.manufacturer || item.product_detail?.manufacturer}
                                 </div>
                               )}
-                              {invoiceSettings.show_item_description !== false && (item.description || item.product_description || item.product_detail?.description) ? (
-                                <div className="whitespace-pre-line" style={{ fontSize: `${type.smallSize}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, wordBreak: 'break-word' }}>
-                                  {item.description || item.product_description || item.product_detail?.description}
+                              {hasVisibleDesc && (
+                                <div className="whitespace-pre-line" style={{ fontSize: `${type.itemDescriptionSize}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, wordBreak: 'break-word' }}>
+                                  {desc}
                                 </div>
-                              ) : null}
+                              )}
                               {invoiceSettings.show_item_storage_condition && (item.storage_condition || item.product_detail?.storage_condition || item.product_detail?.temperature) ? (
                                 <div style={{ fontSize: `${type.smallSize}px`, color: colors.lightText || '#666', marginTop: '1px', lineHeight: 1.15, fontWeight: 500 }}>
                                   {(item.storage_condition || item.product_detail?.storage_condition) ? `Storage: ${item.storage_condition || item.product_detail.storage_condition}` : ''}
