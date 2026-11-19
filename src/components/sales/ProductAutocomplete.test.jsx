@@ -223,4 +223,15 @@ describe('ProductAutocomplete - Option B: Pinned Dropdown', () => {
     expect(onCreateNewProduct).toHaveBeenCalledWith('97866', 0);
     expect(screen.queryByText(/Add to inventory: "97866"/i)).toBeNull();
   });
+
+  it('does not display products when search query only matches HSN code', () => {
+    renderAutocomplete();
+    const input = screen.getByPlaceholderText('Product name');
+
+    // '3204' is the hsn_code for mockProducts[0] and mockProducts[1], but is not in name/code/ref/mfr
+    fireEvent.change(input, { target: { value: '3204' } });
+
+    expect(screen.queryByText(/97866-125ml: Methylene Blue/i)).toBeNull();
+    expect(screen.queryByText(/97866-250ml: Methylene Blue/i)).toBeNull();
+  });
 });

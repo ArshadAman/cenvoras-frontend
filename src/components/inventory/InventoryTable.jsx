@@ -317,7 +317,6 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             product.item_code,
             product.internal_reference,
             product.manufacturer,
-            product.hsn_sac_code,
             product.description,
           ]
             .filter(Boolean)

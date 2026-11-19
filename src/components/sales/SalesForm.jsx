@@ -29,6 +29,7 @@ import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
 import { GST_RATES, gstRatesWithLegacy } from "../../utils/gstRates";
 import { calculateLineAmount, calculateLineTax, calculateLineGross } from "../../utils/lineAmount";
 import { yupGstinOptional } from "../../utils/gstin";
+import { matchesProductSearch, filterProductsBySearch } from "../../utils/productSearch";
 
 const ITEM_CELL_FOCUS = "focus:border-[var(--border-focus)] focus:ring-2 focus:ring-[var(--focus-ring)] focus:bg-[var(--input-bg-focus)] outline-none";
 const HEADER_FIELD_FOCUS = "focus:border-[var(--border-focus)] focus:ring-2 focus:ring-[var(--focus-ring)] focus:bg-[var(--input-bg-focus)] outline-none";
@@ -264,21 +265,14 @@ export function ProductAutocomplete({ idx, values, setFieldValue, onInputChange,
   };
 
   useEffect(() => {
-    const query = (inputValue || "").trim().toLowerCase();
+    const query = (inputValue || "").trim();
     if (!query) {
       setFilteredProducts([]);
       setShowDropdown(false);
       return;
     }
 
-    const filtered = (products || []).filter((product) => {
-      const name = (product?.name || "").toLowerCase();
-      const code = (product?.item_code || "").toLowerCase();
-      const ref = (product?.internal_reference || "").toLowerCase();
-      const hsn = (product?.hsn_sac_code || product?.hsn_code || "").toLowerCase();
-      const mfr = (product?.manufacturer || "").toLowerCase();
-      return name.includes(query) || code.includes(query) || ref.includes(query) || hsn.includes(query) || mfr.includes(query);
-    });
+    const filtered = filterProductsBySearch(products, query);
     setFilteredProducts(filtered);
   }, [inputValue, products]);
 
@@ -295,10 +289,11 @@ export function ProductAutocomplete({ idx, values, setFieldValue, onInputChange,
     // Check client session search cache first (0ms)
     const cached = remoteSearchCacheRef.current.get(query.toLowerCase());
     if (cached) {
+      const validCached = cached.filter((p) => matchesProductSearch(p, query));
       setFilteredProducts((prev) => {
         const map = new Map();
         prev.forEach((p) => { if (p?.id) map.set(p.id, p); });
-        cached.forEach((p) => { if (p?.id && !map.has(p.id)) map.set(p.id, p); });
+        validCached.forEach((p) => { if (p?.id && !map.has(p.id)) map.set(p.id, p); });
         return Array.from(map.values());
       });
       return;
@@ -311,12 +306,15 @@ export function ProductAutocomplete({ idx, values, setFieldValue, onInputChange,
         const remoteItems = Array.isArray(res) ? res : res?.data || res?.results || [];
         remoteSearchCacheRef.current.set(query.toLowerCase(), remoteItems);
         if (!isCancelled && remoteItems.length > 0) {
-          setFilteredProducts((prev) => {
-            const map = new Map();
-            prev.forEach((p) => { if (p?.id) map.set(p.id, p); });
-            remoteItems.forEach((p) => { if (p?.id && !map.has(p.id)) map.set(p.id, p); });
-            return Array.from(map.values());
-          });
+          const validRemoteItems = remoteItems.filter((p) => matchesProductSearch(p, query));
+          if (validRemoteItems.length > 0) {
+            setFilteredProducts((prev) => {
+              const map = new Map();
+              prev.forEach((p) => { if (p?.id) map.set(p.id, p); });
+              validRemoteItems.forEach((p) => { if (p?.id && !map.has(p.id)) map.set(p.id, p); });
+              return Array.from(map.values());
+            });
+          }
         }
       } catch (e) {
         // Silently ignore search error
