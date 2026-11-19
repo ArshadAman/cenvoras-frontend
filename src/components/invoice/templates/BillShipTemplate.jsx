@@ -25,6 +25,9 @@ const BillShipTemplate = forwardRef(({
   const shippingAddress = invoice.delivery_address || invoice.shipping_address || invoice.customer_details?.delivery_address || billingAddress;
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
+  const poDate = invoice.po_date ? new Date(invoice.po_date).toLocaleDateString('en-IN') : '';
+  const showPONumber = sections.showPONumber !== false;
+  const showDueDate = sections.showDueDate !== false;
   const items = invoice.items || [];
 
   const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
@@ -140,9 +143,14 @@ const BillShipTemplate = forwardRef(({
            </p>
            {isDeliveryChallan ? (
              <>
-               {(invoice.sales_order_number || invoice.po_number) && (
+               {showPONumber && (invoice.sales_order_number || invoice.po_number) && (
                  <p className="text-sm text-gray-800 font-semibold mt-1">
                    Ref Order: {invoice.sales_order_number || invoice.po_number}
+                 </p>
+               )}
+               {showPONumber && poDate && (
+                 <p className="text-sm text-gray-800 font-semibold mt-1">
+                   PO Date: {poDate}
                  </p>
                )}
                {invoice.vehicle_number && (
@@ -153,9 +161,14 @@ const BillShipTemplate = forwardRef(({
              </>
            ) : (
              <>
-               {(invoice.po_number || invoice.sales_order_number) && (
+               {showPONumber && (invoice.po_number || invoice.sales_order_number) && (
                  <p className="text-sm text-gray-800 font-semibold mt-1">
                    PO / Order: {invoice.po_number || invoice.sales_order_number}
+                 </p>
+               )}
+               {showPONumber && poDate && (
+                 <p className="text-sm text-gray-800 font-semibold mt-1">
+                   PO Date: {poDate}
                  </p>
                )}
                {formatLinkedChallanList(invoice) && (
@@ -163,7 +176,7 @@ const BillShipTemplate = forwardRef(({
                    Challan: {formatLinkedChallanList(invoice)}
                  </p>
                )}
-               {invoice.due_date && <p className="text-sm font-semibold text-red-600 mt-1">Due: {new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>}
+               {showDueDate && invoice.due_date && <p className="text-sm font-semibold text-red-600 mt-1">Due: {new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>}
              </>
            )}
         </div>

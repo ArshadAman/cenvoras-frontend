@@ -419,11 +419,16 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       '',
     po_number:
       invoiceDetails.po_number ||
+      invoice?.po_number ||
       invoiceDetails.sales_order_number ||
       invoice?.sales_order_number ||
       (invoiceDetails.sales_order_details?.order_number
         ? `SO #${invoiceDetails.sales_order_details.order_number}`
         : '') ||
+      '',
+    po_date:
+      invoiceDetails.po_date ||
+      invoice?.po_date ||
       '',
     round_off: invoiceDetails.round_off ?? invoice?.round_off ?? 0,
     total_amount: invoiceDetails.total_amount ?? invoice?.total_amount,
