@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getCustomers, deleteCustomer } from "../../api/customers";
+import { getCustomers, deleteCustomer, mergeCustomers } from "../../api/customers";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
@@ -28,6 +28,7 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
   const [page, setPage] = useState(1);
   const [selectedCustomers, setSelectedCustomers] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
   const { colWidths, renderResizeHandle } = useResizableColumns(
     "cenvoras_customer_table_col_widths",
     DEFAULT_COLUMN_WIDTHS
@@ -47,6 +48,20 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
   const customers = data?.results || data || [];
   const totalCount = data?.count || customers.length;
   const totalPages = data?.total_pages || Math.ceil(totalCount / 10);
+
+  // Detect duplicate GSTINs across loaded customer records
+  const duplicateGstinSet = useMemo(() => {
+    const counts = {};
+    if (Array.isArray(customers)) {
+      for (const c of customers) {
+        if (c.gstin && typeof c.gstin === 'string' && c.gstin.trim()) {
+          const g = c.gstin.trim().toUpperCase();
+          counts[g] = (counts[g] || 0) + 1;
+        }
+      }
+    }
+    return new Set(Object.keys(counts).filter(g => counts[g] > 1));
+  }, [customers]);
 
   const handleSort = (field) => {
     setOrdering(prev => {
@@ -104,6 +119,44 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
         console.error('Bulk delete error:', error);
         toast.error('Error deleting some customers. Please try again.');
       }
+    }
+  };
+
+  // Merge functionality for duplicate records
+  const handleBulkMerge = async () => {
+    if (selectedCustomers.size !== 2) return;
+    const ids = Array.from(selectedCustomers);
+    const selectedObjs = customers.filter(c => ids.includes(c.id));
+    if (selectedObjs.length < 2) return;
+
+    // Pick earliest created record as canonical primary
+    selectedObjs.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+    const primary = selectedObjs[0];
+    const duplicate = selectedObjs[1];
+
+    const confirmed = window.confirm(
+      `Merge duplicate customer "${duplicate.name}" (${duplicate.id?.slice(0, 8)}) into primary "${primary.name}" (${primary.id?.slice(0, 8)})?\n\n` +
+      `• All sales invoices, challans, orders, payments, and credit notes will be consolidated under ${primary.name}.\n` +
+      `• Ledger balances will be authoritatively recalculated.\n` +
+      `• The duplicate customer record will be deleted.\n\n` +
+      `Proceed with merge?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsMerging(true);
+      const res = await mergeCustomers({ primary_id: primary.id, duplicate_id: duplicate.id });
+      toast.success(res?.message || `Successfully merged customers! New balance: ${getCurrencySymbol()}${res?.data?.new_balance || '0.00'}`);
+      setSelectedCustomers(new Set());
+      setShowBulkActions(false);
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["customer-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["customer-challans"] });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to merge customers.");
+    } finally {
+      setIsMerging(false);
     }
   };
 
@@ -208,6 +261,18 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
               {selectedCustomers.size} Selected
             </span>
             <div className="flex gap-2 w-full sm:w-auto">
+              {selectedCustomers.size === 2 && (
+                <button
+                  type="button"
+                  onClick={handleBulkMerge}
+                  disabled={isMerging}
+                  className="flex-1 sm:flex-none px-4 py-2 bg-[var(--accent-primary)] hover:opacity-90 text-[var(--text-on-accent)] text-xs rounded-xl font-bold uppercase tracking-wider transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-sm"
+                  title="Merge duplicate customers into single profile"
+                >
+                  <UsersIcon className="w-4 h-4" />
+                  <span>{isMerging ? "Merging..." : "Merge 2 Customers"}</span>
+                </button>
+              )}
               <button
                 onClick={handleBulkDelete}
                 className="flex-1 sm:flex-none px-4 py-2 bg-[var(--status-danger-bg)] hover:opacity-90 text-[var(--status-danger)] text-xs rounded-xl border border-[var(--status-danger-border)] font-bold uppercase tracking-wider transition-all"
@@ -365,8 +430,21 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-[var(--text-secondary)] font-mono">
-                      {customer.gstin || 'N/A'}{customer.gstin_warning && (<span title={customer.gstin_warning} className="ml-1 inline-block rounded px-1 text-[10px] font-semibold bg-amber-100 text-amber-800">{customer.gstin_warning}</span>)}
+                    <div className="text-sm text-[var(--text-secondary)] font-mono flex items-center flex-wrap gap-1">
+                      <span>{customer.gstin || 'N/A'}</span>
+                      {customer.gstin && duplicateGstinSet.has(customer.gstin.trim().toUpperCase()) && (
+                        <span
+                          title="Duplicate GSTIN detected with another customer. Select both records to merge them."
+                          className="inline-block rounded-md px-1.5 py-0.5 text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30 uppercase tracking-wider"
+                        >
+                          Duplicate GSTIN
+                        </span>
+                      )}
+                      {customer.gstin_warning && (
+                        <span title={customer.gstin_warning} className="inline-block rounded px-1 text-[10px] font-semibold bg-amber-100 text-amber-800">
+                          {customer.gstin_warning}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -475,7 +553,22 @@ export default function CustomerTable({ onEdit, onView, onDelete, onAddNewCustom
 
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">GSTIN:</span>
-                  <span className="text-sm text-[var(--text-primary)] font-mono">{customer.gstin || 'N/A'}{customer.gstin_warning && (<span title={customer.gstin_warning} className="ml-1 inline-block rounded px-1 text-[10px] font-semibold bg-amber-100 text-amber-800">{customer.gstin_warning}</span>)}</span>
+                  <div className="text-sm text-[var(--text-primary)] font-mono flex items-center flex-wrap gap-1 justify-end">
+                    <span>{customer.gstin || 'N/A'}</span>
+                    {customer.gstin && duplicateGstinSet.has(customer.gstin.trim().toUpperCase()) && (
+                      <span
+                        title="Duplicate GSTIN detected with another customer. Select both records to merge them."
+                        className="inline-block rounded-md px-1.5 py-0.5 text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30 uppercase tracking-wider"
+                      >
+                        Duplicate GSTIN
+                      </span>
+                    )}
+                    {customer.gstin_warning && (
+                      <span title={customer.gstin_warning} className="inline-block rounded px-1 text-[10px] font-semibold bg-amber-100 text-amber-800">
+                        {customer.gstin_warning}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex justify-between items-center">

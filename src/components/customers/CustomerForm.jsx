@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Formik, Form, Field, FieldArray, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -43,6 +43,22 @@ export default function CustomerForm({
   useEscKey(onClose, isOpen, escPriority);
   const queryClient = useQueryClient();
   const isEdit = !!editData;
+
+  const allCustomerQueries = typeof queryClient.getQueriesData === 'function'
+    ? queryClient.getQueriesData({ queryKey: ["customers"] })
+    : [];
+  const allCustomers = useMemo(() => {
+    const list = [];
+    for (const [, queryData] of allCustomerQueries) {
+      const items = queryData?.results || (Array.isArray(queryData) ? queryData : []);
+      for (const item of items) {
+        if (item && item.id && !list.some(x => x.id === item.id)) {
+          list.push(item);
+        }
+      }
+    }
+    return list;
+  }, [allCustomerQueries]);
 
   const createMutation = useMutation({
     mutationFn: createCustomer,
@@ -242,27 +258,40 @@ export default function CustomerForm({
                 <div className="form-field">
                   <label htmlFor="customer-form-gstin" className={labelClass}>GSTIN</label>
                   <Field name="gstin">
-                    {({ field, form }) => (
-                      <input
-                        {...field}
-                        id="customer-form-gstin"
-                        type="text"
-                        className={inputClass}
-                        placeholder="22AAAAA0000A1Z5"
-                        onChange={(e) => {
-                          const val = e.target.value.toUpperCase();
-                          form.setFieldValue('gstin', val);
-                          if (val.length >= 2) {
-                            const code = val.substring(0, 2);
-                            const mappedState = GST_STATE_CODE_MAP[code];
-                            if (mappedState) {
-                              form.setFieldValue('state', mappedState);
-                            }
-                            form.setFieldValue('meta.gst_type', 'registered');
-                          }
-                        }}
-                      />
-                    )}
+                    {({ field, form }) => {
+                      const typedGstin = field.value ? String(field.value).trim().toUpperCase() : '';
+                      const duplicateMatch = typedGstin && allCustomers.find(
+                        c => c.gstin && String(c.gstin).trim().toUpperCase() === typedGstin && c.id !== editData?.id
+                      );
+                      return (
+                        <>
+                          <input
+                            {...field}
+                            id="customer-form-gstin"
+                            type="text"
+                            className={inputClass}
+                            placeholder="22AAAAA0000A1Z5"
+                            onChange={(e) => {
+                              const val = e.target.value.toUpperCase();
+                              form.setFieldValue('gstin', val);
+                              if (val.length >= 2) {
+                                const code = val.substring(0, 2);
+                                const mappedState = GST_STATE_CODE_MAP[code];
+                                if (mappedState) {
+                                  form.setFieldValue('state', mappedState);
+                                }
+                                form.setFieldValue('meta.gst_type', 'registered');
+                              }
+                            }}
+                          />
+                          {duplicateMatch && (
+                            <div className="mt-1.5 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs flex items-center gap-1.5 font-medium">
+                              <span>Existing customer found with this GSTIN: <strong>{duplicateMatch.name}</strong>. Creating a duplicate will be blocked.</span>
+                            </div>
+                          )}
+                        </>
+                      );
+                    }}
                   </Field>
                   <ErrorMessage name="gstin" component="div" className="mt-1 text-xs text-red-400" />
                 </div>
@@ -382,7 +411,7 @@ export default function CustomerForm({
                                     as="textarea"
                                     rows={2}
                                     className={inputClass}
-                                    placeholder="Full shipping address, city, state, PIN..."
+                                    placeholder={`Shipping address #${idx + 1} (city, state, PIN)...`}
                                   />
                                   <ErrorMessage
                                     name={`meta.shipping_addresses.${idx}`}
