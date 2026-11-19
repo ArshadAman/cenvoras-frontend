@@ -542,8 +542,8 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
   });
   const vendors = Array.isArray(vendorsResult) ? vendorsResult : vendorsResult?.data || vendorsResult?.results || [];
   const { data: customersResult } = useQuery({
-    queryKey: ["customers"],
-    queryFn: () => getCustomers({ search: "", ordering: "name" }),
+    queryKey: ["customers", "dropdown"],
+    queryFn: () => getCustomers({ search: "", ordering: "name", page_size: 1000 }),
     staleTime: 5 * 60 * 1000,
   });
   const customers = Array.isArray(customersResult) ? customersResult : customersResult?.data || customersResult?.results || [];

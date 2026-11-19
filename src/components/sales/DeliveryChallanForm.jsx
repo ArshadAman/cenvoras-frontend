@@ -186,8 +186,8 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
   const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
 
   const { data: customersResult } = useQuery({
-    queryKey: ["customers"],
-    queryFn: getCustomers,
+    queryKey: ["customers", "dropdown"],
+    queryFn: () => getCustomers({ page_size: 1000 }),
     staleTime: 5 * 60 * 1000,
   });
   const customers = Array.isArray(customersResult) ? customersResult : customersResult?.data || customersResult?.results || [];
@@ -196,6 +196,7 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
     mutationFn: createDeliveryChallan,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast.success("Delivery Challan created!");
       onClose();
     },
@@ -206,6 +207,7 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
     mutationFn: ({ id, data }) => updateDeliveryChallan(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deliveryChallans"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast.success("Delivery Challan updated!");
       onClose();
     },
@@ -246,16 +248,6 @@ export default function DeliveryChallanForm({ isOpen, onClose, editData }) {
           }}
           validationSchema={DeliveryChallanSchema}
           onSubmit={async (values, { setSubmitting, setFieldError }) => {
-            const customerNameTrimmed = (values.customer_name || '').trim().toLowerCase();
-            const isSavedCustomerInDb = Boolean(
-              (customers || []).some((c) => c.id && (c.name || '').trim().toLowerCase() === customerNameTrimmed)
-            );
-            if (!isSavedCustomerInDb) {
-              setFieldError('customer_name', 'Save this customer first before creating a delivery challan.');
-              toast.error('Save this customer first before creating a delivery challan.');
-              setSubmitting(false);
-              return;
-            }
             const formData = {
                 customer_name: values.customer_name,
                 challan_number: values.challan_number,
