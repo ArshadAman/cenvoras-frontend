@@ -88,4 +88,82 @@ describe('CustomerDetailsModal', () => {
     // Executive footer
     expect(screen.getByText(/This is a computer-generated statement from Cenvora ERP/i)).toBeTruthy();
   });
+
+  it('respects zero current_balance without falling back to totalInvoiced', async () => {
+    const { getCustomer } = await import('../../api/customers');
+    getCustomer.mockResolvedValueOnce({
+      id: 'c-zero',
+      name: 'Zero Balance Co',
+      current_balance: 0,
+    });
+
+    const { getSalesInvoices } = await import('../../api/sales');
+    getSalesInvoices.mockResolvedValueOnce([
+      {
+        id: 'inv-z1',
+        invoice_number: 'INV-Z-001',
+        total_amount: 50000.00,
+        amount_paid: 0,
+        status: 'final',
+        customer: 'c-zero',
+      },
+    ]);
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <CustomerDetailsModal isOpen={true} onClose={() => {}} customer={{ id: 'c-zero', name: 'Zero Balance Co' }} />
+      </QueryClientProvider>
+    );
+
+    await screen.findByRole('heading', { name: /Zero Balance Co/i });
+    // Outstanding Due must show 0.00, not 50,000.00
+    const outEls = screen.getAllByText(/0\.00/);
+    expect(outEls.length).toBeGreaterThan(0);
+  });
+
+  it('excludes draft invoices from totalInvoiced and tags them with Draft badge', async () => {
+    const { getCustomer } = await import('../../api/customers');
+    getCustomer.mockResolvedValueOnce({
+      id: 'c-draft-test',
+      name: 'Draft Test Co',
+      current_balance: 1000,
+    });
+
+    const { getSalesInvoices } = await import('../../api/sales');
+    getSalesInvoices.mockResolvedValueOnce([
+      {
+        id: 'inv-final',
+        invoice_number: 'INV-F-001',
+        total_amount: 1000.00,
+        amount_paid: 0,
+        status: 'final',
+        customer: 'c-draft-test',
+      },
+      {
+        id: 'inv-draft',
+        invoice_number: 'DFT-X-002',
+        total_amount: 18000.00,
+        amount_paid: 0,
+        status: 'draft',
+        customer: 'c-draft-test',
+      },
+    ]);
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <CustomerDetailsModal isOpen={true} onClose={() => {}} customer={{ id: 'c-draft-test', name: 'Draft Test Co' }} />
+      </QueryClientProvider>
+    );
+
+    await screen.findByRole('heading', { name: /Draft Test Co/i });
+
+    // Draft badge must be rendered
+    expect(screen.getByText(/^Draft$/i)).toBeTruthy();
+
+    // Draft balance must show — (Draft)
+    expect(screen.getByText(/— \(Draft\)/i)).toBeTruthy();
+
+    // Grand total row must note draft excluded
+    expect(screen.getByText(/1 Draft Excluded/i)).toBeTruthy();
+  });
 });

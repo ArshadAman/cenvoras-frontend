@@ -38,6 +38,14 @@ export const deleteCustomer = id =>
 export const ensureCustomerVendor = (id) =>
   api.post(`/billing/customers/${id}/ensure-vendor/`).then(res => res.data);
 
+// Merge duplicate customers
+export const mergeCustomers = ({ primary_id, duplicate_id }) =>
+  api.post("/billing/customers/merge/", { primary_id, duplicate_id }).then(res => res.data);
+
+// Get duplicate customer clusters
+export const getCustomerDuplicates = () =>
+  api.get("/billing/customers/duplicates/").then(res => res.data);
+
 // Upload customers via CSV (if supported)
 export const uploadCustomersCsv = formData =>
   api.post("/billing/upload-customers-csv/", formData, {

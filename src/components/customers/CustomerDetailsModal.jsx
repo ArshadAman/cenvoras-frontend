@@ -41,22 +41,30 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
   const customerDetails = data?.data || data || customer || {};
 
   const rawInvoices = Array.isArray(invoicesData) ? invoicesData : invoicesData?.data || invoicesData?.results || [];
-  const customerInvoices = rawInvoices.filter(inv =>
-    inv.customer === customer?.id ||
-    inv.customer?.id === customer?.id ||
-    (customer?.name && inv.customer_name?.toLowerCase() === customer?.name?.toLowerCase())
-  );
+  const customerInvoices = rawInvoices.filter(inv => {
+    const invCustId = inv.customer?.id || inv.customer;
+    if (invCustId) return String(invCustId) === String(customer?.id);
+    return customer?.name && inv.customer_name?.toLowerCase() === customer?.name?.toLowerCase();
+  });
 
   const rawChallans = Array.isArray(challansData) ? challansData : challansData?.data || challansData?.results || [];
-  const customerChallans = rawChallans.filter(ch =>
-    ch.customer === customer?.id ||
-    ch.customer?.id === customer?.id ||
-    (customer?.name && (ch.customer_name?.toLowerCase() === customer?.name?.toLowerCase() || ch.customer?.name?.toLowerCase() === customer?.name?.toLowerCase()))
-  );
+  const customerChallans = rawChallans.filter(ch => {
+    const chCustId = ch.customer?.id || ch.customer;
+    if (chCustId) return String(chCustId) === String(customer?.id);
+    return customer?.name && (
+      ch.customer_name?.toLowerCase() === customer?.name?.toLowerCase() ||
+      ch.customer?.name?.toLowerCase() === customer?.name?.toLowerCase()
+    );
+  });
 
-  const totalInvoiced = customerInvoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0);
-  const totalPaid = customerInvoices.reduce((sum, inv) => sum + (Number(inv.amount_paid) || 0), 0);
-  const outstandingBalance = Number(customerDetails.current_balance) || (totalInvoiced - totalPaid);
+  // Financial accounting: only confirmed/posted invoices drive receivables (drafts are unposted)
+  const confirmedInvoices = customerInvoices.filter(inv => inv.status !== 'draft');
+  const totalInvoiced = confirmedInvoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0);
+  const totalPaid = confirmedInvoices.reduce((sum, inv) => sum + (Number(inv.amount_paid) || 0), 0);
+  const rawBal = customerDetails.current_balance;
+  const outstandingBalance = (rawBal !== undefined && rawBal !== null && !isNaN(Number(rawBal)))
+    ? Number(rawBal)
+    : (totalInvoiced - totalPaid);
 
   const getRelatedChallansForInvoice = (inv) => {
     const matched = customerChallans.filter(ch => {
@@ -457,10 +465,11 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                         </thead>
                         <tbody className="divide-y divide-[var(--border-subtle)]">
                           {customerInvoices.map((inv) => {
+                            const isDraft = inv.status === 'draft';
                             const tot = Number(inv.total_amount) || 0;
                             const paid = Number(inv.amount_paid) || 0;
                             const bal = tot - paid;
-                            const status = inv.payment_status || (bal <= 0 ? 'paid' : paid > 0 ? 'partial' : 'pending');
+                            const status = isDraft ? 'draft' : (inv.payment_status || (bal <= 0 ? 'paid' : paid > 0 ? 'partial' : 'pending'));
                             const relatedChallans = getRelatedChallansForInvoice(inv);
 
                             return (
@@ -520,16 +529,26 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                                   {getCurrencySymbol()}{paid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                                 <td className="py-2.5 px-3 text-right font-mono text-[var(--status-warning-text)] font-bold whitespace-nowrap">
-                                  {getCurrencySymbol()}{bal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  {isDraft ? (
+                                    <span className="text-[var(--text-muted)] font-normal italic">— (Draft)</span>
+                                  ) : (
+                                    `${getCurrencySymbol()}${bal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                  )}
                                 </td>
                                 <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                    status === 'paid' ? 'badge-success' :
-                                    status === 'partial' ? 'badge-warning' :
-                                    'badge-danger'
-                                  }`}>
-                                    {status}
-                                  </span>
+                                  {isDraft ? (
+                                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                                      Draft
+                                    </span>
+                                  ) : (
+                                    <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                      status === 'paid' ? 'badge-success' :
+                                      status === 'partial' ? 'badge-warning' :
+                                      'badge-danger'
+                                    }`}>
+                                      {status}
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="py-2.5 px-3 text-center print-hidden statement-action-col">
                                   <button
@@ -550,7 +569,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                         <tfoot>
                           <tr className="bg-[var(--bg-primary)] font-bold text-[var(--text-primary)] border-t-2 border-b border-[var(--border-default)] statement-no-break">
                             <td colSpan={4} className="py-3 px-3 uppercase tracking-wider text-xs font-bold text-[var(--text-secondary)]">
-                              Grand Total ({customerInvoices.length} {customerInvoices.length === 1 ? 'Record' : 'Records'})
+                              Grand Total ({confirmedInvoices.length} {confirmedInvoices.length === 1 ? 'Record' : 'Records'}{customerInvoices.length > confirmedInvoices.length ? ` · ${customerInvoices.length - confirmedInvoices.length} Draft Excluded` : ''})
                             </td>
                             <td className="py-3 px-3 text-right font-mono text-xs whitespace-nowrap">
                               {getCurrencySymbol()}{totalInvoiced.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
