@@ -23,6 +23,7 @@ const InvoicePreview = forwardRef(({
   const colors = template.colors || {};
   const typography = template.typography || {};
   const sections = template.sections || {};
+  const showPONumber = sections.showPONumber !== false;
   const content = template.content || {};
   const columns = template.columns || [];
   const styles = template.styles || {};
@@ -395,11 +396,11 @@ const InvoicePreview = forwardRef(({
               <span className="font-medium">{isProforma ? 'Proforma Invoice Date:' : isQuotation ? 'Quotation Date:' : 'Date:'}</span> {invoiceDate}
             </div>
           </div>
-          {poNumber ? (
+          {showPONumber && (poNumber || invoice.sales_order_number) ? (
             <div className="flex justify-between gap-4 items-baseline">
               <div>
                 <span className="font-medium">PO No. :</span>{' '}
-                <span className="font-bold" style={{ color: colors.primary }}>{poNumber}</span>
+                <span className="font-bold" style={{ color: colors.primary }}>{poNumber || invoice.sales_order_number}</span>
               </div>
               <div className="text-right whitespace-nowrap">
                 <span className="font-medium">Date:</span> {poDate || '—'}

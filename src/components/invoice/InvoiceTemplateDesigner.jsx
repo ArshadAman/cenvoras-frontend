@@ -203,6 +203,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     invoice_date: new Date().toISOString(),
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     po_number: 'PO-12345',
+    po_date: new Date().toISOString(),
     customer_name: 'Acme Corporation',
     customer_address: '123 Business Park, Tech City\nKarnataka, India - 560001',
     customer_gstin: '29AAKCG6382L1ZU',
@@ -225,6 +226,8 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
     transporter_name: 'Fast Track Logistics',
     transport_mode: 'Road',
     eway_bill_number: 'EWB-998877665544',
+    sales_order_number: 'SO-12345',
+    po_date: new Date().toISOString(),
     is_delivery_challan: true,
     document_type: 'delivery_challan',
     items: [
@@ -781,6 +784,7 @@ export default function InvoiceTemplateDesigner({ isOpen, onClose, businessInfo 
               <SectionHeader>Invoice Details</SectionHeader>
               <ToggleSwitch
                 label="PO Number"
+                description="Also controls PO Date"
                 checked={currentTemplate.sections?.showPONumber}
                 onChange={(v) => updateTemplate('sections.showPONumber', v)}
               />

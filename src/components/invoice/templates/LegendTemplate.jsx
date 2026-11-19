@@ -25,6 +25,8 @@ const LegendTemplate = forwardRef(({
   const billingAddress = invoice.customer_address || '';
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
+  const poDate = invoice.po_date ? new Date(invoice.po_date).toLocaleDateString('en-IN') : '';
+  const showPONumber = sections.showPONumber !== false;
   const items = invoice.items || [];
 
   const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
@@ -161,7 +163,10 @@ const LegendTemplate = forwardRef(({
                   <>
                     <div className="w-1/2 p-2.5 border-r flex flex-col justify-center" style={{ borderColor }}>
                        <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Ref Order</p>
-                       <p className="font-semibold text-gray-900">{invoice.sales_order_number || invoice.po_number || '—'}</p>
+                        <p className="font-semibold text-gray-900">{showPONumber ? (invoice.sales_order_number || invoice.po_number || '—') : '—'}</p>
+                        {showPONumber && poDate && (
+                          <p className="text-xs text-gray-500 mt-0.5">PO Date: <span className="font-semibold text-gray-800">{poDate}</span></p>
+                        )}
                     </div>
                     <div className="w-1/2 p-2.5 flex flex-col justify-center">
                        <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Vehicle No.</p>
@@ -178,12 +183,15 @@ const LegendTemplate = forwardRef(({
                        )}
                     </div>
                     <div className="w-1/2 p-2.5 flex flex-col justify-center">
-                       {invoice.po_number || invoice.sales_order_number ? (
+                       {showPONumber && (invoice.po_number || invoice.sales_order_number) ? (
                          <>
                            <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">PO / Order #</p>
                            <p className="font-semibold text-gray-900">{invoice.po_number || invoice.sales_order_number}</p>
+                           {poDate && (
+                             <p className="text-xs text-gray-500 mt-0.5">PO Date: <span className="font-semibold text-gray-800">{poDate}</span></p>
+                           )}
                          </>
-                       ) : invoice.due_date ? (
+                       ) : (sections.showDueDate !== false && invoice.due_date) ? (
                          <>
                            <p className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-0.5">Due Date</p>
                            <p className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</p>

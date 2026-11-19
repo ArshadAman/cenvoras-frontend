@@ -30,6 +30,8 @@ const ProfessionalTemplate = forwardRef(({
   const shippingAddress = invoice.delivery_address || invoice.shipping_address || '';
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
+  const poDate = invoice.po_date ? new Date(invoice.po_date).toLocaleDateString('en-IN') : '';
+  const showPONumber = sections.showPONumber !== false;
   const items = invoice.items || [];
 
   const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
@@ -187,10 +189,16 @@ const ProfessionalTemplate = forwardRef(({
             </div>
             {isDeliveryChallan ? (
               <>
-                {(invoice.sales_order_number || invoice.po_number) && (
+                {showPONumber && (invoice.sales_order_number || invoice.po_number) && (
                   <div>
                     <p className="text-xs text-gray-700 font-semibold mb-0.5">Ref Order / PO</p>
                     <p className="font-bold text-gray-900">{invoice.sales_order_number || invoice.po_number}</p>
+                  </div>
+                )}
+                {showPONumber && poDate && (
+                  <div>
+                    <p className="text-xs text-gray-700 font-semibold mb-0.5">PO Date</p>
+                    <p className="font-bold text-gray-900">{poDate}</p>
                   </div>
                 )}
                 {invoice.vehicle_number && (
@@ -202,10 +210,16 @@ const ProfessionalTemplate = forwardRef(({
               </>
             ) : (
               <>
-                {(invoice.po_number || invoice.sales_order_number) && (
+                {showPONumber && (invoice.po_number || invoice.sales_order_number) && (
                   <div>
                     <p className="text-xs text-gray-700 font-semibold mb-0.5">PO / Order No</p>
                     <p className="font-bold text-gray-900">{invoice.po_number || invoice.sales_order_number}</p>
+                  </div>
+                )}
+                {showPONumber && poDate && (
+                  <div>
+                    <p className="text-xs text-gray-700 font-semibold mb-0.5">PO Date</p>
+                    <p className="font-bold text-gray-900">{poDate}</p>
                   </div>
                 )}
                 {formatLinkedChallanList(invoice) && (

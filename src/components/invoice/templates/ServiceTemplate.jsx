@@ -24,6 +24,8 @@ const ServiceTemplate = forwardRef(({
   const billingAddress = invoice.customer_address || '';
   const invoiceNumber = invoice.invoice_number || 'INV-001';
   const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
+  const poDate = invoice.po_date ? new Date(invoice.po_date).toLocaleDateString('en-IN') : '';
+  const showPONumber = sections.showPONumber !== false;
   const items = invoice.items || [];
 
   const bankName = businessInfo.bank_name || content.bankDetails?.bankName || '';
@@ -175,10 +177,16 @@ const ServiceTemplate = forwardRef(({
           </div>
           {isDeliveryChallan ? (
             <>
-              {(invoice.sales_order_number || invoice.po_number) && (
+              {showPONumber && (invoice.sales_order_number || invoice.po_number) && (
                 <div className="flex justify-between">
                   <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Ref Order:</span>{' '}
                   <span className="font-semibold text-gray-900">{invoice.sales_order_number || invoice.po_number}</span>
+                </div>
+              )}
+              {showPONumber && poDate && (
+                <div className="flex justify-between">
+                  <span className="font-bold text-gray-700 uppercase text-xs tracking-widest">PO Date:</span>{' '}
+                  <span className="font-semibold text-gray-900">{poDate}</span>
                 </div>
               )}
               {invoice.vehicle_number && (
@@ -196,8 +204,9 @@ const ServiceTemplate = forwardRef(({
             </>
           ) : (
             <>
-              {invoice.due_date && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Due Date:</span> <span className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</span></div>}
-              {(invoice.po_number || invoice.sales_order_number) && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">PO / Order #:</span> <span className="font-semibold text-gray-900">{invoice.po_number || invoice.sales_order_number}</span></div>}
+              {sections.showDueDate !== false && invoice.due_date && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Due Date:</span> <span className="font-semibold text-gray-900">{new Date(invoice.due_date).toLocaleDateString('en-IN')}</span></div>}
+              {showPONumber && (invoice.po_number || invoice.sales_order_number) && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">PO / Order #:</span> <span className="font-semibold text-gray-900">{invoice.po_number || invoice.sales_order_number}</span></div>}
+              {showPONumber && poDate && <div className="flex justify-between"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">PO Date:</span> <span className="font-semibold text-gray-900">{poDate}</span></div>}
               {formatLinkedChallanList(invoice) && <div className="flex justify-between gap-3"><span className="font-bold text-gray-700 uppercase text-xs tracking-widest">Challan #:</span> <span className="font-semibold text-gray-900 text-right">{formatLinkedChallanList(invoice)}</span></div>}
             </>
           )}
