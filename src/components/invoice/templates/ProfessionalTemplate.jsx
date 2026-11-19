@@ -1,7 +1,7 @@
 import { documentTitle, documentDeclaration } from '../../../utils/gstStatus';
 import React, { forwardRef } from 'react';
 import PlaceOfSupplyLine from './PlaceOfSupplyLine';
-import { amountInWords, formatLinkedChallanList, resolveTypography } from '../../../utils/invoiceSettings';
+import { amountInWords, formatLinkedChallanList, resolveTypography, resolveItemProductAndDesc } from '../../../utils/invoiceSettings';
 import { getTaxType } from '../../../utils/taxUtils';
 import { getCurrencySymbol, getCountryCode, formatCurrency } from '../../../utils/currency';
 import { calculateInvoiceTotals } from '../../../utils/lineAmount';
@@ -286,8 +286,7 @@ const ProfessionalTemplate = forwardRef(({
                   </tr>
                 );
               }
-              const desc = item.description || item.product_description || item.product_detail?.description;
-              const hasVisibleDesc = invoiceSettings.show_item_description !== false && Boolean(desc);
+              const { productName, desc, hasVisibleDesc } = resolveItemProductAndDesc(item, invoiceSettings);
               return (
               <tr 
                 key={idx} 
@@ -308,7 +307,7 @@ const ProfessionalTemplate = forwardRef(({
                   else if(col.id==='description') {
                     val = (
                       <div className={`leading-tight ${hasVisibleDesc ? 'py-1' : 'py-0'}`}>
-                        <div className="font-normal text-gray-900" style={{ fontSize: `${type.tableBodySize}px` }}>{item.product_name || item.product}</div>
+                        <div className="font-normal text-gray-900" style={{ fontSize: `${type.tableBodySize}px` }}>{productName}</div>
                         {invoiceSettings.show_item_manufacturer !== false && (item.manufacturer || item.product_detail?.manufacturer) && (
                           <div 
                             className="text-gray-700 font-medium italic mt-0.5"

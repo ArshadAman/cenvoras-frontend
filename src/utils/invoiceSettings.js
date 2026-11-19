@@ -597,6 +597,27 @@ export function resolveTypography(typography = {}) {
   };
 }
 
+export const isUUID = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s.trim());
+
+/**
+ * Robust item product title and secondary description resolver.
+ * Ensures the primary title matches tableBodySize across all templates,
+ * and secondary description notes render only when distinct from the title.
+ */
+export function resolveItemProductAndDesc(item, invoiceSettings = {}) {
+  const explicitName = 
+    item?.product_detail?.name || 
+    item?.product_name || 
+    (typeof item?.product === 'string' && !isUUID(item.product) ? item.product : '') || 
+    (typeof item?.product === 'object' && item?.product?.name ? item.product.name : '') || 
+    '';
+  const desc = item?.description || item?.product_description || item?.product_detail?.description || '';
+  const productName = explicitName || desc || '';
+  const hasDistinctDesc = Boolean(desc) && desc !== productName;
+  const hasVisibleDesc = invoiceSettings.show_item_description !== false && hasDistinctDesc;
+  return { productName, desc, hasVisibleDesc };
+}
+
 export default {
   defaultInvoiceTemplate,
   templatePresets,
@@ -617,4 +638,6 @@ export default {
   formatLinkedChallanEntries,
   formatLinkedChallanList,
   resolveTypography,
+  isUUID,
+  resolveItemProductAndDesc,
 };
