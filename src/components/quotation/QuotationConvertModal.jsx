@@ -31,10 +31,18 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
     // Initialize item quantities and discounts
     const initialItems = {};
     approvedItems.forEach((item) => {
+      const quoteDiscount = Math.max(0, Math.min(100, Number(item.discount || 0)));
+      const basePrice = Number(item.price || 0);
+      const quotedRate = quoteDiscount > 0
+        ? Math.round(basePrice * (1 - quoteDiscount / 100) * 100) / 100
+        : basePrice;
+
       initialItems[item.id] = {
         quantity: item.quantity,
-        price: item.price || 0,
-        discount: Number(item.discount || 0),
+        price: quotedRate,
+        basePrice,
+        quoteDiscount,
+        discount: 0,
         tax: Number(item.tax || 0),
         unit: item.unit || '',
       };
@@ -243,10 +251,18 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
             ) : (
               approvedItems.map((item) => {
                 const isChecked = selected.has(item.id);
+                const quoteDiscount = Math.max(0, Math.min(100, Number(item.discount || 0)));
+                const basePrice = Number(item.price || 0);
+                const quotedRate = quoteDiscount > 0
+                  ? Math.round(basePrice * (1 - quoteDiscount / 100) * 100) / 100
+                  : basePrice;
+
                 const itemInfo = itemsState[item.id] || {
                   quantity: item.quantity,
-                  price: item.price,
-                  discount: item.discount,
+                  price: quotedRate,
+                  basePrice,
+                  quoteDiscount,
+                  discount: 0,
                   tax: item.tax,
                 };
                 const lineTotal = calculateLineTotal(itemInfo);
@@ -296,8 +312,13 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
                             <p className="font-semibold text-sm truncate text-[var(--text-primary)]">
                               {item.product_name}
                             </p>
-                            <div className="mt-0.5 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                              <span>Rate: {getCurrencySymbol()}{Number(item.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-[var(--text-secondary)]">
+                              <span>Rate: {getCurrencySymbol()}{Number(itemInfo.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              {itemInfo.quoteDiscount > 0 && (
+                                <span className="text-[11px] text-[var(--text-muted)]">
+                                  (Base: <span className="line-through">{getCurrencySymbol()}{Number(itemInfo.basePrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span> −{itemInfo.quoteDiscount}%)
+                                </span>
+                              )}
                               {Number(item.tax || 0) > 0 && (
                                 <>
                                   <span className="w-1 h-1 rounded-full bg-[var(--text-muted)]"></span>
@@ -331,7 +352,7 @@ export default function QuotationConvertModal({ isOpen, quotation, onClose, onCo
                           </div>
 
                           <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                            <span className="text-[var(--text-secondary)] font-medium">Disc:</span>
+                            <span className="text-[var(--text-secondary)] font-medium">Extra Disc:</span>
                             <div className="flex items-center bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded px-1.5 py-0.5">
                               <input
                                 type="number"
