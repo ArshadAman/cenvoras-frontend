@@ -193,7 +193,7 @@ function catalogSyncPayload(item, index) {
 }
 
 // Product Autocomplete Component
-function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, showManufacturer = true, onCreateNewProduct, onSelectProduct }) {
+export function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showDescription = true, showManufacturer = true, onCreateNewProduct, onSelectProduct, activeDropdownIdx, setActiveDropdownIdx }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.items[idx]?.product || "");
@@ -228,7 +228,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     }
   }, [focusDesc, descExpanded]);
 
-  useEscKey(() => setShowDropdown(false), showDropdown, 30);
+  useEscKey(() => {
+    setShowDropdown(false);
+    setSelectedIndex(-1);
+    if (setActiveDropdownIdx) setActiveDropdownIdx(null);
+  }, showDropdown, 30);
 
   // Sync inputValue with Formik values when items change or shift on deletion
   useEffect(() => {
@@ -237,6 +241,13 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       setInputValue(formVal);
     }
   }, [values.items[idx]?.product]);
+
+  // Coordinate active dropdown across multiple rows (only one product dropdown open at a time)
+  useEffect(() => {
+    if (activeDropdownIdx !== undefined && activeDropdownIdx !== null && activeDropdownIdx !== idx) {
+      setShowDropdown(false);
+    }
+  }, [activeDropdownIdx, idx]);
 
   const updateDropdownPosition = () => {
     const wrapper = wrapperRef.current;
@@ -269,18 +280,14 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       return name.includes(query) || code.includes(query) || ref.includes(query) || hsn.includes(query) || mfr.includes(query);
     });
     setFilteredProducts(filtered);
-
-    if (!isFocused) {
-      setShowDropdown(false);
-    }
-  }, [inputValue, products, isFocused]);
+  }, [inputValue, products]);
 
   const remoteSearchCacheRef = useRef(new Map());
 
   // Debounced remote search against API to guarantee all inventory items are synced even in large catalogs
   useEffect(() => {
     const query = (inputValue || "").trim();
-    if (query.length < 2 || !isFocused) return;
+    if (query.length < 2) return;
 
     // If local in-memory catalog already has sufficient matches, avoid redundant network queries
     if (filteredProducts.length >= 8) return;
@@ -320,7 +327,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       isCancelled = true;
       clearTimeout(timer);
     };
-  }, [inputValue, isFocused, filteredProducts.length]);
+  }, [inputValue, filteredProducts.length]);
 
   useEffect(() => {
     if (!showDropdown) return;
@@ -362,6 +369,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setInputValue(product.name);
     setShowDropdown(false);
     setSelectedIndex(-1);
+    if (setActiveDropdownIdx) setActiveDropdownIdx(null);
     
     // Trigger auto-add row functionality after product selection
     if (onInputChange) {
@@ -382,12 +390,12 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
       setFieldValue(`items.${idx}.isExistingProduct`, false);
       setFieldValue(`items.${idx}.product_id`, null);
       setShowDropdown(false);
+      if (setActiveDropdownIdx) setActiveDropdownIdx(null);
       return;
     }
 
-    if (isFocused) {
-      setShowDropdown(true);
-    }
+    if (setActiveDropdownIdx) setActiveDropdownIdx(idx);
+    setShowDropdown(true);
   };
 
   return (
@@ -402,13 +410,18 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                 onChange={handleInputChange}
                 onFocus={() => {
                   setIsFocused(true);
-                  if ((inputValue || "").trim() && filteredProducts.length > 0) {
+                  if (setActiveDropdownIdx) setActiveDropdownIdx(idx);
+                  const query = (inputValue || "").trim();
+                  const exactMatch = (filteredProducts || []).some(
+                    (p) => (p.name || '').trim().toLowerCase() === query.toLowerCase()
+                  );
+                  const showAddButton = Boolean(query && !exactMatch && onCreateNewProduct);
+                  if (query && (filteredProducts.length > 0 || showAddButton)) {
                     setShowDropdown(true);
                   }
                 }}
                 onBlur={() => {
                   setIsFocused(false);
-                  setTimeout(() => setShowDropdown(false), 100);
                 }}
                 placeholder="Product name"
                 className={`${ITEM_INPUT_CLASS} transition-all ${showDescription && !descExpanded && !hasDescription ? "!pr-7" : ""}`}
@@ -430,10 +443,14 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                       selectProduct(filteredProducts[selectedIndex]);
                     } else if (showDropdown && selectedIndex === displayLimit && showAddButton) {
                       e.preventDefault();
+                      setShowDropdown(false);
+                      setSelectedIndex(-1);
+                      if (setActiveDropdownIdx) setActiveDropdownIdx(null);
                       onCreateNewProduct(inputValue.trim(), idx);
                     }
                     setShowDropdown(false);
                     setSelectedIndex(-1);
+                    if (setActiveDropdownIdx) setActiveDropdownIdx(null);
                     return;
                   }
 
@@ -456,16 +473,19 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                         e.preventDefault();
                         setShowDropdown(false);
                         setSelectedIndex(-1);
+                        if (setActiveDropdownIdx) setActiveDropdownIdx(null);
                         onCreateNewProduct(inputValue.trim(), idx);
                       }
                     } else if (e.key === 'Escape') {
                       e.preventDefault();
                       setShowDropdown(false);
                       setSelectedIndex(-1);
+                      if (setActiveDropdownIdx) setActiveDropdownIdx(null);
                     }
                   } else if (e.key === 'Escape') {
                     setShowDropdown(false);
                     setSelectedIndex(-1);
+                    if (setActiveDropdownIdx) setActiveDropdownIdx(null);
                   }
                 }}
               />
@@ -537,6 +557,10 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
             <div
               ref={listRef}
               style={dropdownStyle}
+              onMouseDown={(e) => {
+                // Prevent bubbling to outer click handlers
+                e.stopPropagation();
+              }}
               className="max-h-60 overflow-y-auto rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-2xl backdrop-blur-xl"
             >
               {filteredProducts.slice(0, 50).map((product, index) => (
@@ -587,6 +611,7 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
                     event.stopPropagation();
                     setShowDropdown(false);
                     setSelectedIndex(-1);
+                    if (setActiveDropdownIdx) setActiveDropdownIdx(null);
                     onCreateNewProduct(inputValue.trim(), idx);
                   }}
                 >
@@ -1044,6 +1069,7 @@ export default function SalesForm({
   const columnPickerRef = React.useRef(null);
   const [roundOffApplied, setRoundOffApplied] = useState(false);
   const [productCreationState, setProductCreationState] = useState(null);
+  const [activeProductIdx, setActiveProductIdx] = useState(null);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [catalogSyncModal, setCatalogSyncModal] = useState(null);
   // Missing-product HSN prompt: { rows: [{ key, name, hsn }], resolve }
@@ -1055,6 +1081,7 @@ export default function SalesForm({
   useEffect(() => {
     setShippingEditState(null);
     billToShipToManualRef.current = false;
+    setActiveProductIdx(null);
   }, [isOpen, editData?.id]);
 
   const isFormDirty = Boolean(
@@ -1427,6 +1454,7 @@ export default function SalesForm({
   };
 
   const handleCreateInventoryProduct = (productName, idx) => {
+    setActiveProductIdx(null);
     if (!canAccessInventory) {
       toast.info("Inventory browsing is locked on Starter. Enter item details manually to create this sales bill.");
       return;
@@ -3265,6 +3293,8 @@ export default function SalesForm({
                                                    showManufacturer={itemSettings.show_item_manufacturer}
                                                    onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                                    onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
+                                                   activeDropdownIdx={activeProductIdx}
+                                                   setActiveDropdownIdx={setActiveProductIdx}
                                                  />
                                                   {itemSettings.show_item_storage_condition && (
                                                     <div className="mt-1 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
@@ -3667,6 +3697,8 @@ export default function SalesForm({
                                             showManufacturer={itemSettings.show_item_manufacturer}
                                             onCreateNewProduct={canAccessInventory ? handleCreateInventoryProduct : undefined}
                                             onSelectProduct={(prod) => handleProductSelected(index, prod, setFieldValue, values)}
+                                            activeDropdownIdx={activeProductIdx}
+                                            setActiveDropdownIdx={setActiveProductIdx}
                                           />
                                                   {itemSettings.show_item_storage_condition && (
                                                     <div className="mt-1 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
