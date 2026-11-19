@@ -181,4 +181,16 @@ describe('PO Date rendering and PO Number toggle control across invoice template
       expect(text).toContain('Also controls PO Date');
     });
   });
+
+  describe('BillShipTemplate Amount Due badge removal', () => {
+    it('does not render the Amount Due badge in totals', () => {
+      render(
+        <BillShipTemplate
+          invoice={proformaWithPo}
+          businessInfo={businessInfo}
+        />
+      );
+      expect(document.body.textContent).not.toContain('Amount Due');
+    });
+  });
 });

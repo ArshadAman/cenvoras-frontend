@@ -401,9 +401,6 @@ const BillShipTemplate = forwardRef(({
                  <span className="whitespace-nowrap">Grand Total</span>
                  <span className="font-mono whitespace-nowrap">{getCurrencySymbol()}{finalTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                </div>
-               <div className="flex justify-end mt-2">
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-extrabold uppercase">✔ Amount Due</span>
-               </div>
              </div>
 
           </div>
