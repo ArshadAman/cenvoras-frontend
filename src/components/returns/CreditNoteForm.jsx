@@ -25,8 +25,8 @@ export default function CreditNoteForm({ isOpen, onClose }) {
 
   // Fetch Customers
   const { data: customers } = useQuery({
-    queryKey: ["customers"],
-    queryFn: getCustomers,
+    queryKey: ["customers", "dropdown"],
+    queryFn: () => getCustomers({ page_size: 1000 }),
     enabled: isOpen && step === 1,
   });
 

@@ -1,11 +1,13 @@
 import api from "./api";
 
 // Get all customers with search and ordering
-export const getCustomers = ({ search = "", ordering = "", page = 1 } = {}) => {
+export const getCustomers = ({ search = "", ordering = "", page = 1, page_size, all } = {}) => {
   const params = new URLSearchParams();
   if (search) params.append("search", search);
   if (ordering) params.append("ordering", ordering);
   if (page) params.append("page", page);
+  if (page_size) params.append("page_size", page_size);
+  if (all) params.append("all", "true");
   
   const queryString = params.toString();
   const url = queryString ? `/billing/customers/?${queryString}` : "/billing/customers/";

@@ -381,8 +381,8 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
   const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
 
   const { data: customersResult } = useQuery({ 
-      queryKey: ["customers"], 
-      queryFn: getCustomers,
+      queryKey: ["customers", "dropdown"], 
+      queryFn: () => getCustomers({ page_size: 1000 }),
       staleTime: 5 * 60 * 1000, 
   });
   const customers = Array.isArray(customersResult) ? customersResult : customersResult?.data || customersResult?.results || [];
@@ -391,6 +391,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
     mutationFn: createSalesOrder,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast.success("Sales Order created successfully!");
       onClose();
     },
@@ -403,6 +404,7 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
     mutationFn: ({ id, data }) => updateSalesOrder(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salesOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast.success("Sales Order updated successfully!");
       onClose();
     },
@@ -476,17 +478,6 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
             if (submitLockRef.current || createMutation.isPending || updateMutation.isPending) {
               return;
             }
-            const customerNameTrimmed = (values.customer_name || '').trim().toLowerCase();
-            const isSavedCustomerInDb = Boolean(
-              values.customer ||
-              (customers || []).some((c) => c.id && (c.name || '').trim().toLowerCase() === customerNameTrimmed)
-            );
-            if (!isSavedCustomerInDb) {
-              setFieldError('customer_name', 'Save this customer first before creating a sales order.');
-              toast.error('Save this customer first before creating a sales order.');
-              setSubmitting(false);
-              return;
-            }
             submitLockRef.current = true;
             try {
                 const processedItems = values.items.map(item => ({
@@ -505,9 +496,12 @@ export default function SalesOrderForm({ isOpen, onClose, editData }) {
                const totalAmount = processedItems.reduce((sum, item) => sum + item.amount, 0);
 
                const formData = {
+                   customer: values.customer || null,
                    customer_name: values.customer_name,
                    customer_email: values.customer_email || null,
                    customer_phone: values.customer_phone || null,
+                   customer_address: values.customer_address || null,
+                   customer_gstin: values.customer_gstin || null,
                    order_number: values.order_number,
                    date: values.date,
                    total_amount: totalAmount,

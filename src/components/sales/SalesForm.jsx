@@ -1132,8 +1132,8 @@ export default function SalesForm({
   const products = Array.isArray(productsResult) ? productsResult : productsResult?.data || productsResult?.results || [];
 
   const { data: customersResult } = useQuery({ 
-      queryKey: ["customers"], 
-      queryFn: getCustomers,
+      queryKey: ["customers", "dropdown"], 
+      queryFn: () => getCustomers({ page_size: 1000 }),
       staleTime: 5 * 60 * 1000, 
   });
   const customers = Array.isArray(customersResult) ? customersResult : customersResult?.data || customersResult?.results || [];
@@ -1976,20 +1976,6 @@ export default function SalesForm({
                   return;
                 }
             }
-
-            if (!isSavedCustomerInDb) {
-              const unsavedCustomerMsg = isSalesOrder
-                ? 'Save this customer first before creating a sales order.'
-                : isDeliveryChallan
-                  ? 'Save this customer first before creating a delivery challan.'
-                  : isQuotation
-                    ? 'Save this customer first before creating a quotation.'
-                    : 'Save this customer first before billing or quoting them.';
-              setFieldError('customer_name', unsavedCustomerMsg);
-              toast.error(unsavedCustomerMsg);
-              setSubmitting(false);
-              return;
-            }
             
             try {
               const itemsForSave = cleanedItems;
@@ -2165,9 +2151,9 @@ export default function SalesForm({
                 ...(!isDeliveryChallan && !isQuotation && !isSalesOrder && linkedChallans.length ? { meta: { linked_challans: linkedChallans } } : {}),
                 ...(values.customer_address && { customer_address: values.customer_address }),
                 ...(values.customer_gstin && { customer_gstin: values.customer_gstin }),
-                // Email/phone identify a saved customer; do not send them for typed-only names.
-                ...(values.customer && values.customer_email && { customer_email: values.customer_email }),
-                ...(values.customer && values.customer_phone && { customer_phone: values.customer_phone }),
+                ...(values.customer && { customer: values.customer }),
+                ...(values.customer_email && { customer_email: values.customer_email }),
+                ...(values.customer_phone && { customer_phone: values.customer_phone }),
                 // Delivery Challan specific fields
                 ...(isDeliveryChallan && {
                   challan_number: finalInvoiceNumber,
