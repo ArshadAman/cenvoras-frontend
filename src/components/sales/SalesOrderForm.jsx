@@ -219,6 +219,21 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     setFieldValue('customer', null);
     setSelectedIndex(-1);
 
+    const typed = value.trim().toLowerCase();
+    const isBlank = !typed;
+    const selectedStillMatches = Boolean(
+      values.customer &&
+      (customers || []).some(
+        (c) => c.id === values.customer && (c.name || '').trim().toLowerCase() === typed
+      )
+    );
+    if (isBlank || !selectedStillMatches) {
+      setFieldValue('customer_email', '');
+      setFieldValue('customer_phone', '');
+      setFieldValue('customer_address', '');
+      setFieldValue('customer_gstin', '');
+    }
+
     if (value.trim()) {
       const filtered = customers.filter(customer =>
         customer.name.toLowerCase().includes(value.toLowerCase())
