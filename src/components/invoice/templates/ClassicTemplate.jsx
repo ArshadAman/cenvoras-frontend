@@ -134,6 +134,7 @@ const InvoicePreview = forwardRef(({
   const tableHeaderStyle = {
     backgroundColor: colors.tableHeader || '#f8fafc',
     borderColor: colors.tableBorder || '#e5e7eb',
+    fontSize: `${type.tableHeaderSize}px`,
   };
   
   const totalRowStyle = {
@@ -538,6 +539,7 @@ const InvoicePreview = forwardRef(({
                       paddingBottom: hasVisibleDesc ? '3px' : '0.6px',
                       margin: 0,
                       lineHeight: 1.2,
+                      fontSize: `${type.tableBodySize}px`,
                     }}
                   >
                     {visibleColumns.map(col => {
