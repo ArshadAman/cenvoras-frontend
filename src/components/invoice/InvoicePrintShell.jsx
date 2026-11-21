@@ -20,6 +20,21 @@ export default function InvoicePrintShell({ children, theme = 'classic', headerP
       <thead style={{ display: 'table-header-group' }}>
         <InvoiceContinuationHeader colSpan={1} theme={theme} {...headerProps} />
       </thead>
+      <tfoot
+        className="invoice-print-shell-footer-spacer"
+        style={{ display: 'table-footer-group' }}
+      >
+        <tr>
+          <td
+            style={{
+              height: '10mm',
+              padding: 0,
+              border: 'none',
+              backgroundColor: 'transparent',
+            }}
+          />
+        </tr>
+      </tfoot>
       <tbody>
         <tr className="invoice-print-shell-row">
           <td

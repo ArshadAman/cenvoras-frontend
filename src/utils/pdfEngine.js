@@ -12,10 +12,10 @@ import { jsPDF } from 'jspdf';
  * 5. Interactive text selection overlay for copying and searching text
  */
 
-/** Match print/vector CSS: 3mm under continuation letterhead (96dpi CSS px). */
-const CONTINUATION_CONTENT_GAP_PX = Math.round((3 / 25.4) * 96);
-/** Same 3mm gap when a page opens on bank/totals (parity with print CSS). */
-const CONTINUATION_TOTALS_GAP_PX = Math.round((3 / 25.4) * 96);
+/** Match print/vector CSS: 1.5mm under continuation letterhead (96dpi CSS px). */
+const CONTINUATION_CONTENT_GAP_PX = Math.round((1.5 / 25.4) * 96);
+/** Same 1.5mm gap when a page opens on bank/totals (parity with print CSS). */
+const CONTINUATION_TOTALS_GAP_PX = Math.round((1.5 / 25.4) * 96);
 
 export async function generatePixelPerfectPDF(element, options = {}) {
   if (!element) {
@@ -95,7 +95,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
     el.style.overflow = 'visible';
   });
   element.querySelectorAll(`${classicSelector} .invoice-continuation-header > td`).forEach((el) => {
-    el.style.padding = '0 0 3mm 0';
+    el.style.padding = '0 0 1.5mm 0';
     el.style.border = 'none';
   });
   footers.forEach((el) => {
@@ -235,7 +235,7 @@ export async function generatePixelPerfectPDF(element, options = {}) {
             el.style.overflow = 'visible';
           });
           clonedDoc.querySelectorAll('.invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td').forEach((el) => {
-            el.style.padding = '0 0 3mm 0';
+            el.style.padding = '0 0 1.5mm 0';
             el.style.border = 'none';
           });
         }

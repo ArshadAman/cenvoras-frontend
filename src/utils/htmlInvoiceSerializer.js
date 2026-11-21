@@ -83,8 +83,11 @@ export function serializeInvoiceHtml(element) {
     el.style.display = 'table-row';
   });
   cloned.querySelectorAll('.invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td').forEach((el) => {
-    el.style.padding = '0 0 3mm 0';
+    el.style.padding = '0 0 1.5mm 0';
     el.style.border = 'none';
+  });
+  cloned.querySelectorAll('.invoice-print-shell-footer-spacer').forEach((el) => {
+    el.style.display = 'table-footer-group';
   });
   cloned.querySelectorAll('.invoice-page-footer').forEach((el) => {
     el.style.position = 'static';
