@@ -216,7 +216,7 @@ const ServiceTemplate = forwardRef(({
       {/* Items Table */}
       <table className="w-full text-left mb-8 border-collapse" style={{ tableLayout: 'fixed' }}>
           <thead style={{ display: 'table-header-group' }}>
-            <tr className="border-b-2 border-gray-900">
+            <tr className="border-b-2 border-gray-900" style={{ fontSize: `${type.tableHeaderSize}px` }}>
               {visibleColumns.map(col => (
                 <th 
                   key={col.id} 
@@ -247,7 +247,8 @@ const ServiceTemplate = forwardRef(({
                   paddingTop: hasVisibleDesc ? '2px' : '0.6px', 
                   paddingBottom: hasVisibleDesc ? '3px' : '0.6px', 
                   margin: 0, 
-                  lineHeight: 1.2 
+                  lineHeight: 1.2,
+                  fontSize: `${type.tableBodySize}px`
                 }} 
                 className="border-b border-gray-300 hover:bg-gray-50/50"
               >

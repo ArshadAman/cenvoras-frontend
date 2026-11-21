@@ -212,7 +212,7 @@ const LegendTemplate = forwardRef(({
         {/* Legend Table */}
         <table className="w-full border-collapse border-b" style={{ borderColor, tableLayout: 'fixed' }}>
             <thead style={{ display: 'table-header-group' }}>
-              <tr className="h-9" style={{ backgroundColor: colors.primary, color: '#fff' }}>
+              <tr className="h-9" style={{ backgroundColor: colors.primary, color: '#fff', fontSize: `${type.tableHeaderSize}px` }}>
                 {visibleColumns.map((col, idx) => {
                   const isLast = idx === visibleColumns.length - 1;
                   const isNum = ['price', 'amount'].includes(col.id);
@@ -249,7 +249,8 @@ const LegendTemplate = forwardRef(({
                     paddingTop: hasVisibleDesc ? '2px' : '0.6px', 
                     paddingBottom: hasVisibleDesc ? '3px' : '0.6px', 
                     margin: 0, 
-                    lineHeight: 1.2 
+                    lineHeight: 1.2,
+                    fontSize: `${type.tableBodySize}px`
                   }} 
                   className="border-b border-gray-300"
                 >

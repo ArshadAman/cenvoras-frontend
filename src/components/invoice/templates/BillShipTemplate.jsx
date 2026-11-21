@@ -201,7 +201,7 @@ const BillShipTemplate = forwardRef(({
       {/* Items Table */}
       <table className="w-full border-collapse mb-6" style={{ tableLayout: 'fixed' }}>
           <thead style={{ display: 'table-header-group' }}>
-            <tr className="border-y border-gray-400 bg-gray-50 h-9">
+            <tr className="border-y border-gray-400 bg-gray-50 h-9" style={{ fontSize: `${type.tableHeaderSize}px` }}>
               {visibleColumns.map((col, idx) => {
                 const isLast = idx === visibleColumns.length - 1;
                 const isNum = ['price', 'amount'].includes(col.id);
@@ -234,7 +234,8 @@ const BillShipTemplate = forwardRef(({
                     paddingTop: hasVisibleDesc ? '2px' : '0.6px', 
                     paddingBottom: hasVisibleDesc ? '3px' : '0.6px', 
                     margin: 0, 
-                    lineHeight: 1.2 
+                    lineHeight: 1.2,
+                    fontSize: `${type.tableBodySize}px`
                   }} 
                   className="border-b border-gray-300"
                 >

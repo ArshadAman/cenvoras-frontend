@@ -531,7 +531,7 @@
     border-bottom: 1px solid var(--border-subtle);
   }
 
-  th {
+  th:not(:where(.invoice-sheet, [data-bill-template], .bill-template) *) {
     color: var(--text-muted) !important;
     font-size: 0.75rem !important;
     font-weight: 600 !important;
@@ -540,7 +540,7 @@
     border-color: var(--border-subtle) !important;
   }
 
-  td {
+  td:not(:where(.invoice-sheet, [data-bill-template], .bill-template) *) {
     color: var(--text-primary) !important;
     font-size: 0.875rem !important;
     line-height: 1.45 !important;
@@ -713,19 +713,12 @@
   }
 
   .invoice-sheet th, [data-bill-template] th, .bill-template th {
-    color: inherit !important;
-    font-size: inherit !important;
-    font-weight: inherit !important;
-    letter-spacing: normal !important;
-    text-transform: none !important;
-    border-color: #e5e7eb !important;
+    letter-spacing: normal;
+    text-transform: none;
   }
 
   .invoice-sheet td, [data-bill-template] td, .bill-template td {
-    color: inherit !important;
-    font-size: inherit !important;
-    line-height: inherit !important;
-    border-color: #e5e7eb !important;
+    line-height: inherit;
   }
 
   .invoice-sheet tbody tr:hover, [data-bill-template] tbody tr:hover, .bill-template tbody tr:hover {
