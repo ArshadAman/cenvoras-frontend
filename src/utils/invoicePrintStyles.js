@@ -86,10 +86,25 @@ export const INVOICE_PRINT_DOCUMENT_RULES = `
     display: table-row !important;
   }
   .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td {
-    /* Slight white gap under letterhead before body (items or bank/totals on page break) */
-    padding: 0 0 3mm 0 !important;
+    padding: 0 0 1.5mm 0 !important;
     border: none !important;
     overflow: visible !important;
+  }
+  tfoot {
+    display: table-footer-group !important;
+  }
+  tfoot tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .invoice-print-shell-footer-spacer,
+  .invoice-print-shell tfoot {
+    display: table-footer-group !important;
+  }
+  .invoice-print-shell-footer-spacer > tr > td {
+    height: 10mm !important;
+    padding: 0 !important;
+    border: none !important;
   }
   .invoice-print-shell {
     border-collapse: collapse !important;
@@ -188,9 +203,18 @@ export const INVOICE_PREVIEW_LAYOUT_STYLE = `
     display: table-row;
   }
   [data-print-target] .invoice-print-shell[data-print-theme="classic"] .invoice-continuation-header > td {
-    padding: 0 0 3mm 0;
+    padding: 0 0 1.5mm 0;
     border: none;
     overflow: visible;
+  }
+  [data-print-target] .invoice-print-shell-footer-spacer,
+  [data-print-target] .invoice-print-shell tfoot {
+    display: table-footer-group;
+  }
+  [data-print-target] .invoice-print-shell-footer-spacer > tr > td {
+    height: 10mm;
+    padding: 0;
+    border: none;
   }
   [data-print-target] .invoice-print-shell {
     border-collapse: collapse;

@@ -152,7 +152,44 @@ const InvoicePreview = forwardRef(({
     .filter(col => (invoiceSettings.show_item_discount !== false && hasAnyDiscount) || col.id !== 'discount')
     .filter(col => invoiceSettings.show_item_tax !== false || col.id !== 'tax');
 
-  const preferredWidths = {
+  // Dynamic column width calculation for Price and Amount
+  // Normal maintained widths (baseline): Price = 9%, Amount = 10%
+  // Fits standard formatted numbers up to 8 chars (Price) and 9 chars (Amount).
+  // If content exceeds standard length, extra width is allocated to prevent wrapping,
+  // and the entire remaining width is dynamically assigned to Description.
+  const BASE_PRICE_WIDTH = 9;
+  const BASE_AMOUNT_WIDTH = 10;
+  const BASE_PRICE_CHARS = 8;
+  const BASE_AMOUNT_CHARS = 9;
+
+  let maxPriceLen = 0;
+  let maxAmountLen = 0;
+
+  for (const item of items) {
+    if (item.row_type === 'note') continue;
+    const qty = parseFloat(item.quantity || 0);
+    const price = parseFloat(item.price || 0);
+    const discount = parseFloat(item.discount || 0);
+    const lineBase = qty * price;
+    const amount = lineBase - (lineBase * discount) / 100;
+
+    const pStr = price.toString();
+    const decCount = (pStr.split('.')[1] || '').length;
+    const decimals = Math.min(Math.max(2, decCount), 4);
+    const priceStr = `${getCurrencySymbol()}${price.toFixed(decimals)}`;
+    const amountStr = `${getCurrencySymbol()}${amount.toFixed(2)}`;
+
+    if (priceStr.length > maxPriceLen) maxPriceLen = priceStr.length;
+    if (amountStr.length > maxAmountLen) maxAmountLen = amountStr.length;
+  }
+
+  const extraPriceWidth = maxPriceLen > BASE_PRICE_CHARS ? (maxPriceLen - BASE_PRICE_CHARS) * 0.9 : 0;
+  const extraAmountWidth = maxAmountLen > BASE_AMOUNT_CHARS ? (maxAmountLen - BASE_AMOUNT_CHARS) * 0.9 : 0;
+
+  const dynamicPriceWidth = BASE_PRICE_WIDTH + extraPriceWidth;
+  const dynamicAmountWidth = BASE_AMOUNT_WIDTH + extraAmountWidth;
+
+  const dynamicWidths = {
     serial: 4,
     description: 0,
     batch: 9,
@@ -162,20 +199,20 @@ const InvoicePreview = forwardRef(({
     unit: 6,
     make: 10,
     pack_size: 10,
-    price: 14,
+    price: dynamicPriceWidth,
     discount: 6,
     tax: 6,
-    amount: 16,
+    amount: dynamicAmountWidth,
   };
 
   const nonDescriptionWidth = visibleColumns
     .filter((col) => col.id !== 'description')
-    .reduce((sum, col) => sum + (preferredWidths[col.id] || 10), 0);
+    .reduce((sum, col) => sum + (dynamicWidths[col.id] || 10), 0);
   const descriptionWidth = Math.max(100 - nonDescriptionWidth, 20);
 
   const getColumnWidth = (columnId) => {
     if (columnId === 'description') return `${descriptionWidth}%`;
-    return `${preferredWidths[columnId] || 10}%`;
+    return `${dynamicWidths[columnId] || 10}%`;
   };
 
   const getColumnLabel = (col) => {
@@ -231,7 +268,7 @@ const InvoicePreview = forwardRef(({
 
       {/* Address Section */}
       <div className="flex justify-between items-start mb-1 gap-8">
-        <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-2">
+        <div className="flex-1 rounded-lg border border-white/10 bg-white/60 px-2 pt-0.5 pb-1">
           <div className="font-bold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${sectionHeadingSize}px` }}>
             {isDeliveryChallan ? 'Customer Address' : 'Billing Address'}
           </div>
@@ -250,7 +287,7 @@ const InvoicePreview = forwardRef(({
         </div>
 
         {hasSeparateShipping ? (
-          <div className="flex-1 rounded-lg border border-white/10 bg-white/60 p-2">
+          <div className="flex-1 rounded-lg border border-white/10 bg-white/60 px-2 pt-0.5 pb-1">
             <div className="font-bold mb-2 uppercase tracking-wide" style={{ color: colors.secondary, fontSize: `${sectionHeadingSize}px` }}>
               Shipping Address
             </div>
@@ -439,7 +476,7 @@ const InvoicePreview = forwardRef(({
           >
             <colgroup>
               {visibleColumns.map((col) => (
-                <col key={col.id} style={{ width: getColumnWidth(col.id) }} />
+                <col key={col.id} data-col-id={col.id} style={{ width: getColumnWidth(col.id) }} />
               ))}
             </colgroup>
             <thead style={{ display: 'table-header-group' }}>
