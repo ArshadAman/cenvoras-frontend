@@ -626,13 +626,14 @@ export function ProductAutocomplete({ idx, values, setFieldValue, onInputChange,
 }
 
 // Customer Autocomplete Component  
-function CustomerAutocomplete({ values, setFieldValue, customers }) {
+export function CustomerAutocomplete({ values, setFieldValue, customers }) {
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(values.customer_name || "");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
   const listRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEscKey(() => setShowDropdown(false), showDropdown, 30);
 
@@ -673,11 +674,50 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     setSelectedIndex(-1);
   };
 
-  const clearSavedCustomerLink = () => {
+  const clearCustomerDetails = (isTotalClear = false) => {
+    const prevBilling = values.customer_address;
+    const prevDelivery = values.delivery_address;
+    const prevCustId = values.customer;
+    const prevDefaultPos = values.default_pos;
+    const prevPos = values.place_of_supply;
+
     setFieldValue('customer', null);
     setFieldValue('customer_id', null);
     setFieldValue('customer_email', '');
     setFieldValue('customer_phone', '');
+    setFieldValue('customer_address', '');
+    setFieldValue('customer_gstin', '');
+    setFieldValue('default_pos', '');
+
+    if (isTotalClear) {
+      const cust = (customers || []).find((c) => c.id === prevCustId);
+      const savedList = cust ? getSavedShippingList(cust) : [];
+      const isFromCust =
+        !prevDelivery ||
+        normalizeAddressText(prevDelivery) === normalizeAddressText(prevBilling) ||
+        savedList.some((addr) => normalizeAddressText(addr) === normalizeAddressText(prevDelivery));
+
+      if (isFromCust) {
+        setFieldValue('delivery_address', '');
+      }
+      if (prevPos && prevDefaultPos && stateToCode(prevPos) === stateToCode(prevDefaultPos)) {
+        setFieldValue('place_of_supply', '');
+      }
+      if (values.bill_to_ship_to) {
+        setFieldValue('bill_to_ship_to', false);
+      }
+    }
+  };
+
+  const handleClear = () => {
+    setInputValue("");
+    setFieldValue('customer_name', "");
+    clearCustomerDetails(true);
+    setShowDropdown(false);
+    setSelectedIndex(-1);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   const handleInputChange = (e) => {
@@ -687,14 +727,17 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
     setSelectedIndex(-1);
 
     const typed = value.trim().toLowerCase();
+    const isBlank = !typed;
     const selectedStillMatches = Boolean(
       values.customer &&
       (customers || []).some(
         (c) => c.id === values.customer && (c.name || '').trim().toLowerCase() === typed
       )
     );
-    if (!selectedStillMatches && (values.customer || values.customer_id || values.customer_email)) {
-      clearSavedCustomerLink();
+    if (isBlank) {
+      clearCustomerDetails(true);
+    } else if (!selectedStillMatches && (values.customer || values.customer_id || values.customer_email || values.customer_address || values.customer_gstin)) {
+      clearCustomerDetails(false);
     }
 
     if (value.trim()) {
@@ -717,75 +760,89 @@ function CustomerAutocomplete({ values, setFieldValue, customers }) {
       <Field name="customer_name">
         {({ meta }) => (
           <div>
-            <input
-              name="customer_name"
-              id="customer_name"
-              value={inputValue}
-              onChange={handleInputChange}
-              onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-              onFocus={() => {
-                if (inputValue.trim()) {
-                  setShowDropdown(true);
-                }
-              }}
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck="false"
-              data-1p-ignore="true"
-              onKeyDown={(e) => {
-                if (showDropdown) {
-                  const isExactMatch = (customers || []).some(
-                    (c) => c.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()
-                  );
-                  const showAddNew = Boolean(inputValue.trim() && !isExactMatch);
-                  const displayLimit = Math.min(filteredCustomers.length, 50);
-                  const totalItems = displayLimit + (showAddNew ? 1 : 0);
-                  
-                  if (e.key === 'Tab') {
-                    if (filteredCustomers.length === 1) {
-                      selectCustomer(filteredCustomers[0]);
-                    } else if (selectedIndex >= 0 && selectedIndex < displayLimit) {
-                      selectCustomer(filteredCustomers[selectedIndex]);
-                    }
-                    setShowDropdown(false);
-                    setSelectedIndex(-1);
-                    return;
+            <div className="relative">
+              <input
+                ref={inputRef}
+                name="customer_name"
+                id="customer_name"
+                value={inputValue}
+                onChange={handleInputChange}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                onFocus={() => {
+                  if (inputValue.trim()) {
+                    setShowDropdown(true);
                   }
-                  if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    setSelectedIndex(prev => (prev < totalItems - 1) ? prev + 1 : 0);
-                  } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    setSelectedIndex(prev => (prev > 0) ? prev - 1 : totalItems - 1);
-                  } else if (e.key === 'Enter') {
-                    if (filteredCustomers.length === 1 && !showAddNew) {
-                      e.preventDefault();
-                      selectCustomer(filteredCustomers[0]);
-                    } else if (selectedIndex >= 0) {
-                      e.preventDefault();
-                      if (selectedIndex < displayLimit) {
+                }}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                data-1p-ignore="true"
+                onKeyDown={(e) => {
+                  if (showDropdown) {
+                    const isExactMatch = (customers || []).some(
+                      (c) => c.name?.trim().toLowerCase() === inputValue.trim().toLowerCase()
+                    );
+                    const showAddNew = Boolean(inputValue.trim() && !isExactMatch);
+                    const displayLimit = Math.min(filteredCustomers.length, 50);
+                    const totalItems = displayLimit + (showAddNew ? 1 : 0);
+                    
+                    if (e.key === 'Tab') {
+                      if (filteredCustomers.length === 1) {
+                        selectCustomer(filteredCustomers[0]);
+                      } else if (selectedIndex >= 0 && selectedIndex < displayLimit) {
                         selectCustomer(filteredCustomers[selectedIndex]);
-                      } else if (showAddNew) {
-                        // "Add New Customer" option
-                        setShowNewCustomerModal(true);
-                        setShowDropdown(false);
                       }
+                      setShowDropdown(false);
+                      setSelectedIndex(-1);
+                      return;
                     }
-                  } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    setShowDropdown(false);
-                    setSelectedIndex(-1);
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSelectedIndex(prev => (prev < totalItems - 1) ? prev + 1 : 0);
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSelectedIndex(prev => (prev > 0) ? prev - 1 : totalItems - 1);
+                    } else if (e.key === 'Enter') {
+                      if (filteredCustomers.length === 1 && !showAddNew) {
+                        e.preventDefault();
+                        selectCustomer(filteredCustomers[0]);
+                      } else if (selectedIndex >= 0) {
+                        e.preventDefault();
+                        if (selectedIndex < displayLimit) {
+                          selectCustomer(filteredCustomers[selectedIndex]);
+                        } else if (showAddNew) {
+                          // "Add New Customer" option
+                          setShowNewCustomerModal(true);
+                          setShowDropdown(false);
+                        }
+                      }
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setShowDropdown(false);
+                      setSelectedIndex(-1);
+                    }
                   }
-                }
-              }}
-              placeholder="Customer name"
-              className={`w-full bg-[var(--bg-primary)] border ${
-                meta.error
-                  ? 'border-[var(--status-danger)] focus:border-[var(--status-danger)] ring-1 ring-[var(--status-danger)]'
-                  : 'border-[var(--border-subtle)]'
-              } rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all ${HEADER_FIELD_FOCUS}`}
-            />
+                }}
+                placeholder="Customer name"
+                className={`w-full bg-[var(--bg-primary)] border ${
+                  meta.error
+                    ? 'border-[var(--status-danger)] focus:border-[var(--status-danger)] ring-1 ring-[var(--status-danger)]'
+                    : 'border-[var(--border-subtle)]'
+                } rounded-xl px-4 py-3 pr-10 text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all ${HEADER_FIELD_FOCUS}`}
+              />
+              {Boolean(inputValue) && (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded-md transition-colors"
+                  title="Clear customer"
+                  aria-label="Clear customer"
+                >
+                  <XMarkIcon className="w-4 h-4" />
+                </button>
+              )}
+            </div>
             {meta.error && (
               <div className="text-[var(--status-danger)] text-sm mt-1">{meta.error}</div>
             )}
@@ -2497,7 +2554,7 @@ export default function SalesForm({
                           );
                         })()}
                         <ErrorMessage name="customer_name" component="div" className="text-[var(--status-danger)] text-xs mt-1" />
-                        {(values.customer_address || values.customer_email || values.customer_phone || values.customer_gstin) && (
+                        {Boolean(values.customer_name?.trim()) && (values.customer_address || values.customer_email || values.customer_phone || values.customer_gstin) && (
                           <div className="mt-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 text-xs text-[var(--text-primary)] space-y-1.5">
                             {values.customer_gstin && (
                               <div className="flex items-center gap-2">
@@ -2527,7 +2584,7 @@ export default function SalesForm({
                           <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)]"></div>
                           <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Shipping Details</h3>
                         </div>
-                        {values.customer_address && (
+                        {Boolean(values.customer_name?.trim()) && values.customer_address && (
                           <button
                             type="button"
                             onClick={() => setFieldValue('delivery_address', values.customer_address)}
