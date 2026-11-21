@@ -25,6 +25,7 @@ export function useInventoryCsvJob({ onComplete, pollInterval = 1500 } = {}) {
     errors: [],
     errorMessage: null,
     isProcessing: Boolean(taskId),
+    details: null,
   });
 
   const onCompleteRef = useRef(onComplete);
@@ -51,6 +52,7 @@ export function useInventoryCsvJob({ onComplete, pollInterval = 1500 } = {}) {
       errors: [],
       errorMessage: null,
       isProcessing: false,
+      details: null,
     });
   }, []);
 
@@ -75,6 +77,7 @@ export function useInventoryCsvJob({ onComplete, pollInterval = 1500 } = {}) {
       errors: [],
       errorMessage: null,
       isProcessing: true,
+      details: null,
     });
   }, []);
 
@@ -115,6 +118,7 @@ export function useInventoryCsvJob({ onComplete, pollInterval = 1500 } = {}) {
           const finalSkipped = Number(data?.skipped_count || 0);
           const finalFailed = Number(data?.failed_count || 0);
           const finalErrors = data?.errors || [];
+          const finalDetails = data?.details || data?.result?.details || null;
 
           setJobState({
             status: 'SUCCESS',
@@ -128,6 +132,7 @@ export function useInventoryCsvJob({ onComplete, pollInterval = 1500 } = {}) {
             errors: finalErrors,
             errorMessage: null,
             isProcessing: false,
+            details: finalDetails,
           });
 
           try {

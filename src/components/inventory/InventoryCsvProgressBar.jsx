@@ -8,7 +8,7 @@ import {
   ChevronUpIcon,
 } from '@heroicons/react/24/outline';
 
-export default function InventoryCsvProgressBar({ job, onDismiss, onRefreshNow }) {
+export default function InventoryCsvProgressBar({ job, onDismiss, onRefreshNow, onOpenResults }) {
   const [showErrorDetails, setShowErrorDetails] = useState(false);
 
   if (!job || job.status === 'IDLE') {
@@ -127,28 +127,60 @@ export default function InventoryCsvProgressBar({ job, onDismiss, onRefreshNow }
         )}
       </div>
 
-      {/* Counters & Metric Pills */}
+      {/* Counters & Metric Pills (clickable when details available) */}
       <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--border-subtle)]">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+        <button
+          type="button"
+          onClick={() => onOpenResults && isSuccess && job.details && onOpenResults('created')}
+          disabled={!isSuccess || !onOpenResults || !job.details}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 transition ${
+            isSuccess && onOpenResults && job.details ? 'cursor-pointer hover:ring-2 hover:ring-emerald-500/40' : ''
+          }`}
+          title={isSuccess && job.details ? 'Click to view created products' : ''}
+        >
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           Created: <strong>{createdCount}</strong>
-        </span>
+        </button>
 
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/25">
+        <button
+          type="button"
+          onClick={() => onOpenResults && isSuccess && job.details && onOpenResults('updated')}
+          disabled={!isSuccess || !onOpenResults || !job.details}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/25 transition ${
+            isSuccess && onOpenResults && job.details ? 'cursor-pointer hover:ring-2 hover:ring-[var(--accent-primary)]/40' : ''
+          }`}
+          title={isSuccess && job.details ? 'Click to view updated products' : ''}
+        >
           <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-primary)]" />
           Updated: <strong>{updatedCount}</strong>
-        </span>
+        </button>
 
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
+        <button
+          type="button"
+          onClick={() => onOpenResults && isSuccess && job.details && onOpenResults('skipped')}
+          disabled={!isSuccess || !onOpenResults || !job.details}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] transition ${
+            isSuccess && onOpenResults && job.details ? 'cursor-pointer hover:ring-2 hover:ring-[var(--text-secondary)]/40' : ''
+          }`}
+          title={isSuccess && job.details ? 'Click to view unchanged products' : ''}
+        >
           <span className="h-1.5 w-1.5 rounded-full bg-[var(--text-secondary)]" />
           Unchanged: <strong>{skippedCount}</strong>
-        </span>
+        </button>
 
         {failedCount > 0 && (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25">
+          <button
+            type="button"
+            onClick={() => onOpenResults && isSuccess && job.details && onOpenResults('failed')}
+            disabled={!isSuccess || !onOpenResults || !job.details}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-medium bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25 transition ${
+              isSuccess && onOpenResults && job.details ? 'cursor-pointer hover:ring-2 hover:ring-rose-500/40' : ''
+            }`}
+            title={isSuccess && job.details ? 'Click to view failed rows' : ''}
+          >
             <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
             Failed: <strong>{failedCount}</strong>
-          </span>
+          </button>
         )}
 
         <div className="ml-auto flex items-center gap-2">

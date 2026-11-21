@@ -9,6 +9,7 @@ import { useInventoryCsvJob } from "../../hooks/useInventoryCsvJob";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
 import InventoryCsvMappingModal from "./InventoryCsvMappingModal";
 import InventoryCsvProgressBar from "./InventoryCsvProgressBar";
+import InventoryCsvResultsModal from "./InventoryCsvResultsModal";
 import useEscKey from "../../hooks/useEscStack";
 import useResizableColumns from "../../hooks/useResizableColumns";
 import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL } from "../common/tableHeaderClasses";
@@ -128,6 +129,8 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
   const [showMappingModal, setShowMappingModal] = useState(false);
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [showItemDetails, setShowItemDetails] = useState(true);
+  const [showCsvResultsModal, setShowCsvResultsModal] = useState(false);
+  const [csvResultsTab, setCsvResultsTab] = useState('all');
   const { colWidths, renderResizeHandle } = useResizableColumns(
     "cenvoras_inventory_table_col_widths",
     DEFAULT_COLUMN_WIDTHS
@@ -562,6 +565,10 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         onRefreshNow={() => {
           queryClient.invalidateQueries({ queryKey: ["products"] });
           refetch();
+        }}
+        onOpenResults={(tab) => {
+          setCsvResultsTab(tab || 'all');
+          setShowCsvResultsModal(true);
         }}
       />
 
@@ -1285,6 +1292,22 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
           }}
           onJobStarted={(taskId) => {
             csvJob.startJob(taskId);
+          }}
+        />
+      )}
+
+      {/* CSV Import Results Breakdown Modal */}
+      {showCsvResultsModal && csvJob.details && (
+        <InventoryCsvResultsModal
+          details={csvJob.details}
+          isOpen={showCsvResultsModal}
+          initialTab={csvResultsTab}
+          onClose={() => setShowCsvResultsModal(false)}
+          onLocateInTable={(term) => {
+            setSearchInput(term);
+            setSearch(term);
+            setPage(1);
+            setShowCsvResultsModal(false);
           }}
         />
       )}
