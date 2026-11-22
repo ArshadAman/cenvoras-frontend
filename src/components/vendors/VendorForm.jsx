@@ -67,13 +67,18 @@ export default function VendorForm({ isOpen, onClose, editData = null }) {
 
   const handleSubmit = async (values, { setSubmitting, setFieldError, setStatus }) => {
     setStatus(undefined);
-    // Clean up empty values
-    const cleanValues = Object.fromEntries(
-      Object.entries(values).filter(([_, value]) => {
-        if (typeof value === 'string') return value.trim() !== "";
-        return value !== null && value !== undefined;
-      })
-    );
+    // Clean up values: trim strings and convert empty optional fields to null
+    // so clearing a field on edit actually clears it in the backend database.
+    const cleanValues = {
+      ...values,
+      name: typeof values.name === "string" ? values.name.trim() : values.name,
+      gstin: typeof values.gstin === "string" ? (values.gstin.trim() || null) : (values.gstin ?? null),
+      pan: typeof values.pan === "string" ? (values.pan.trim() || null) : (values.pan ?? null),
+      email: typeof values.email === "string" ? (values.email.trim() || null) : (values.email ?? null),
+      phone: typeof values.phone === "string" ? (values.phone.trim() || null) : (values.phone ?? null),
+      address: typeof values.address === "string" ? (values.address.trim() || null) : (values.address ?? null),
+      state: typeof values.state === "string" ? (values.state.trim() || null) : (values.state ?? null),
+    };
 
     try {
       if (isEdit) {
