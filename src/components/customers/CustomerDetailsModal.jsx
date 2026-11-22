@@ -1,8 +1,11 @@
 import React, { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getCustomer } from "../../api/customers";
 import { getSalesInvoices } from "../../api/sales";
 import { getDeliveryChallans } from "../../api/delivery_challan";
+import { getSalesOrders } from "../../api/sales_order";
+import { getQuotations } from "../../api/quotation";
 import { format } from "date-fns";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
@@ -16,6 +19,13 @@ import { STATEMENT_PRINT_PAGE_STYLE, prepareClonedStatementElementForPdf } from 
 export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
   useEscKey(onClose, isOpen, 15);
   const printRef = useRef();
+  let navigate = (path) => { if (typeof window !== 'undefined') window.location.href = path; };
+  try {
+    const routerNav = useNavigate();
+    if (routerNav) navigate = routerNav;
+  } catch (e) {
+    // router context not present (e.g. tests or standalone)
+  }
 
   const [activeTab, setActiveTab] = useState("invoices");
   const [previewDoc, setPreviewDoc] = useState(null);
@@ -38,6 +48,18 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
     enabled: !!customer?.id,
   });
 
+  const { data: ordersData, isLoading: isLoadingOrders } = useQuery({
+    queryKey: ["customer-orders", customer?.id],
+    queryFn: () => getSalesOrders({ customer: customer?.id }),
+    enabled: !!customer?.id,
+  });
+
+  const { data: quotationsData, isLoading: isLoadingQuotations } = useQuery({
+    queryKey: ["customer-quotations", customer?.id],
+    queryFn: () => getQuotations({ customer: customer?.id }),
+    enabled: !!customer?.id,
+  });
+
   const customerDetails = data?.data || data || customer || {};
 
   const rawInvoices = Array.isArray(invoicesData) ? invoicesData : invoicesData?.data || invoicesData?.results || [];
@@ -54,6 +76,26 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
     return customer?.name && (
       ch.customer_name?.toLowerCase() === customer?.name?.toLowerCase() ||
       ch.customer?.name?.toLowerCase() === customer?.name?.toLowerCase()
+    );
+  });
+
+  const rawOrders = Array.isArray(ordersData) ? ordersData : ordersData?.data || ordersData?.results || [];
+  const customerOrders = rawOrders.filter(so => {
+    const soCustId = so.customer?.id || so.customer;
+    if (soCustId) return String(soCustId) === String(customer?.id);
+    return customer?.name && (
+      so.customer_name?.toLowerCase() === customer?.name?.toLowerCase() ||
+      so.customer?.name?.toLowerCase() === customer?.name?.toLowerCase()
+    );
+  });
+
+  const rawQuotations = Array.isArray(quotationsData) ? quotationsData : quotationsData?.data || quotationsData?.results || [];
+  const customerQuotations = rawQuotations.filter(q => {
+    const qCustId = q.customer?.id || q.customer;
+    if (qCustId) return String(qCustId) === String(customer?.id);
+    return customer?.name && (
+      q.customer_name?.toLowerCase() === customer?.name?.toLowerCase() ||
+      q.customer?.name?.toLowerCase() === customer?.name?.toLowerCase()
     );
   });
 
@@ -212,6 +254,38 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
               </button>
               <button
                 type="button"
+                onClick={() => setActiveTab("orders")}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                  activeTab === "orders"
+                    ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-bold shadow-md"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                <span>Orders</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-medium ${
+                  activeTab === "orders" ? "bg-black/20 text-[var(--text-on-accent)]" : "bg-[var(--bg-surface)] text-[var(--text-secondary)]"
+                }`}>
+                  {customerOrders.length}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("quotations")}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                  activeTab === "quotations"
+                    ? "bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-bold shadow-md"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                <span>Quotations</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-medium ${
+                  activeTab === "quotations" ? "bg-black/20 text-[var(--text-on-accent)]" : "bg-[var(--bg-surface)] text-[var(--text-secondary)]"
+                }`}>
+                  {customerQuotations.length}
+                </span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setActiveTab("overview")}
                 className={`px-3 py-1.5 rounded-lg transition-all ${
                   activeTab === "overview"
@@ -347,8 +421,14 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                 </div>
                 <div className="bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-xl p-3 sm:p-4 flex flex-col justify-between metric-card">
                   <span className="text-[11px] font-semibold text-[var(--accent-primary)] uppercase tracking-wider">Total Documents</span>
-                  <span className="text-lg sm:text-xl font-bold text-[var(--accent-primary)] font-mono mt-1.5">
-                    {customerInvoices.length} Inv / {customerChallans.length} DC
+                  <span className="text-xs sm:text-sm font-bold text-[var(--accent-primary)] font-mono mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5" title={`${customerInvoices.length} Invoices, ${customerChallans.length} Challans, ${customerOrders.length} Orders, ${customerQuotations.length} Quotations`}>
+                    <span>{customerInvoices.length} Inv</span>
+                    <span>·</span>
+                    <span>{customerChallans.length} DC</span>
+                    <span>·</span>
+                    <span>{customerOrders.length} SO</span>
+                    <span>·</span>
+                    <span>{customerQuotations.length} QT</span>
                   </span>
                 </div>
               </div>
@@ -729,6 +809,194 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                             </td>
                             <td className="py-3 px-3 text-right font-mono text-xs whitespace-nowrap">
                               {getCurrencySymbol()}{customerChallans.reduce((sum, ch) => sum + (Number(ch.total_amount) || 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-3 px-3 text-center"></td>
+                            <td className="py-3 px-3 print-hidden statement-action-col"></td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: SALES ORDERS */}
+              {activeTab === "orders" && (
+                <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl overflow-hidden">
+                  <div className="p-4 sm:p-5 border-b border-[var(--border-subtle)] flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Sales Orders</h3>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">Booking and order commitments for {customerDetails.name || 'Customer'}</p>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 px-3 py-1 rounded-full">
+                      {customerOrders.length} Records
+                    </span>
+                  </div>
+
+                  {isLoadingOrders ? (
+                    <div className="py-12 flex justify-center items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)]"></div>
+                    </div>
+                  ) : customerOrders.length === 0 ? (
+                    <div className="py-12 text-center text-[var(--text-muted)] text-xs font-bold uppercase tracking-wider">
+                      No sales orders recorded for this customer yet.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto print:overflow-visible">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-default)] text-[var(--text-secondary)] font-bold uppercase tracking-wider">
+                            <th className="py-2.5 px-3">Order #</th>
+                            <th className="py-2.5 px-3">Date</th>
+                            <th className="py-2.5 px-3">Due Date</th>
+                            <th className="py-2.5 px-3 text-right">Total Amount</th>
+                            <th className="py-2.5 px-3 text-center">Stage</th>
+                            <th className="py-2.5 px-3 text-center print-hidden statement-action-col">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--border-subtle)]">
+                          {customerOrders.map((so) => (
+                            <tr key={so.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors statement-no-break">
+                              <td className="py-2.5 px-3 font-mono font-bold text-[var(--text-primary)]">
+                                {so.order_number || so.id?.slice(0, 8)}
+                              </td>
+                              <td className="py-2.5 px-3 text-[var(--text-secondary)] whitespace-nowrap">
+                                {so.date ? format(new Date(so.date), 'dd MMM yyyy') : '-'}
+                              </td>
+                              <td className="py-2.5 px-3 text-[var(--text-muted)] whitespace-nowrap">
+                                {so.due_date ? format(new Date(so.due_date), 'dd MMM yyyy') : '-'}
+                              </td>
+                              <td className="py-2.5 px-3 text-right font-mono font-bold text-[var(--text-primary)] whitespace-nowrap">
+                                {getCurrencySymbol()}{(Number(so.total_amount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                  so.stage === 'completed' ? 'badge-success' :
+                                  so.stage === 'cancelled' ? 'badge-danger' :
+                                  so.stage === 'shipped' ? 'badge-info' :
+                                  'badge-warning'
+                                }`}>
+                                  {so.stage || 'New'}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-center print-hidden statement-action-col">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    onClose();
+                                    navigate('/sales-orders');
+                                  }}
+                                  className="p-1 rounded-md bg-[var(--bg-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-default)] transition-all inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1"
+                                  title="Open Sales Orders page"
+                                >
+                                  <span>View</span>
+                                  <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="bg-[var(--bg-primary)] font-bold text-[var(--text-primary)] border-t-2 border-b border-[var(--border-default)] statement-no-break">
+                            <td colSpan={3} className="py-3 px-3 uppercase tracking-wider text-xs font-bold text-[var(--text-secondary)]">
+                              Grand Total ({customerOrders.length} {customerOrders.length === 1 ? 'Order' : 'Orders'})
+                            </td>
+                            <td className="py-3 px-3 text-right font-mono text-xs whitespace-nowrap">
+                              {getCurrencySymbol()}{customerOrders.reduce((sum, so) => sum + (Number(so.total_amount) || 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-3 px-3 text-center"></td>
+                            <td className="py-3 px-3 print-hidden statement-action-col"></td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 4: QUOTATIONS */}
+              {activeTab === "quotations" && (
+                <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl overflow-hidden">
+                  <div className="p-4 sm:p-5 border-b border-[var(--border-subtle)] flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Quotations</h3>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">Estimates and quotes issued to {customerDetails.name || 'Customer'}</p>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 px-3 py-1 rounded-full">
+                      {customerQuotations.length} Records
+                    </span>
+                  </div>
+
+                  {isLoadingQuotations ? (
+                    <div className="py-12 flex justify-center items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)]"></div>
+                    </div>
+                  ) : customerQuotations.length === 0 ? (
+                    <div className="py-12 text-center text-[var(--text-muted)] text-xs font-bold uppercase tracking-wider">
+                      No quotations recorded for this customer yet.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto print:overflow-visible">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-[var(--bg-primary)] border-b border-[var(--border-default)] text-[var(--text-secondary)] font-bold uppercase tracking-wider">
+                            <th className="py-2.5 px-3">Quotation #</th>
+                            <th className="py-2.5 px-3">Date</th>
+                            <th className="py-2.5 px-3">Due Date</th>
+                            <th className="py-2.5 px-3 text-right">Total Amount</th>
+                            <th className="py-2.5 px-3 text-center">Status</th>
+                            <th className="py-2.5 px-3 text-center print-hidden statement-action-col">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--border-subtle)]">
+                          {customerQuotations.map((q) => (
+                            <tr key={q.id} className="hover:bg-[var(--bg-primary)]/50 transition-colors statement-no-break">
+                              <td className="py-2.5 px-3 font-mono font-bold text-[var(--text-primary)]">
+                                {q.quotation_number || q.id?.slice(0, 8)}
+                              </td>
+                              <td className="py-2.5 px-3 text-[var(--text-secondary)] whitespace-nowrap">
+                                {q.quotation_date ? format(new Date(q.quotation_date), 'dd MMM yyyy') : '-'}
+                              </td>
+                              <td className="py-2.5 px-3 text-[var(--text-muted)] whitespace-nowrap">
+                                {q.due_date ? format(new Date(q.due_date), 'dd MMM yyyy') : '-'}
+                              </td>
+                              <td className="py-2.5 px-3 text-right font-mono font-bold text-[var(--text-primary)] whitespace-nowrap">
+                                {getCurrencySymbol()}{(Number(q.total_amount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                  q.status === 'converted' || q.status === 'approved' ? 'badge-success' :
+                                  q.status === 'rejected' ? 'badge-danger' :
+                                  q.status === 'pending' ? 'badge-warning' :
+                                  'badge-neutral'
+                                }`}>
+                                  {q.status || 'Draft'}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-center print-hidden statement-action-col">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    onClose();
+                                    navigate('/quotations');
+                                  }}
+                                  className="p-1 rounded-md bg-[var(--bg-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-default)] transition-all inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1"
+                                  title="Open Quotations page"
+                                >
+                                  <span>View</span>
+                                  <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="bg-[var(--bg-primary)] font-bold text-[var(--text-primary)] border-t-2 border-b border-[var(--border-default)] statement-no-break">
+                            <td colSpan={3} className="py-3 px-3 uppercase tracking-wider text-xs font-bold text-[var(--text-secondary)]">
+                              Grand Total ({customerQuotations.length} {customerQuotations.length === 1 ? 'Quotation' : 'Quotations'})
+                            </td>
+                            <td className="py-3 px-3 text-right font-mono text-xs whitespace-nowrap">
+                              {getCurrencySymbol()}{customerQuotations.reduce((sum, q) => sum + (Number(q.total_amount) || 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </td>
                             <td className="py-3 px-3 text-center"></td>
                             <td className="py-3 px-3 print-hidden statement-action-col"></td>
