@@ -26,29 +26,37 @@ export default function ExpiryCard() {
       {/* Card */}
       <div
         onClick={() => setShowModal(true)}
-        className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 sm:p-6 flex flex-col justify-between group hover:border-[var(--accent-primary)]/40 transition-all cursor-pointer shadow-sm"
+        className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 sm:p-5 xl:p-5 2xl:p-6 flex flex-col justify-between group hover:border-[var(--accent-primary)]/40 transition-all cursor-pointer shadow-sm"
       >
-        <div className="flex justify-between items-start mb-4">
-          <div className="p-3 rounded-xl bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 text-[var(--status-warning)]">
+        <div className="flex justify-between items-start mb-3 sm:mb-4">
+          <div className="p-2.5 sm:p-3 rounded-xl bg-[var(--status-warning)]/10 border border-[var(--status-warning)]/20 text-[var(--status-warning)]">
             <ClockIcon className="w-6 h-6" />
           </div>
           {count > 0 && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--status-warning)]/20 text-[var(--status-warning)] font-bold border border-[var(--status-warning)]/40 animate-pulse">
+            <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-[var(--status-warning)]/20 text-[var(--status-warning)] font-bold border border-[var(--status-warning)]/40 animate-pulse">
               ⚠ ACTION
             </span>
           )}
         </div>
         <div>
-          <div className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-primary)] mb-1 tracking-tight font-mono font-tabular">
+          <div 
+            className="text-lg sm:text-xl lg:text-xl xl:text-2xl 2xl:text-3xl font-black text-[var(--text-primary)] mb-1 tracking-tight font-mono font-tabular truncate"
+            title={isLoading ? 'Loading' : count}
+          >
             {isLoading ? '—' : count}
           </div>
-          <div className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider">
+          <div className="text-[11px] sm:text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider min-h-[2.25rem] flex items-center leading-snug">
             Expiring in {days} days
           </div>
-          {count > 0 && (
-            <div className="text-xs text-[var(--status-warning)] mt-1 font-semibold font-mono">
+          {count > 0 ? (
+            <div 
+              className="text-[10px] sm:text-[11px] text-[var(--status-warning)] mt-1 font-semibold font-mono leading-tight truncate"
+              title={`${getCurrencySymbol()}${Number(totalValue).toLocaleString('en-IN')} at risk`}
+            >
               {getCurrencySymbol()}{Number(totalValue).toLocaleString('en-IN')} at risk
             </div>
+          ) : (
+            <div className="h-[14px] mt-1" />
           )}
         </div>
       </div>

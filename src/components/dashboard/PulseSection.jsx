@@ -139,11 +139,11 @@ export default function PulseSection({ data, isLoading }) {
 
   if (isLoading && !Object.keys(lastGoodPulseRef.current).length) {
     return (
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4 xl:gap-5">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bento-card !p-5 animate-pulse">
-            <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-xl mb-3" />
-            <div className="h-8 w-24 bg-[var(--border-subtle)] rounded mb-2" />
+          <div key={i} className="bento-card !p-4 sm:!p-5 animate-pulse">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 bg-[var(--border-subtle)] rounded-xl mb-3" />
+            <div className="h-6 sm:h-8 w-24 bg-[var(--border-subtle)] rounded mb-2" />
             <div className="h-4 w-32 bg-[var(--border-subtle)] rounded" />
           </div>
         ))}
@@ -191,14 +191,24 @@ export default function PulseSection({ data, isLoading }) {
     {
       label: 'Cash / Bank',
       value: formatCurrencySigned(liquidTotal),
-      subtitle: `Cash: ${formatCurrencySigned(pulse.cash_in_hand || 0)} | Bank: ${formatCurrencySigned(pulse.bank_collections || 0)}`,
+      subtitle: (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px] sm:text-[11px]">
+          <span className="truncate">Cash: {formatCurrencySigned(pulse.cash_in_hand || 0)}</span>
+          <span className="text-[var(--border-subtle)]">|</span>
+          <span className="truncate">Bank: {formatCurrencySigned(pulse.bank_collections || 0)}</span>
+        </div>
+      ),
       icon: BanknotesIcon,
       color: liquidNegative ? 'red' : 'green',
     },
     {
       label: 'Net Profit (Est.)',
       value: formatCurrencyAbs(pulse.net_profit_today),
-      subtitle: "Today's P&L (sales - purchases - stock change)",
+      subtitle: (
+        <span className="text-[10px] sm:text-[11px] block truncate">
+          Today's P&L (sales - purchases - stock change)
+        </span>
+      ),
       icon: pulse.net_profit_today >= 0 ? ArrowTrendingUpIcon : ArrowTrendingDownIcon,
       color: pulse.net_profit_today >= 0 ? 'emerald' : 'red',
     },
@@ -206,11 +216,13 @@ export default function PulseSection({ data, isLoading }) {
       label: 'Udhaar',
       value: formatCurrencyAbs(liveReceivables || pulse.total_receivables),
       subtitle: (
-        <div className="flex justify-between items-center w-full">
-          <span>G: {formatCurrency(pulse.udhaar_given_today)} | C: {formatCurrency(pulse.udhaar_collected_today)}</span>
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 w-full text-[10px] sm:text-[11px]">
+          <span className="font-mono truncate">
+            G: {formatCurrency(pulse.udhaar_given_today)} | C: {formatCurrency(pulse.udhaar_collected_today)}
+          </span>
           <Link 
             to="/payments" 
-            className="text-[var(--accent-primary)] hover:underline ml-2 font-medium" 
+            className="text-[var(--accent-primary)] hover:underline font-semibold shrink-0" 
             onClick={(e) => e.stopPropagation()}
           >
             Record Payment
@@ -233,12 +245,12 @@ export default function PulseSection({ data, isLoading }) {
 
   return (
     <section>
-      <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">Today's Pulse</h2>
-        <span className="text-xs px-2 py-0.5 bg-[var(--status-info)]/15 text-[var(--status-info)] font-semibold rounded-full">Live</span>
+      <div className="flex items-center gap-2 mb-3 sm:mb-4">
+        <h2 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Today's Pulse</h2>
+        <span className="text-[10px] px-2 py-0.5 bg-[var(--status-info)]/15 text-[var(--status-info)] font-semibold rounded-full">Live</span>
       </div>
       
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4 xl:gap-5">
         {cards.map((card, i) => {
           const colors = colorClasses[card.color] || colorClasses.cyan;
           const Icon = card.icon;
@@ -247,10 +259,10 @@ export default function PulseSection({ data, isLoading }) {
             <div 
               key={i} 
               onClick={card.onClick}
-              className={`bento-card !p-5 group hover:border-[var(--accent-primary)]/40 transition-all duration-300 ${colors.border} ${card.onClick ? 'cursor-pointer active:scale-95' : ''}`}
+              className={`bento-card !p-4 sm:!p-5 group hover:border-[var(--accent-primary)]/40 transition-all duration-300 flex flex-col justify-between ${colors.border} ${card.onClick ? 'cursor-pointer active:scale-95' : ''}`}
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className={`p-2.5 rounded-xl ${colors.bg}`}>
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <div className={`p-2 sm:p-2.5 rounded-xl ${colors.bg}`}>
                   <Icon className={`w-5 h-5 ${colors.text}`} />
                 </div>
                 {card.trend !== undefined && (
@@ -265,16 +277,21 @@ export default function PulseSection({ data, isLoading }) {
                 )}
               </div>
               
-              <div className={`text-2xl font-bold ${colors.text} mb-1 font-mono font-tabular`}>
-                {card.value}
-              </div>
-              
-              <div className="text-xs text-[var(--text-muted)] font-medium">
-                {card.label}
-              </div>
-              
-              <div className="text-xs text-[var(--text-muted)]/80 mt-1 truncate">
-                {card.subtitle}
+              <div>
+                <div 
+                  className={`text-lg sm:text-xl xl:text-2xl 2xl:text-3xl font-black ${colors.text} mb-1 font-mono font-tabular tracking-tight truncate`}
+                  title={card.value}
+                >
+                  {card.value}
+                </div>
+                
+                <div className="text-[11px] sm:text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider min-h-[1.5rem] flex items-center">
+                  {card.label}
+                </div>
+                
+                <div className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] mt-1 font-medium leading-tight min-h-[1.25rem] flex items-center">
+                  {card.subtitle}
+                </div>
               </div>
             </div>
           );
