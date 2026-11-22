@@ -23,6 +23,7 @@ import {
 } from "@heroicons/react/24/outline";
 import PaymentForm from "../ledger/PaymentForm";
 import { getCurrencySymbol } from '../../utils/currency';
+import { isInvoiceOverdue } from "../../utils/date";
 import useResizableColumns from "../../hooks/useResizableColumns";
 import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from "../common/tableHeaderClasses";
 
@@ -291,10 +292,7 @@ export default function SalesTable({
       // Overdue filter
       let matchesOverdue = true;
       if (advancedFilters.hasOverdue) {
-        const today = new Date();
-        const dueDateValue = invoice.due_date || invoice.invoice_date;
-        const dueDate = new Date(dueDateValue);
-        matchesOverdue = !Number.isNaN(dueDate.getTime()) && dueDate < today;
+        matchesOverdue = isInvoiceOverdue(invoice);
       }
       
       return matchesSearch && matchesDate && matchesAmount && matchesCustomer && matchesOverdue;
@@ -648,23 +646,25 @@ export default function SalesTable({
             )}
           </div>
 
-          {/* Show overdue Bills only Quick Toggle */}
-          <button
-            type="button"
-            onClick={() => setAdvancedFilters(prev => ({ ...prev, hasOverdue: !prev.hasOverdue }))}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer select-none ${
-              advancedFilters.hasOverdue
-                ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border-[var(--status-danger)]/30'
-                : 'btn-secondary text-[var(--text-secondary)]'
-            }`}
-            title="Filter to show only overdue bills"
-          >
-            <ExclamationTriangleIcon className={`w-3.5 h-3.5 ${advancedFilters.hasOverdue ? 'text-[var(--status-danger)]' : 'text-[var(--text-muted)]'}`} />
-            <span>Show overdue Bills only</span>
-            {advancedFilters.hasOverdue && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-danger)] animate-pulse"></span>
-            )}
-          </button>
+          {/* Show overdue Invoices only Quick Toggle */}
+          {documentType !== "quotation" && (
+            <button
+              type="button"
+              onClick={() => setAdvancedFilters(prev => ({ ...prev, hasOverdue: !prev.hasOverdue }))}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer select-none ${
+                advancedFilters.hasOverdue
+                  ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border-[var(--status-danger)]/30'
+                  : 'btn-secondary text-[var(--text-secondary)]'
+              }`}
+              title="Filter to show only overdue invoices"
+            >
+              <ExclamationTriangleIcon className={`w-3.5 h-3.5 ${advancedFilters.hasOverdue ? 'text-[var(--status-danger)]' : 'text-[var(--text-muted)]'}`} />
+              <span>Show overdue Invoices only</span>
+              {advancedFilters.hasOverdue && (
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-danger)] animate-pulse"></span>
+              )}
+            </button>
+          )}
           
           {selectedInvoices.size > 0 && (
             <button
