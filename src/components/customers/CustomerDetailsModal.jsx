@@ -64,38 +64,44 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
 
   const rawInvoices = Array.isArray(invoicesData) ? invoicesData : invoicesData?.data || invoicesData?.results || [];
   const customerInvoices = rawInvoices.filter(inv => {
-    const invCustId = inv.customer?.id || inv.customer;
+    const invCustId = inv.customer_details?.id || inv.customer?.id || inv.customer || inv.customer_id;
     if (invCustId) return String(invCustId) === String(customer?.id);
-    return customer?.name && inv.customer_name?.toLowerCase() === customer?.name?.toLowerCase();
+    return customer?.name && (
+      inv.customer_name?.toLowerCase() === customer?.name?.toLowerCase() ||
+      inv.customer_details?.name?.toLowerCase() === customer?.name?.toLowerCase()
+    );
   });
 
   const rawChallans = Array.isArray(challansData) ? challansData : challansData?.data || challansData?.results || [];
   const customerChallans = rawChallans.filter(ch => {
-    const chCustId = ch.customer?.id || ch.customer;
+    const chCustId = ch.customer_details?.id || ch.customer?.id || ch.customer || ch.customer_id;
     if (chCustId) return String(chCustId) === String(customer?.id);
     return customer?.name && (
       ch.customer_name?.toLowerCase() === customer?.name?.toLowerCase() ||
-      ch.customer?.name?.toLowerCase() === customer?.name?.toLowerCase()
+      ch.customer?.name?.toLowerCase() === customer?.name?.toLowerCase() ||
+      ch.customer_details?.name?.toLowerCase() === customer?.name?.toLowerCase()
     );
   });
 
   const rawOrders = Array.isArray(ordersData) ? ordersData : ordersData?.data || ordersData?.results || [];
   const customerOrders = rawOrders.filter(so => {
-    const soCustId = so.customer?.id || so.customer;
+    const soCustId = so.customer_details?.id || so.customer?.id || so.customer || so.customer_id;
     if (soCustId) return String(soCustId) === String(customer?.id);
     return customer?.name && (
       so.customer_name?.toLowerCase() === customer?.name?.toLowerCase() ||
-      so.customer?.name?.toLowerCase() === customer?.name?.toLowerCase()
+      so.customer?.name?.toLowerCase() === customer?.name?.toLowerCase() ||
+      so.customer_details?.name?.toLowerCase() === customer?.name?.toLowerCase()
     );
   });
 
   const rawQuotations = Array.isArray(quotationsData) ? quotationsData : quotationsData?.data || quotationsData?.results || [];
   const customerQuotations = rawQuotations.filter(q => {
-    const qCustId = q.customer?.id || q.customer;
+    const qCustId = q.customer_details?.id || q.customer?.id || q.customer || q.customer_id;
     if (qCustId) return String(qCustId) === String(customer?.id);
     return customer?.name && (
       q.customer_name?.toLowerCase() === customer?.name?.toLowerCase() ||
-      q.customer?.name?.toLowerCase() === customer?.name?.toLowerCase()
+      q.customer?.name?.toLowerCase() === customer?.name?.toLowerCase() ||
+      q.customer_details?.name?.toLowerCase() === customer?.name?.toLowerCase()
     );
   });
 
