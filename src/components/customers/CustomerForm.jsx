@@ -106,14 +106,18 @@ export default function CustomerForm({
       shipping_addresses: cleanedShipping,
     };
 
-    // Clean up empty top-level values while retaining normalized meta.shipping_addresses
-    const cleanValues = Object.fromEntries(
-      Object.entries({ ...values, meta: cleanMeta }).filter(([key, value]) => {
-        if (key === "meta") return true;
-        if (typeof value === 'string') return value.trim() !== "";
-        return value !== null && value !== undefined;
-      })
-    );
+    // Clean up values: normalize meta and convert empty optional strings to null
+    // so clearing a field on edit actually clears it in the backend database.
+    const cleanValues = {
+      ...values,
+      name: typeof values.name === "string" ? values.name.trim() : values.name,
+      gstin: typeof values.gstin === "string" ? (values.gstin.trim() || null) : (values.gstin ?? null),
+      email: typeof values.email === "string" ? (values.email.trim() || null) : (values.email ?? null),
+      phone: typeof values.phone === "string" ? (values.phone.trim() || null) : (values.phone ?? null),
+      address: typeof values.address === "string" ? (values.address.trim() || null) : (values.address ?? null),
+      state: typeof values.state === "string" ? (values.state.trim() || null) : (values.state ?? null),
+      meta: cleanMeta,
+    };
 
     try {
       if (isEdit) {

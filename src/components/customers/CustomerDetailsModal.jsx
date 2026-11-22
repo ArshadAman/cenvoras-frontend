@@ -62,9 +62,13 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
   const totalInvoiced = confirmedInvoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0);
   const totalPaid = confirmedInvoices.reduce((sum, inv) => sum + (Number(inv.amount_paid) || 0), 0);
   const rawBal = customerDetails.current_balance;
-  const outstandingBalance = (rawBal !== undefined && rawBal !== null && !isNaN(Number(rawBal)))
+  let outstandingBalance = (rawBal !== undefined && rawBal !== null && !isNaN(Number(rawBal)))
     ? Number(rawBal)
     : (totalInvoiced - totalPaid);
+  // Guard against phantom receivables when customer has no confirmed invoices
+  if (confirmedInvoices.length === 0 && outstandingBalance > 0) {
+    outstandingBalance = 0;
+  }
 
   const getRelatedChallansForInvoice = (inv) => {
     const matched = customerChallans.filter(ch => {

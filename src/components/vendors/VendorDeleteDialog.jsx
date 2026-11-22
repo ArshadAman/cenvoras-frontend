@@ -50,6 +50,19 @@ export default function VendorDeleteDialog({ isOpen, onClose, vendor }) {
             This action cannot be undone.
           </p>
 
+          {/* Error Message if deletion failed */}
+          {mutation.isError && (
+            <div className="bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)] rounded-xl p-4 flex gap-3 text-xs text-[var(--status-danger-text)]">
+              <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <strong className="font-bold">Cannot delete vendor:</strong>
+                <p className="leading-relaxed">
+                  {mutation.error?.response?.data?.message || mutation.error?.message || "Failed to delete vendor."}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Warning */}
           <div className="bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] rounded-xl p-4 flex gap-3">
             <ExclamationTriangleIcon className="w-5 h-5 text-[var(--status-warning-text)] flex-shrink-0 mt-0.5" />
