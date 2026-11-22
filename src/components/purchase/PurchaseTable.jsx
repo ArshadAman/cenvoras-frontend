@@ -4,8 +4,8 @@ import { getPurchaseBills } from "../../api/purchase";
 import { format } from "date-fns";
 import AdvancedPurchaseFilters from "./AdvancedPurchaseFilters";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
-import { EyeIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { parseDateOnly } from '../../utils/date';
+import { EyeIcon, PencilSquareIcon, TrashIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { parseDateOnly, isBillOverdue } from '../../utils/date';
 import useResizableColumns from "../../hooks/useResizableColumns";
 import { LIST_THEAD, LIST_TH, LIST_TH_SORTABLE, LIST_TH_LABEL, LIST_TD, LIST_TD_AMOUNT } from "../common/tableHeaderClasses";
 import DateInputField from "../common/DateInputField";
@@ -140,13 +140,10 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
         matchesGST = bill.gst_treatment === advancedFilters.gstTreatment;
       }
       
-      // Overdue filter (assuming we have due_date field or calculate from bill_date + terms)
+      // Overdue filter
       let matchesOverdue = true;
       if (advancedFilters.hasOverdue) {
-        const today = new Date();
-        const billDate = new Date(bill.bill_date);
-        const dueDate = new Date(billDate.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days default
-        matchesOverdue = dueDate < today;
+        matchesOverdue = isBillOverdue(bill);
       }
       
       return matchesSearch && matchesDate && matchesAmount && matchesVendor && matchesJournal && matchesGST && matchesOverdue;
@@ -336,6 +333,23 @@ export default function PurchaseTable({ onEdit, onView, onDelete }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
             </svg>
             Filters
+          </button>
+          {/* Show overdue Bills only Quick Toggle */}
+          <button
+            type="button"
+            onClick={() => setAdvancedFilters(prev => ({ ...prev, hasOverdue: !prev.hasOverdue }))}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer select-none ${
+              advancedFilters.hasOverdue
+                ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border-[var(--status-danger)]/30'
+                : 'btn-secondary text-[var(--text-secondary)]'
+            }`}
+            title="Filter to show only overdue bills"
+          >
+            <ExclamationTriangleIcon className={`w-3.5 h-3.5 ${advancedFilters.hasOverdue ? 'text-[var(--status-danger)]' : 'text-[var(--text-muted)]'}`} />
+            <span>Show overdue Bills only</span>
+            {advancedFilters.hasOverdue && (
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-danger)] animate-pulse"></span>
+            )}
           </button>
         </div>
       </div>

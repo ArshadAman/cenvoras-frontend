@@ -91,3 +91,66 @@ export function parseDateOnly(value) {
   if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   return new Date(value);
 }
+
+/**
+ * Determines whether a sales invoice is overdue.
+ * An invoice is overdue if:
+ * 1. It is not a draft.
+ * 2. It is not fully paid (payment_status !== 'paid' and outstanding balance > 0).
+ * 3. Its effective due date (due_date or invoice_date) is strictly earlier than today in Asia/Kolkata.
+ */
+export function isInvoiceOverdue(invoice, todayStr = getTodayKolkata()) {
+  if (!invoice) return false;
+
+  // Drafts and quotations cannot be overdue
+  const isDraft = invoice.status === 'draft' ||
+    String(invoice.invoice_number || '').startsWith('DFT-') ||
+    String(invoice.invoice_number || '').startsWith('D-');
+  if (isDraft) return false;
+
+  // Fully paid invoices cannot be overdue
+  const paymentStatus = String(invoice.payment_status || '').toLowerCase();
+  if (paymentStatus === 'paid') return false;
+
+  const total = parseFloat(invoice.total_amount || 0);
+  const paid = parseFloat(invoice.amount_paid || 0);
+  if (total > 0 && paid >= total) return false;
+
+  // Effective due date (YYYY-MM-DD)
+  const rawDate = invoice.due_date || invoice.invoice_date;
+  if (!rawDate) return false;
+
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(rawDate).trim());
+  if (!m) return false;
+
+  return m[1] < todayStr;
+}
+
+/**
+ * Determines whether a purchase bill is overdue.
+ * A bill is overdue if:
+ * 1. It is not a draft.
+ * 2. It is not fully paid (payment_status !== 'paid' and outstanding balance > 0).
+ * 3. Its due date (or bill_date) is strictly earlier than today in Asia/Kolkata.
+ */
+export function isBillOverdue(bill, todayStr = getTodayKolkata()) {
+  if (!bill) return false;
+
+  if (bill.status === 'draft') return false;
+
+  const paymentStatus = String(bill.payment_status || '').toLowerCase();
+  if (paymentStatus === 'paid') return false;
+
+  const total = parseFloat(bill.total_amount || 0);
+  const paid = parseFloat(bill.amount_paid || 0);
+  if (total > 0 && paid >= total) return false;
+
+  const rawDate = bill.due_date || bill.bill_date;
+  if (!rawDate) return false;
+
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(rawDate).trim());
+  if (!m) return false;
+
+  return m[1] < todayStr;
+}
+
