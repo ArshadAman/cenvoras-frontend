@@ -46,7 +46,11 @@ function KpiDetailModal({ kind, onClose, customerFilter, stats }) {
   });
 
   const payments = asList(paymentsData).filter((p) => !customerFilter || String(p.customer) === String(customerFilter));
-  const invoices = asList(invoicesData).filter((inv) => !customerFilter || String(inv.customer) === String(customerFilter) || String(inv.customer?.id) === String(customerFilter));
+  const invoices = asList(invoicesData).filter((inv) => {
+    if (!customerFilter) return true;
+    const invCustId = inv.customer_details?.id || inv.customer?.id || inv.customer || inv.customer_id;
+    return String(invCustId) === String(customerFilter);
+  });
   const customers = asList(customersData).filter((c) => !customerFilter || String(c.id) === String(customerFilter));
 
   const title = {
