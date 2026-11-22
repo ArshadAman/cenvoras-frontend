@@ -30,13 +30,13 @@ import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 // Skeleton for loading
 function SkeletonCard() {
   return (
-    <div className="bento-card !p-6 flex flex-col justify-between h-40 animate-pulse bg-[var(--bg-surface)] border-[var(--border-subtle)]">
+    <div className="bento-card !p-4 sm:!p-5 flex flex-col justify-between h-36 sm:h-40 animate-pulse bg-[var(--bg-surface)] border-[var(--border-subtle)]">
       <div className="flex justify-between items-start">
-        <div className="h-10 w-10 bg-white/10 rounded-xl"></div>
+        <div className="h-8 w-8 sm:h-9 sm:w-9 bg-white/10 rounded-xl"></div>
       </div>
-      <div className="space-y-3">
-        <div className="h-8 w-32 bg-white/10 rounded-lg"></div>
-        <div className="h-4 w-20 bg-white/5 rounded"></div>
+      <div className="space-y-2 sm:space-y-2.5">
+        <div className="h-6 sm:h-7 w-24 sm:w-28 bg-white/10 rounded-lg"></div>
+        <div className="h-3 sm:h-3.5 w-16 sm:w-20 bg-white/5 rounded"></div>
       </div>
     </div>
   )
@@ -244,7 +244,7 @@ export default function Dashboard({ onLogout }) {
 
   return (
     <>
-      <div className="p-6 md:p-10 space-y-8 animate-fade-up">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 animate-fade-up">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -286,25 +286,39 @@ export default function Dashboard({ onLogout }) {
           isLoading={loadingSmart} 
         />
 
-        {/* 2. LEGACY OVERVIEW CARDS (Total Sales, Purchases, etc.) */}
+        {/* 2. OVERVIEW CARDS (Total Sales, Purchases, etc.) */}
         <section>
-          <h2 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-4">Overall Financial Summary</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <h2 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3 sm:mb-4">Overall Financial Summary</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3.5 sm:gap-4 xl:gap-5">
             {loadingMetrics
               ? Array(5).fill(0).map((_, i) => <SkeletonCard key={i} />)
               : cardData.map((card, i) => (
-                  <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-5 sm:p-6 flex flex-col justify-between group hover:border-[var(--accent-primary)]/40 transition-all shadow-sm">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className={`p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] ${card.color}`}>
+                  <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 sm:p-5 xl:p-5 2xl:p-6 flex flex-col justify-between group hover:border-[var(--accent-primary)]/40 transition-all shadow-sm">
+                    <div className="flex justify-between items-start mb-3 sm:mb-4">
+                      <div className={`p-2.5 sm:p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] ${card.color}`}>
                         {card.icon}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-primary)] mb-1 tracking-tight font-mono font-tabular">{card.value}</div>
-                      <div className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider">{card.label}</div>
+                      <div 
+                        className="text-lg sm:text-xl lg:text-xl xl:text-2xl 2xl:text-3xl font-black text-[var(--text-primary)] mb-1 tracking-tight font-mono font-tabular truncate"
+                        title={card.value}
+                      >
+                        {card.value}
+                      </div>
+                      <div className="text-[11px] sm:text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider min-h-[2.25rem] flex items-center leading-snug">
+                        {card.label}
+                      </div>
                       {card.subtitle ? (
-                        <div className="text-[10px] text-[var(--text-secondary)] mt-1 font-medium normal-case">{card.subtitle}</div>
-                      ) : null}
+                        <div 
+                          className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] mt-1 font-medium normal-case leading-tight line-clamp-2"
+                          title={typeof card.subtitle === 'string' ? card.subtitle : undefined}
+                        >
+                          {card.subtitle}
+                        </div>
+                      ) : (
+                        <div className="h-[14px] mt-1" />
+                      )}
                     </div>
                   </div>
               ))
@@ -315,7 +329,7 @@ export default function Dashboard({ onLogout }) {
         </section>
 
         {/* 3. WARNINGS + INSIGHTS + GST SHIELD Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 xl:gap-6">
           <WarningsSection 
             data={smartData?.warnings} 
             healthStatus={smartData?.health_status}
