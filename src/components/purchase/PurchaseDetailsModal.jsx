@@ -507,6 +507,17 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                     </span>
                   </div>
 
+                  {Array.isArray(bill.additional_charges) && bill.additional_charges.map((c, i) => (
+                    <div key={i} className="flex justify-between items-center text-xs">
+                      <span className="text-[var(--text-muted)] font-medium">
+                        {c.name} {Number(c.tax_rate) > 0 ? `(${c.tax_rate}% GST)` : ''}
+                      </span>
+                      <span className="font-mono font-semibold text-[var(--text-primary)]">
+                        +{getCurrencySymbol()}{parseFloat(c.amount || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+
                   {parseFloat(bill.igst || 0) > 0 ? (
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-[var(--text-muted)] font-medium">IGST</span>

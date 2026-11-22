@@ -39,12 +39,14 @@ const BillShipTemplate = forwardRef(({
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
   const {
+    itemsSubtotal,
     subtotal,
     taxTotal,
     cgst,
     sgst,
     roundOff,
     finalTotal,
+    charges,
   } = calculateInvoiceTotals(items, invoice);
 
   const taxType = getTaxType(invoice, businessInfo);
@@ -371,9 +373,15 @@ const BillShipTemplate = forwardRef(({
           <div className="w-1/2 pl-6 flex flex-col justify-between" style={{ fontSize: `${type.totalsSize}px` }}>
              <div>
                <div className="flex justify-between font-medium text-gray-700 mb-1.5 items-center" style={{ fontSize: `${type.totalsSize}px` }}>
-                 <span>Taxable Amount</span>
-                 <span className="font-bold text-gray-900">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                 <span>{charges && charges.length > 0 ? "Items Taxable" : "Taxable Amount"}</span>
+                 <span className="font-bold text-gray-900">{getCurrencySymbol()}{(itemsSubtotal !== undefined ? itemsSubtotal : subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                </div>
+               {charges?.map((c, i) => (
+                 <div key={i} className="flex justify-between text-sm font-medium text-gray-700 mb-1.5 items-center">
+                   <span>{c.name} {c.tax_rate > 0 ? `(${c.tax_rate}% GST)` : ''}</span>
+                   <span className="font-bold text-gray-900">{getCurrencySymbol()}{Number(c.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                 </div>
+               ))}
                {isIGST ? (
                  <div className="flex justify-between text-sm font-medium text-gray-700 mb-1.5 items-center">
                    <span>IGST</span>

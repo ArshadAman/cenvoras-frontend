@@ -37,12 +37,14 @@ const ServiceTemplate = forwardRef(({
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
   const {
+    itemsSubtotal,
     subtotal,
     taxTotal,
     cgst,
     sgst,
     roundOff,
     finalTotal,
+    charges,
   } = calculateInvoiceTotals(items, invoice);
 
   const taxType = getTaxType(invoice, businessInfo);
@@ -382,7 +384,10 @@ const ServiceTemplate = forwardRef(({
           <div className="w-[40%]">
             <table className="w-full text-right" style={{ fontSize: `${type.totalsSize}px` }}>
               <tbody>
-                <tr><td className="py-1 font-semibold text-gray-700">Taxable Amount</td><td className="py-1">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                <tr><td className="py-1 font-semibold text-gray-700">{charges && charges.length > 0 ? "Items Taxable" : "Taxable Amount"}</td><td className="py-1">{getCurrencySymbol()}{(itemsSubtotal !== undefined ? itemsSubtotal : subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                {charges?.map((c, i) => (
+                  <tr key={i}><td className="py-1 font-semibold text-gray-700">{c.name} {c.tax_rate > 0 ? `(${c.tax_rate}% GST)` : ''}</td><td className="py-1">{getCurrencySymbol()}{Number(c.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                ))}
                 {isIGST ? (
                   <tr><td className="py-1 font-semibold text-gray-700">IGST</td><td className="py-1">{getCurrencySymbol()}{taxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
                 ) : (

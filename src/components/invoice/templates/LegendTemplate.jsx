@@ -38,12 +38,14 @@ const LegendTemplate = forwardRef(({
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
   const {
+    itemsSubtotal,
     subtotal,
     taxTotal,
     cgst,
     sgst,
     roundOff,
     finalTotal,
+    charges,
   } = calculateInvoiceTotals(items, invoice);
 
   const taxType = getTaxType(invoice, businessInfo);
@@ -400,9 +402,15 @@ const LegendTemplate = forwardRef(({
             <div className="w-2/5 flex flex-col">
                <div className="p-3 space-y-1" style={{ fontSize: `${type.totalsSize}px` }}>
                  <div className="flex justify-between items-center py-0.5">
-                   <span className="font-semibold text-gray-700 whitespace-nowrap">Taxable Amount</span>
-                   <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                   <span className="font-semibold text-gray-700 whitespace-nowrap">{charges && charges.length > 0 ? "Items Taxable" : "Taxable Amount"}</span>
+                   <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(itemsSubtotal !== undefined ? itemsSubtotal : subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                  </div>
+                 {charges?.map((c, i) => (
+                   <div key={i} className="flex justify-between items-center py-0.5">
+                     <span className="font-semibold text-gray-700 whitespace-nowrap">{c.name} {c.tax_rate > 0 ? `(${c.tax_rate}% GST)` : ''}</span>
+                     <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{Number(c.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                   </div>
+                 ))}
                  {isIGST ? (
                    <div className="flex justify-between items-center py-0.5">
                      <span className="font-semibold text-gray-700 whitespace-nowrap">IGST</span>
