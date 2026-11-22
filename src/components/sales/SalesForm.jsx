@@ -33,7 +33,7 @@ import { matchesProductSearch, filterProductsBySearch } from "../../utils/produc
 
 const ITEM_CELL_FOCUS = "focus:border-[var(--border-focus)] focus:ring-2 focus:ring-[var(--focus-ring)] focus:bg-[var(--input-bg-focus)] outline-none";
 const HEADER_FIELD_FOCUS = "focus:border-[var(--border-focus)] focus:ring-2 focus:ring-[var(--focus-ring)] focus:bg-[var(--input-bg-focus)] outline-none";
-const ITEM_INPUT_CLASS = `w-full min-h-[32px] bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1.5 text-xs min-h-[32px] text-center text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all ${ITEM_CELL_FOCUS}`;
+const ITEM_INPUT_CLASS = `w-full min-h-[32px] bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1.5 text-xs text-left text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all ${ITEM_CELL_FOCUS}`;
 const ITEM_GRID_RULES = "[&>*]:border-r [&>*]:border-[var(--border-subtle)] [&>*:last-child]:border-r-0 [&>*]:px-1.5";
 
 function getSavedShippingList(customer) {
