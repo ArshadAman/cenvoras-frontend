@@ -21,6 +21,8 @@ import { getUserProfile } from "../../api/users";
 import { getTodayKolkata } from "../../utils/date";
 import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
 import { yupGstinOptional } from "../../utils/gstin";
+import AdditionalChargesSection from "../common/AdditionalChargesSection";
+import { calculateChargesBreakup } from "../../utils/lineAmount";
 
 // Helper for Indian States (same as Sales)
 const INDIAN_STATES = [
@@ -679,6 +681,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
             rcm_receipt_date: initialReceiptDate(bill, bill?.bill_date || getTodayKolkata()),
             journal: bill?.journal || "Purchase",
             total_amount: bill?.total_amount || "0.00",
+            additional_charges: Array.isArray(bill?.additional_charges) ? bill.additional_charges : [],
             items: bill?.items?.map(item => ({
               product_name: item.product_name || item.product_detail?.name || (typeof item.product === 'object' ? item.product?.name : '') || (typeof item.product === 'string' && item.product.length < 32 ? item.product : "") || "",
               product_id: item.product_detail?.id || item.product_id || (typeof item.product === 'object' ? item.product?.id : (typeof item.product === 'string' && item.product.length >= 32 ? item.product : null)) || null,
@@ -778,7 +781,24 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                 };
               });
               
-              const totalAmount = validItems.reduce((sum, item) => {
+              const cleanedCharges = (values.additional_charges || [])
+                .filter(c => Number(c?.amount) > 0)
+                .map(c => {
+                  const amt = Math.max(0, Number(c.amount) || 0);
+                  const rate = Math.max(0, Number(c.tax_rate) || 0);
+                  const taxAmt = Number(((amt * rate) / 100).toFixed(2));
+                  return {
+                    id: c.id || '',
+                    name: String(c.name || '').trim() || 'Miscellaneous Expense',
+                    amount: amt,
+                    tax_rate: rate,
+                    tax_amount: taxAmt,
+                    total: Number((amt + taxAmt).toFixed(2)),
+                  };
+                });
+              const chargesGross = cleanedCharges.reduce((sum, c) => sum + c.total, 0);
+
+              const itemsTotal = validItems.reduce((sum, item) => {
                 const quantity = Number(item.quantity) || 0;
                 const price = Number(item.purchase_price) || 0;
                 const discount = Number(item.discount) || 0;
@@ -788,6 +808,8 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                 const calculatedAmount = ((quantity * price) - discountAmount) + taxAmount;
                 return sum + calculatedAmount;
               }, 0);
+
+              const totalAmount = itemsTotal + chargesGross;
 
               const purchaseData = {
                 bill_number: values.bill_number,
@@ -802,6 +824,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                 rcm_receipt_date: receiptDatePayload(values),
                 journal: values.journal,
                 total_amount: Number(Number(totalAmount).toFixed(2)),
+                additional_charges: cleanedCharges,
                 notes: values.notes || "",
                 items: processedItems
               };
@@ -835,8 +858,8 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
           }}
         >
           {({ values, isSubmitting, setFieldValue }) => {
-            let taxableSubtotal = 0;
-            let taxTotal = 0;
+            let itemsTaxableSubtotal = 0;
+            let itemsTaxTotal = 0;
             values.items.forEach((item) => {
                 const quantity = Number(item.quantity) || 0;
                 const price = Number(item.purchase_price) || 0;
@@ -845,9 +868,16 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                 const discountAmount = ((quantity * price) * discount) / 100;
                 const taxable = (quantity * price) - discountAmount;
                 const taxAmount = (taxable * tax) / 100;
-                taxableSubtotal += taxable;
-                taxTotal += taxAmount;
+                itemsTaxableSubtotal += taxable;
+                itemsTaxTotal += taxAmount;
             });
+
+            const chargesBreakup = calculateChargesBreakup(values.additional_charges, false);
+            const chargesSubtotal = chargesBreakup.chargesTaxablePaise / 100;
+            const chargesTax = chargesBreakup.chargesTaxPaise / 100;
+
+            const taxableSubtotal = itemsTaxableSubtotal + chargesSubtotal;
+            const taxTotal = itemsTaxTotal + chargesTax;
             const grandTotal = taxableSubtotal + taxTotal;
             const vendorGstin = (values.vendor_gstin || '').trim();
             const vendorStateCode = vendorGstin.length >= 2 ? vendorGstin.slice(0, 2) : '';
@@ -1175,14 +1205,29 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                    )}
                  </FieldArray>
 
+                {/* Miscellaneous Expenses & Additional Charges */}
+                <AdditionalChargesSection
+                  charges={values.additional_charges || []}
+                  onChange={(newCharges) => setFieldValue("additional_charges", newCharges)}
+                  isTaxLocked={false}
+                  isInterstate={isInterstate}
+                  readOnly={false}
+                />
+
                 {/* Totals Section */}
                 <div className="flex justify-end pt-8">
                   <div className="w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl p-8 shadow-xl">
                     <div className="space-y-4">
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-[var(--text-muted)] font-medium">Subtotal (ex-GST)</span>
-                        <span className="text-[var(--text-primary)] font-black tabular-nums tracking-tight">{getCurrencySymbol()}{taxableSubtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span className="text-[var(--text-muted)] font-medium">Subtotal (Items ex-GST)</span>
+                        <span className="text-[var(--text-primary)] font-black tabular-nums tracking-tight">{getCurrencySymbol()}{itemsTaxableSubtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
+                      {chargesSubtotal > 0 && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-[var(--text-muted)] font-medium">Miscellaneous Expenses (ex-GST)</span>
+                          <span className="text-[var(--text-primary)] font-mono font-bold tabular-nums">+{getCurrencySymbol()}{chargesSubtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
                       {isInterstate ? (
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-[var(--text-muted)] font-medium">IGST</span>

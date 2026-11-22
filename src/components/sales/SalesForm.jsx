@@ -27,7 +27,8 @@ import useUnsavedPrompt from "../../hooks/useUnsavedPrompt";
 import { getTodayKolkata } from "../../utils/date";
 import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
 import { GST_RATES, gstRatesWithLegacy } from "../../utils/gstRates";
-import { calculateLineAmount, calculateLineTax, calculateLineGross } from "../../utils/lineAmount";
+import { calculateLineAmount, calculateLineTax, calculateLineGross, calculateChargesBreakup } from "../../utils/lineAmount";
+import AdditionalChargesSection from "../common/AdditionalChargesSection";
 import { yupGstinOptional } from "../../utils/gstin";
 import { matchesProductSearch, filterProductsBySearch } from "../../utils/productSearch";
 
@@ -1825,6 +1826,7 @@ export default function SalesForm({
       journal: editData?.journal || (isSalesOrder ? "Sales" : isQuotation ? "Quotation" : isDeliveryChallan ? "Challan" : "Sales"),
       total_amount: editData?.total_amount || null,
       notes: editData?.notes || "",
+      additional_charges: Array.isArray(editData?.additional_charges) ? editData.additional_charges : [],
       
       items: (() => {
         const mapped = (editData?.items && editData.items.length > 0) ? editData.items.map((item, idx) => {
@@ -2174,10 +2176,29 @@ export default function SalesForm({
                 };
               });
 
-              const totalAmount = processedItems.reduce((sum, item) => {
+              const cleanedCharges = (values.additional_charges || [])
+                .filter(c => Number(c?.amount) > 0)
+                .map(c => {
+                  const amt = Math.max(0, Number(c.amount) || 0);
+                  const rate = gstTaxLocked ? 0 : Math.max(0, Number(c.tax_rate) || 0);
+                  const taxAmt = Number(((amt * rate) / 100).toFixed(2));
+                  return {
+                    id: c.id || '',
+                    name: String(c.name || '').trim() || 'Miscellaneous Expense',
+                    amount: amt,
+                    tax_rate: rate,
+                    tax_amount: taxAmt,
+                    total: Number((amt + taxAmt).toFixed(2)),
+                  };
+                });
+
+              const chargesGross = cleanedCharges.reduce((sum, c) => sum + c.total, 0);
+
+              const itemsGross = processedItems.reduce((sum, item) => {
                 if (item.row_type === 'note') return sum;
                 return sum + calculateLineGross(item.quantity, item.price, item.discount, item.tax);
               }, 0);
+              const totalAmount = itemsGross + chargesGross;
               const finalTotal = roundOffApplied ? computeRoundedTotal(totalAmount) : totalAmount;
               const roundOffValue = roundOffApplied
                 ? Number((finalTotal - totalAmount).toFixed(2))
@@ -2229,6 +2250,7 @@ export default function SalesForm({
                 total_amount: Number(finalTotal).toFixed(2),
                 round_off: Number(roundOffValue).toFixed(2),
                 apply_round_off: roundOffApplied,
+                additional_charges: cleanedCharges,
                 notes: values.notes || "",
                 items: processedItems,
                 ...(!isDeliveryChallan && !isQuotation && !isSalesOrder && linkedChallans.length ? { meta: { linked_challans: linkedChallans } } : {}),
@@ -2331,7 +2353,12 @@ export default function SalesForm({
               return sum + calculateLineTax(item.quantity, item.price, disc, tax);
             }, 0);
 
-            const grandTotal = Number((taxableTotal + totalTax).toFixed(2));
+            const chargesBreakup = calculateChargesBreakup(values.additional_charges, gstTaxLocked);
+            const chargesSubtotal = chargesBreakup.chargesTaxablePaise / 100;
+            const chargesTax = chargesBreakup.chargesTaxPaise / 100;
+            const combinedTax = Number((totalTax + chargesTax).toFixed(2));
+
+            const grandTotal = Number((taxableTotal + chargesSubtotal + combinedTax).toFixed(2));
             const roundedGrandTotal = computeRoundedTotal(grandTotal);
             const roundOffDelta = Number((roundedGrandTotal - grandTotal).toFixed(2));
 
@@ -4103,13 +4130,28 @@ export default function SalesForm({
                   </FieldArray>
                 </div>
 
+                {/* Miscellaneous Expenses & Additional Charges */}
+                <AdditionalChargesSection
+                  charges={values.additional_charges || []}
+                  onChange={(newCharges) => setFieldValue("additional_charges", newCharges)}
+                  isTaxLocked={gstTaxLocked}
+                  isInterstate={isIGST}
+                  readOnly={isLocked}
+                />
+
                 {/* Totals */}
                 <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-6 sm:p-8 rounded-2xl shadow-xl">
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between text-[var(--text-secondary)]">
-                      <span>Subtotal</span>
+                      <span>Subtotal (Items)</span>
                       <span className="text-[var(--text-primary)] font-medium font-mono font-tabular">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
                     </div>
+                    {chargesSubtotal > 0 && (
+                      <div className="flex justify-between text-[var(--text-secondary)]">
+                        <span>Miscellaneous Expenses (ex-GST)</span>
+                        <span className="text-[var(--text-primary)] font-medium font-mono font-tabular">+{getCurrencySymbol()}{chargesSubtotal.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-[var(--status-success)]">
                       <span>Total Discount</span>
                       <span className="font-mono font-tabular">-{getCurrencySymbol()}{totalDiscount.toFixed(2)}</span>
@@ -4117,16 +4159,16 @@ export default function SalesForm({
                     {!gstTaxLocked && (<>
                     <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Total Tax (GST)</span>
-                      <span className="text-[var(--text-primary)] font-medium font-mono font-tabular">{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
+                      <span className="text-[var(--text-primary)] font-medium font-mono font-tabular">{getCurrencySymbol()}{combinedTax.toFixed(2)}</span>
                     </div>
                     {isIGST ? (
                       <div className="flex justify-between text-[var(--status-info)] text-xs pl-2 font-mono font-tabular">
                         <span>↳ IGST (Inter-state)</span>
-                        <span>{getCurrencySymbol()}{totalTax.toFixed(2)}</span>
+                        <span>{getCurrencySymbol()}{combinedTax.toFixed(2)}</span>
                       </div>
                     ) : (() => {
-                      const cgstTax = Math.floor((totalTax * 100) / 2) / 100;
-                      const sgstTax = Number((totalTax - cgstTax).toFixed(2));
+                      const cgstTax = Math.floor((combinedTax * 100) / 2) / 100;
+                      const sgstTax = Number((combinedTax - cgstTax).toFixed(2));
                       return (
                         <>
                           <div className="flex justify-between text-[var(--status-info)] text-xs pl-2 font-mono font-tabular">

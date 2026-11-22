@@ -432,6 +432,7 @@ export default function SalesDetailsModal({ isOpen, onClose, invoice, businessIn
       '',
     round_off: invoiceDetails.round_off ?? invoice?.round_off ?? 0,
     total_amount: invoiceDetails.total_amount ?? invoice?.total_amount,
+    additional_charges: invoiceDetails.additional_charges ?? invoice?.additional_charges ?? [],
     items:
       (Array.isArray(invoiceDetails.items) && invoiceDetails.items.length > 0)
         ? invoiceDetails.items

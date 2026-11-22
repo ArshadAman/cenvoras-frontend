@@ -43,12 +43,14 @@ const ProfessionalTemplate = forwardRef(({
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi || bankQr);
   
   const {
+    itemsSubtotal,
     subtotal,
     taxTotal,
     cgst,
     sgst,
     roundOff,
     finalTotal,
+    charges,
   } = calculateInvoiceTotals(items, invoice);
 
   const taxType = getTaxType(invoice, businessInfo);
@@ -426,9 +428,15 @@ const ProfessionalTemplate = forwardRef(({
           <div className="w-1/3">
             <div className="border border-gray-200 rounded-lg overflow-hidden" style={{ fontSize: `${type.totalsSize}px` }}>
               <div className="flex justify-between px-3 py-1.5 border-b border-gray-100">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-bold">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
+                <span className="text-gray-600">{charges && charges.length > 0 ? "Items Subtotal" : "Subtotal"}</span>
+                <span className="font-bold">{getCurrencySymbol()}{(itemsSubtotal !== undefined ? itemsSubtotal : subtotal).toFixed(2)}</span>
               </div>
+              {charges?.map((c, i) => (
+                <div key={i} className="flex justify-between px-3 py-1.5 border-b border-gray-100">
+                  <span className="text-gray-600">{c.name} {c.tax_rate > 0 ? `(${c.tax_rate}% GST)` : ''}</span>
+                  <span className="font-bold">{getCurrencySymbol()}{Number(c.amount || 0).toFixed(2)}</span>
+                </div>
+              ))}
               {isIGST ? (
                 <div className="flex justify-between px-3 py-1.5 border-b border-gray-100">
                   <span className="text-gray-600">IGST</span>

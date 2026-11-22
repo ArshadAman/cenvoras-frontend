@@ -83,12 +83,14 @@ const InvoicePreview = forwardRef(({
   
   // Calculate totals factoring in discounts
   const {
+    itemsSubtotal,
     subtotal,
     taxTotal,
     cgst,
     sgst,
     roundOff,
     finalTotal,
+    charges,
   } = calculateInvoiceTotals(items, invoice);
   
   // Forced footer chrome — always shown regardless of template/settings/plan
@@ -689,12 +691,22 @@ const InvoicePreview = forwardRef(({
               <tbody>
                 <tr>
                   <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>
-                    Untaxed Amount
+                    {charges && charges.length > 0 ? "Items Subtotal" : "Untaxed Amount"}
                   </td>
                   <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>
-                    {getCurrencySymbol()}{subtotal.toFixed(2)}
+                    {getCurrencySymbol()}{(itemsSubtotal !== undefined ? itemsSubtotal : subtotal).toFixed(2)}
                   </td>
                 </tr>
+                {charges?.map((c, i) => (
+                  <tr key={i}>
+                    <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>
+                      {c.name} {c.tax_rate > 0 ? `(${c.tax_rate}% GST)` : ''}
+                    </td>
+                    <td className="px-3 py-1 border text-right" style={{ borderColor: colors.tableBorder }}>
+                      {getCurrencySymbol()}{Number(c.amount || 0).toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
                 {isIGST ? (
                   <tr>
                     <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>IGST</td>

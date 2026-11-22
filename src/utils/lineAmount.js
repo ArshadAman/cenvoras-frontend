@@ -52,26 +52,79 @@ export function splitIntraStateTax(taxTotal) {
 }
 
 /**
+ * Sanitizes and calculates breakdown for additional/miscellaneous charges.
+ */
+export function calculateChargesBreakup(charges = [], isTaxLocked = false) {
+  if (!Array.isArray(charges)) {
+    return { sanitizedCharges: [], chargesTaxablePaise: 0, chargesTaxPaise: 0 };
+  }
+
+  let chargesTaxablePaise = 0;
+  let chargesTaxPaise = 0;
+
+  const sanitizedCharges = charges
+    .filter((c) => c && typeof c === 'object')
+    .map((c, idx) => {
+      const name = String(c.name || '').trim() || 'Miscellaneous Expense';
+      const amount = Math.max(0, Number(c.amount) || 0);
+      const taxRate = isTaxLocked ? 0 : Math.max(0, Number(c.tax_rate) || 0);
+      const taxablePaise = Math.round(amount * 100);
+      const taxPaise = Math.round(((taxablePaise * taxRate) / 100));
+      const totalPaise = taxablePaise + taxPaise;
+
+      chargesTaxablePaise += taxablePaise;
+      chargesTaxPaise += taxPaise;
+
+      return {
+        id: c.id || `charge-${idx}`,
+        name,
+        amount: taxablePaise / 100,
+        tax_rate: taxRate,
+        tax_amount: taxPaise / 100,
+        total: totalPaise / 100,
+      };
+    })
+    .filter((c) => c.amount > 0);
+
+  return {
+    sanitizedCharges,
+    chargesTaxablePaise,
+    chargesTaxPaise,
+  };
+}
+
+/**
  * Compute consistent 2-decimal invoice totals for print/PDF templates.
  * - Accumulates per-line taxable and tax rounded to 2 decimal places (matching backend DocumentSyncService).
+ * - Incorporates miscellaneous expenses (additional_charges) with individual tax rates.
  * - Splits intra-state GST into whole-paise CGST & SGST (never 3 decimals like .255).
  * - When round-off is applied (round_off !== 0 or apply_round_off === true), guarantees
  *   finalTotal is a whole rupee (.00) and roundOff reconciles unroundedTotal -> finalTotal.
  */
-export function calculateInvoiceTotals(items = [], invoice = {}) {
+export function calculateInvoiceTotals(items = [], invoice = {}, explicitCharges = null) {
   const validItems = (items || []).filter((item) => item && item.row_type !== 'note');
 
   const subtotalPaise = validItems.reduce((sum, item) => {
     return sum + Math.round(calculateLineAmount(item.quantity, item.price, item.discount) * 100);
   }, 0);
 
-  const taxPaise = validItems.reduce((sum, item) => {
+  const itemTaxPaise = validItems.reduce((sum, item) => {
     return sum + Math.round(calculateLineTax(item.quantity, item.price, item.discount, item.tax) * 100);
   }, 0);
 
-  const subtotal = subtotalPaise / 100;
+  const rawCharges = explicitCharges != null
+    ? explicitCharges
+    : (invoice?.additional_charges || []);
+  const isTaxLocked = Boolean(invoice?.tax_locked || invoice?.gstTaxLocked);
+  const { sanitizedCharges, chargesTaxablePaise, chargesTaxPaise } = calculateChargesBreakup(rawCharges, isTaxLocked);
+
+  const itemsSubtotal = subtotalPaise / 100;
+  const chargesSubtotal = chargesTaxablePaise / 100;
+  const subtotal = (subtotalPaise + chargesTaxablePaise) / 100;
+
+  const taxPaise = itemTaxPaise + chargesTaxPaise;
   const taxTotal = taxPaise / 100;
-  const unroundedTotal = (subtotalPaise + taxPaise) / 100;
+  const unroundedTotal = (subtotalPaise + chargesTaxablePaise + taxPaise) / 100;
   const { cgst, sgst } = splitIntraStateTax(taxTotal);
 
   const rawRoundOff = parseFloat(invoice?.round_off || 0) || 0;
@@ -81,11 +134,11 @@ export function calculateInvoiceTotals(items = [], invoice = {}) {
   let roundOff;
 
   if (isRoundOffApplied) {
-    const baseAmount = validItems.length > 0
+    const baseAmount = (validItems.length > 0 || sanitizedCharges.length > 0)
       ? unroundedTotal
       : (invoice?.total_amount != null ? parseFloat(invoice.total_amount) : 0);
     finalTotal = computeRoundedTotal(baseAmount);
-    roundOff = validItems.length > 0
+    roundOff = (validItems.length > 0 || sanitizedCharges.length > 0)
       ? Number((finalTotal - unroundedTotal).toFixed(2))
       : Number(rawRoundOff.toFixed(2));
   } else {
@@ -96,6 +149,8 @@ export function calculateInvoiceTotals(items = [], invoice = {}) {
   }
 
   return {
+    itemsSubtotal,
+    chargesSubtotal,
     subtotal,
     taxTotal,
     cgst,
@@ -103,5 +158,6 @@ export function calculateInvoiceTotals(items = [], invoice = {}) {
     unroundedTotal,
     roundOff,
     finalTotal,
+    charges: sanitizedCharges,
   };
 }
