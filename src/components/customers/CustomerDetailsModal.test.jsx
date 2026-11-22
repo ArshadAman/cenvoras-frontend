@@ -37,6 +37,34 @@ vi.mock('../../api/delivery_challan', () => ({
   getDeliveryChallans: vi.fn().mockResolvedValue([]),
 }));
 
+vi.mock('../../api/sales_order', () => ({
+  getSalesOrders: vi.fn().mockResolvedValue([
+    {
+      id: 'so-1',
+      order_number: 'SO-2026-001',
+      date: '2026-09-10',
+      due_date: '2026-09-20',
+      total_amount: 12000.00,
+      stage: 'new',
+      customer: 'c-101',
+    },
+  ]),
+}));
+
+vi.mock('../../api/quotation', () => ({
+  getQuotations: vi.fn().mockResolvedValue([
+    {
+      id: 'q-1',
+      quotation_number: 'QT-2026-001',
+      quotation_date: '2026-09-05',
+      due_date: '2026-09-15',
+      total_amount: 8000.00,
+      status: 'pending',
+      customer: 'c-101',
+    },
+  ]),
+}));
+
 vi.mock('react-to-print', () => ({
   useReactToPrint: () => vi.fn(),
 }));
