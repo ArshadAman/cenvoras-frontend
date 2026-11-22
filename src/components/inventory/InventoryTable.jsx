@@ -395,6 +395,25 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
         if (ordering === "-updated_at") return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
         if (ordering === "-created_at") return new Date(b.created_at || 0) - new Date(a.created_at || 0);
 
+        if (ordering === "status" || ordering === "-status") {
+          const getStatusRank = (p) => {
+            const stock = parseFloat(p.stock ?? p.current_stock ?? 0);
+            const minStock = parseFloat(p.low_stock_alert ?? p.min_stock_level ?? 0);
+            if (stock < 0) return 1;
+            if (stock === 0) return 2;
+            if (minStock > 0 && stock <= minStock) return 3;
+            return 4;
+          };
+          const rankA = getStatusRank(a);
+          const rankB = getStatusRank(b);
+          if (rankA !== rankB) {
+            return ordering === "status" ? rankA - rankB : rankB - rankA;
+          }
+          const stockA = parseFloat(a.stock ?? a.current_stock ?? 0);
+          const stockB = parseFloat(b.stock ?? b.current_stock ?? 0);
+          return ordering === "status" ? stockA - stockB : stockB - stockA;
+        }
+
         return 0;
       });
   }, [
@@ -529,7 +548,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const minStock = parseFloat(product.low_stock_alert ?? product.min_stock_level ?? 0);
 
     if (currentStock < 0) {
-      return { text: "Critical", className: "bg-[var(--bg-primary)] text-[var(--text-primary)] border-2 border-[var(--text-primary)] font-bold uppercase" };
+      return { text: "Critical", className: "bg-[var(--status-danger-bg)] text-[var(--status-danger)] border border-[var(--status-danger-border)] font-bold uppercase" };
     } else if (currentStock === 0) {
       return { text: "Out of Stock", className: "bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-default)] font-bold" };
     } else if (minStock > 0 && currentStock > 0 && currentStock <= minStock) {
@@ -600,6 +619,8 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
             <option value="sale_price">Sale Price (Low to High)</option>
             <option value="-unit_price">Cost Price (High to Low)</option>
             <option value="unit_price">Cost Price (Low to High)</option>
+            <option value="status">Status (Critical → In Stock)</option>
+            <option value="-status">Status (In Stock → Critical)</option>
           </select>
           <select
             value={stockFilter}
@@ -869,8 +890,14 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 </th>
               )}
               {visibleColumns.status && (
-                <th className={LIST_TH}>
-                  Status
+                <th
+                  onClick={() => handleSort('status')}
+                  className={LIST_TH_SORTABLE}
+                >
+                  <div className={LIST_TH_LABEL}>
+                    <span>Status</span>
+                    {renderSortIndicator('status')}
+                  </div>
                   {renderResizeHandle("status")}
                 </th>
               )}
@@ -1186,7 +1213,7 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
                 </div>
 
                 {currentStock < 0 ? (
-                  <div className="text-xs text-[var(--text-primary)] bg-[var(--bg-primary)] border-2 border-[var(--text-primary)] px-2 py-1 rounded font-bold uppercase">
+                  <div className="text-xs text-[var(--status-danger)] bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)] px-2 py-1 rounded font-bold uppercase">
                     Critical (Negative Stock)
                   </div>
                 ) : isLowStock ? (
