@@ -65,38 +65,26 @@ const TrustMarquee = () => {
 
 // CA Objection Neutralizer Banner
 const CaObjectionBanner = () => (
-  <section className="relative z-10 py-8 px-6 bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
+  <section className="relative z-10 py-6 px-6 bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
     <div className="max-w-5xl mx-auto">
-      <div className="p-6 sm:p-8 rounded-3xl border-2 border-[var(--accent-primary)]/40 bg-[var(--bg-surface)] shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] flex items-center justify-center shrink-0 mt-1">
-            <CheckBadgeIcon className="w-7 h-7" />
+      <div className="p-5 sm:p-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <div className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] shrink-0" />
+            <span>Your CA keeps using Tally. You get modern cloud billing.</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] font-mono">
-                The Zero-Friction CA Guarantee
-              </span>
-              <span className="text-[10px] font-mono bg-[var(--accent-primary)] text-white px-2 py-0.5 rounded-full font-semibold">
-                Tally Compatible
-              </span>
-            </div>
-            <h3 className="font-display text-lg sm:text-xl font-bold text-[var(--text-primary)] mt-1">
-              "What will my CA say if I switch to Cenvora?"
-            </h3>
-            <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1.5 max-w-2xl leading-relaxed">
-              <strong>Your CA keeps using Tally.</strong> At month-end, click one button to export your sales, purchases, payments, and journals as a certified Tally XML file. Your CA imports it into Tally in 60 seconds with zero manual data entry.
-            </p>
-          </div>
+          <p className="text-xs text-[var(--text-muted)] mt-1 max-w-2xl leading-relaxed">
+            At month-end, download your sales, purchases, and journals as a certified Tally XML file. Your accountant imports it into Tally in 60 seconds with zero manual re-entry.
+          </p>
         </div>
         <a
           href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20can%20you%20show%20me%20how%20the%201-click%20Tally%20XML%20export%20works%3F"
           target="_blank"
           rel="noreferrer"
-          className="btn-secondary !text-xs !py-3 !px-5 whitespace-nowrap shrink-0 shadow-sm flex items-center gap-2"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--accent-primary)] hover:underline whitespace-nowrap shrink-0 group mt-1 sm:mt-0"
         >
-          See Tally Export Demo
-          <ArrowRightIcon className="w-3.5 h-3.5" />
+          <span>See Tally export demo</span>
+          <ArrowRightIcon className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </a>
       </div>
     </div>
