@@ -9,13 +9,10 @@ import {
   ArchiveBoxIcon,
   DocumentChartBarIcon,
   ShieldCheckIcon,
+  QrCodeIcon,
   BanknotesIcon,
   ChevronDownIcon,
-  ArrowPathIcon,
-  BuildingOffice2Icon,
   SparklesIcon,
-  WrenchScrewdriverIcon,
-  CheckBadgeIcon,
 } from '@heroicons/react/24/outline';
 import PublicNavbar from '../components/PublicNavbar';
 import Seo from '../components/Seo';
@@ -40,12 +37,12 @@ const Reveal = ({ children, delay = 0, className = '' }) => (
 // Trust Marquee Strip
 const TrustMarquee = () => {
   const items = [
-    '1-Click Tally XML Export for CAs',
-    'NIC E-Way Bill & GST Compliant',
-    'Multi-Godown Real-Time Stock Sync',
-    'Batch & Expiry (FEFO) Control',
-    '100% Indian Cloud Data Sovereignty',
-    'Keyboard-Only 15-Second Billing',
+    'GST Suvidha Provider (GSP) Gateway Ready',
+    '1-Click Tally XML Export for Your CA',
+    'NIC E-Way Bill & E-Invoice Standard',
+    'ISO/IEC 27001 Security Standard Ready',
+    '100% Indian Data Center Sovereignty',
+    'Unlimited Staff Logins & Zero Per-User Fees',
     'Perpetual License Available · Full Ownership',
   ];
   const doubled = [...items, ...items];
@@ -63,47 +60,19 @@ const TrustMarquee = () => {
   );
 };
 
-// CA Objection Neutralizer Banner
-const CaObjectionBanner = () => (
-  <section className="relative z-10 py-6 px-6 bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
-    <div className="max-w-5xl mx-auto">
-      <div className="p-5 sm:p-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] shrink-0" />
-            <span>Your CA keeps using Tally. You get modern cloud billing.</span>
-          </div>
-          <p className="text-xs text-[var(--text-muted)] mt-1 max-w-2xl leading-relaxed">
-            At month-end, download your sales, purchases, and journals as a certified Tally XML file. Your accountant imports it into Tally in 60 seconds with zero manual re-entry.
-          </p>
-        </div>
-        <a
-          href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20can%20you%20show%20me%20how%20the%201-click%20Tally%20XML%20export%20works%3F"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--accent-primary)] hover:underline whitespace-nowrap shrink-0 group mt-1 sm:mt-0"
-        >
-          <span>See Tally export demo</span>
-          <ArrowRightIcon className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-        </a>
-      </div>
-    </div>
-  </section>
-);
-
 // Product Showcase with animated tab indicator
 const ProductShowcase = () => {
   const [activeTab, setActiveTab] = useState('demo');
 
   const tabs = [
-    { id: 'demo', label: '15-Sec Fast Billing', icon: BoltIcon, image: '/billcreationdemo.gif' },
-    { id: 'dashboard', label: 'Owner Dashboard', icon: DocumentChartBarIcon, image: '/dashboard.png' },
-    { id: 'sales', label: 'GST Sales & Challans', icon: BanknotesIcon, image: '/sales.png' },
-    { id: 'inventory', label: 'Multi-Godown Stock', icon: ArchiveBoxIcon, image: '/inventory.png' },
+    { id: 'demo', label: 'Billing Demo', icon: BoltIcon, image: '/billcreationdemo.gif' },
+    { id: 'dashboard', label: 'Dashboard', icon: DocumentChartBarIcon, image: '/dashboard.png' },
+    { id: 'sales', label: 'Sales Invoices', icon: BanknotesIcon, image: '/sales.png' },
+    { id: 'inventory', label: 'Stock Valuation', icon: ArchiveBoxIcon, image: '/inventory.png' },
   ];
 
   return (
-    <Reveal className="mt-12 sm:mt-16 w-full max-w-5xl mx-auto">
+    <Reveal className="mt-16 sm:mt-20 w-full max-w-5xl mx-auto">
       {/* Tab Buttons */}
       <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
         {tabs.map((tab) => {
@@ -145,7 +114,7 @@ const ProductShowcase = () => {
           </div>
           <div className="flex items-center gap-2 bg-[var(--bg-surface)] px-3 py-1 rounded-md border border-[var(--border-subtle)] font-mono text-xs text-[var(--text-muted)]">
             <ShieldCheckIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-            <span>https://app.cenvora.com/billing</span>
+            <span>https://app.cenvora.com</span>
           </div>
         </div>
 
@@ -167,103 +136,91 @@ const ProductShowcase = () => {
   );
 };
 
-// Head-to-Head Comparison Table
-const CompetitorComparison = () => {
-  const rows = [
-    {
-      feature: 'Fast Cloud Access (Phone / Tablet / PC)',
-      cenvora: 'Native Cloud Web (Zero lag, instant open)',
-      tally: 'Slow RDP / Remote Desktop (Lags & crashes)',
-      vyapar: 'Basic Mobile App (Desktop sync often breaks)',
-    },
-    {
-      feature: 'Multi-Godown Stock Transfers',
-      cenvora: 'Real-time multi-warehouse transfers & balances',
-      tally: 'Requires complex Tally Gold setup',
-      vyapar: 'Not supported (Single-store only)',
-    },
-    {
-      feature: 'Batch & Expiry Tracking (FEFO)',
-      cenvora: 'Automatic oldest-batch pick & expiry alerts',
-      tally: 'Supported on desktop version',
-      vyapar: 'Basic manual batch typing only',
-    },
-    {
-      feature: 'True Double-Entry General Ledger',
-      cenvora: 'Immutable journal audit trail & balance sheet',
-      tally: 'Yes, full double-entry',
-      vyapar: 'No (Single-entry balance estimation)',
-    },
-    {
-      feature: 'CA Tally Interoperability',
-      cenvora: '1-Click Month-End Tally XML Export',
-      tally: 'Native Tally format',
-      vyapar: 'Manual Excel export & re-typing',
-    },
-    {
-      feature: 'Cost & License Structure',
-      cenvora: 'Transparent SaaS OR Custom Lifetime License',
-      tally: '₹1,40,000+ Year 1 (Gold + Cloud Hosting)',
-      vyapar: '₹4,000/yr (Fails when turnover > ₹1 Cr)',
-    },
-  ];
+// Rent vs Own Calculator
+const RentVsOwnCalculator = () => {
+  const [users, setUsers] = useState(6);
+
+  const saasMonthlyPerUser = 1500;
+  const saas3YearCost = users * saasMonthlyPerUser * 12 * 3;
+  const cenvora3YearCost = 75000 + (12000 * 3);
+  const savings = Math.max(0, saas3YearCost - cenvora3YearCost);
+
+  const formatINR = (val) => '₹' + Math.round(val).toLocaleString('en-IN');
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl p-6 sm:p-10 shadow-xl backdrop-blur-xl">
+    <div className="w-full max-w-4xl mx-auto bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
       <div className="max-w-2xl mb-8">
-        <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] font-mono">
-          Head-to-Head Comparison
-        </span>
-        <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight mt-1">
-          Why growing distributors outgrow Tally Cloud & Vyapar
+        <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
+          Why rent your business software when you can own it?
         </h3>
-        <p className="text-[var(--text-muted)] text-sm sm:text-base mt-2 leading-relaxed">
-          See how Cenvora solves multi-godown stock leaks and slow remote-desktop lag without forcing your CA to learn a new system.
+        <p className="text-[var(--text-muted)] text-sm sm:text-base mt-3 leading-relaxed font-body">
+          Monthly subscription ERPs charge per employee. When your team grows, your costs skyrocket. With Cenvora, you pay once and add team members at zero extra per-user penalty.
         </p>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs sm:text-sm border-collapse">
-          <thead>
-            <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-mono">
-              <th className="py-3.5 px-4 font-semibold">Capability</th>
-              <th className="py-3.5 px-4 font-bold text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 rounded-t-xl">
-                Cenvora ERP
-              </th>
-              <th className="py-3.5 px-4 font-semibold">Tally Prime + Cloud RDP</th>
-              <th className="py-3.5 px-4 font-semibold">Vyapar / myBillBook</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--border-subtle)]">
-            {rows.map((row, idx) => (
-              <tr key={idx} className="hover:bg-[var(--bg-primary)]/50 transition-colors">
-                <td className="py-4 px-4 font-medium text-[var(--text-primary)]">{row.feature}</td>
-                <td className="py-4 px-4 font-semibold text-[var(--accent-primary)] bg-[var(--accent-primary)]/5">
-                  <div className="flex items-center gap-1.5">
-                    <CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" />
-                    <span>{row.cenvora}</span>
-                  </div>
-                </td>
-                <td className="py-4 px-4 text-[var(--text-muted)]">{row.tally}</td>
-                <td className="py-4 px-4 text-[var(--text-muted)]">{row.vyapar}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Slider */}
+      <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl p-5 mb-8">
+        <div className="flex justify-between items-center mb-3">
+          <label className="text-sm font-medium text-[var(--text-primary)] font-body">
+            How many people need access?
+          </label>
+          <span className="text-base font-bold text-[var(--text-primary)] bg-[var(--bg-surface)] px-3.5 py-1 rounded-xl border border-[var(--border-subtle)] font-mono font-tabular">
+            {users} Users
+          </span>
+        </div>
+        <input 
+          type="range" 
+          min="2" 
+          max="30" 
+          value={users} 
+          onChange={(e) => setUsers(Number(e.target.value))}
+          className="w-full h-2 bg-[var(--bg-surface)] rounded-lg appearance-none cursor-pointer accent-[var(--accent-primary)]"
+        />
+        <div className="flex justify-between text-xs text-[var(--text-muted)] mt-2 font-mono font-medium">
+          <span>2 users</span>
+          <span>15 users</span>
+          <span>30 users</span>
+        </div>
       </div>
 
-      <div className="mt-8 p-5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Comparison */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="p-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]">
+          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Monthly Subscription ERP</div>
+          <div className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mt-2 font-mono font-tabular">{formatINR(saas3YearCost)}</div>
+          <p className="text-xs text-[var(--text-muted)] mt-1.5">Total cost over 3 years (at ~₹1,500/user/month).</p>
+          <ul className="mt-5 space-y-2.5 text-xs text-[var(--text-muted)] border-t border-[var(--border-subtle)] pt-4">
+            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Recurring fees that never stop</li>
+            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Price hikes every time you hire</li>
+            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Lose your database if you stop paying</li>
+          </ul>
+        </div>
+
+        <div className="p-6 rounded-2xl border-2 border-[var(--accent-primary)] bg-[var(--bg-surface)] shadow-xl">
+          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--accent-primary)]">Cenvora (Buy Once, Own Forever)</div>
+          <div className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mt-2 font-mono font-tabular">{formatINR(cenvora3YearCost)}</div>
+          <p className="text-xs text-[var(--text-muted)] mt-1.5">Total cost over 3 years (Perpetual license + standard maintenance).</p>
+          <ul className="mt-5 space-y-2.5 text-xs text-[var(--text-primary)] border-t border-[var(--border-subtle)] pt-4">
+            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> One-time license with generous team access</li>
+            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Complete flexibility to customize features & logo</li>
+            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Your database is 100% yours forever</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Savings */}
+      <div className="p-6 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="text-xs font-semibold text-[var(--text-primary)]">Ready to see Cenvora running your exact stock?</div>
-          <div className="text-xs text-[var(--text-muted)] mt-0.5">We can demo your products and godowns on a 15-minute call.</div>
+          <div className="text-xs text-[var(--text-muted)] font-medium">Estimated 3-Year Savings</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-[var(--accent-primary)] mt-0.5 font-mono font-tabular">Save {formatINR(savings)}</div>
         </div>
         <a
-          href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20saw%20the%20comparison%20with%20Tally%20and%20want%20a%2015-minute%20walkthrough."
+          href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20checked%20the%20pricing%20calculator%20and%20want%20to%20know%20more%20about%20the%20perpetual%20license."
           target="_blank"
           rel="noreferrer"
-          className="btn-primary !text-xs !py-3 !px-6 whitespace-nowrap shadow-md"
+          className="btn-primary !text-sm !py-3 !px-6 whitespace-nowrap shadow-md cursor-pointer"
         >
-          Request Live Walkthrough
+          Talk to Us on WhatsApp
         </a>
       </div>
     </div>
@@ -273,6 +230,10 @@ const CompetitorComparison = () => {
 // Animated FAQ Accordion
 const FAQ_ITEMS = [
   {
+    q: 'Can I import my existing products and customers from Excel or Tally?',
+    a: 'Yes. We provide simple Excel and CSV import templates for your item catalog, starting stock counts, customer directory, and opening balances. Our engineering team also helps you migrate your data seamlessly with zero downtime.',
+  },
+  {
     q: 'Will my CA be able to file my GST returns without learning new software?',
     a: 'Yes, 100%. Cenvora comes with a built-in 1-Click Tally XML Export engine. At month-end, your accountant clicks one button to download sales, purchases, bank receipts, and journals, and imports the file directly into TallyPrime in 60 seconds. Your CA does not have to learn or touch anything new.',
   },
@@ -281,20 +242,12 @@ const FAQ_ITEMS = [
     a: 'Our Lifetime License gives you complete flexibility and perpetual software ownership. You pay once and own the software license forever. You can completely customize your Cenvora: put it on your own domain (erp.yourbrand.com), use your company branding on invoice PDFs, and request custom features or specific workflow modules built specifically for your trade.',
   },
   {
-    q: 'Can we migrate our existing party balances, stock counts, and items from Tally or Excel?',
-    a: 'Yes. With our 24-Hour White-Glove Migration Service, you send us your Tally backup or Excel spreadsheets. Our engineering team imports your item catalog, HSN codes, opening stock counts per godown, and customer/vendor balances into Cenvora within 24 hours so you experience zero downtime.',
+    q: 'How many devices and team members can use Cenvora?',
+    a: 'You can create logins for cashiers, stock managers, sales staff, and your accountant. Cenvora does not penalize you with per-user subscription fees.',
   },
   {
-    q: 'Where is our data stored and can we download local backups?',
-    a: 'Your data is hosted in high-security, ISO-certified data centers in India with automated daily encrypted backups. Furthermore, Cenvora gives you a 1-click button to download your complete company database and Excel ledger archive to your local PC or Google Drive every single evening.',
-  },
-  {
-    q: 'Can our counter billing operators use this with keyboard shortcuts only?',
-    a: 'Yes. Cenvora is built specifically for fast wholesale counter billing. Your operators can traverse form inputs using pure keyboard shortcuts (Enter to jump fields, Tab, Ctrl+S to save, Ctrl+P to print) without needing to touch a mouse during rush hours.',
-  },
-  {
-    q: 'Do you charge per user or per invoice volume?',
-    a: 'No. Cenvora does not penalize you for hiring more billing clerks or generating more invoices. All plans come with generous multi-user access and unlimited invoice generation.',
+    q: 'Where is our data stored? Is it private?',
+    a: 'Your data is stored in dedicated, encrypted databases located in Indian data centers. We never sell or share your business data, and your records are completely isolated from other businesses.',
   },
 ];
 
@@ -342,11 +295,11 @@ export default function LandingPage() {
     {
       '@context': 'https://schema.org',
       '@type': 'SoftwareApplication',
-      name: 'Cenvora ERP',
+      name: 'Cenvora',
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web, Android, iOS, Windows, Mac',
       url: siteUrl,
-      description: 'Multi-godown GST billing and double-entry accounting ERP for Indian wholesale distributors and manufacturers with 1-click Tally export.',
+      description: 'GST billing and stock management software for Indian businesses. Available in transparent annual SaaS or customizable perpetual license.',
       offers: {
         '@type': 'Offer',
         price: '17999',
@@ -367,8 +320,8 @@ export default function LandingPage() {
   return (
     <div className="font-body text-[var(--text-primary)] bg-[var(--bg-primary)] min-h-screen">
       <Seo
-        title="Cenvora — Multi-Godown GST Billing & ERP for Wholesalers (Tally Compatible)"
-        description="Run multi-godown stock, batch expiry (FEFO), and fast counter GST billing with 1-click Tally export. Available in transparent annual SaaS or custom lifetime license."
+        title="Cenvora — Run Your Business & GST Billing From The Cloud"
+        description="Run your business and billing from the cloud without changing your CA. GST invoices, live stock, and customer ledgers with 1-click Tally export."
         canonicalPath="/"
         structuredData={structuredData}
       />
@@ -383,8 +336,8 @@ export default function LandingPage() {
       <PublicNavbar
         links={[
           { label: 'Features', href: '#features' },
-          { label: 'Comparison', href: '#comparison' },
           { label: 'Pricing', href: '#pricing' },
+          { label: 'Why Own?', href: '#why-own' },
           { label: 'HSN Lookup', href: '/gst-hsn-guide' },
           { label: 'Contact', href: '/contact' },
         ]}
@@ -395,18 +348,13 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
           {/* Left Column — Copy */}
           <div className="flex-1 max-w-xl lg:max-w-none">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs font-semibold text-[var(--accent-primary)] mb-5">
-              <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
-              Built for Indian Wholesalers, Distributors & Light Fabricators
-            </div>
-
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
               className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[var(--text-primary)] leading-[1.08]"
             >
-              Run your godowns and billing from the cloud.{' '}
+              Run your business and billing from the cloud.{' '}
               <span className="text-[var(--accent-primary)]">Without changing your CA.</span>
             </motion.h1>
 
@@ -416,7 +364,7 @@ export default function LandingPage() {
               transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
               className="mt-5 text-base sm:text-lg text-[var(--text-muted)] max-w-lg leading-relaxed"
             >
-              The only modern multi-warehouse ERP with real double-entry accounting that exports directly to your CA’s Tally in 1 click. Zero remote-desktop lag. No per-user fees.
+              GST invoices, live stock, and customer ledgers with 1-click Tally export for your accountant. Zero remote-desktop lag. No per-user traps.
             </motion.p>
 
             {/* CTAs */}
@@ -430,11 +378,11 @@ export default function LandingPage() {
                 onClick={() => setIsCalendlyOpen(true)}
                 className="btn-primary !text-sm !py-3.5 !px-7 cursor-pointer shadow-lg"
               >
-                Book a Free 15-Min Demo
+                Book a Free Demo
               </button>
 
               <a
-                href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20would%20like%20to%20see%20a%20quick%20demo%20of%20the%20multi-godown%20billing%20ERP."
+                href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20would%20like%20to%20see%20a%20quick%20demo%20of%20the%20billing%20software."
                 target="_blank"
                 rel="noreferrer"
                 className="btn-secondary !text-sm !py-3.5 !px-6 flex items-center gap-2 cursor-pointer shadow-sm"
@@ -452,16 +400,16 @@ export default function LandingPage() {
               className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--text-muted)] font-medium"
             >
               <span className="flex items-center gap-1.5 font-mono">
-                <CheckIcon className="w-4 h-4 text-[var(--accent-primary)]" />
-                1-Click Tally XML Export
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
+                1-Click Tally Export
               </span>
               <span className="flex items-center gap-1.5 font-mono">
-                <CheckIcon className="w-4 h-4 text-[var(--accent-primary)]" />
-                24-Hour White-Glove Migration
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
+                No monthly per-user fees
               </span>
               <span className="flex items-center gap-1.5 font-mono">
-                <CheckIcon className="w-4 h-4 text-[var(--accent-primary)]" />
-                100% Indian Cloud Sovereignty
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
+                100% India-hosted data
               </span>
             </motion.div>
           </div>
@@ -478,36 +426,30 @@ export default function LandingPage() {
       {/* ─── Trust Marquee Strip ─── */}
       <TrustMarquee />
 
-      {/* ─── CA Objection Neutralizer ─── */}
-      <CaObjectionBanner />
-
       {/* ─── 2. CORE PILLARS — Asymmetric Bento Grid ─── */}
       <section id="features" className="relative z-10 py-24 px-6 bg-[var(--bg-primary)]">
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mb-14">
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] font-mono">
-                Purpose-Built For Wholesale Trade
-              </span>
-              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight mt-1">
-                Everything your business runs on. Under one roof.
+              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
+                Everything your business runs on
               </h2>
               <p className="mt-3 text-[var(--text-muted)] text-sm sm:text-base font-body">
-                Made for owners and counter operators who need speed, accuracy, and zero stock confusion.
+                Made for shop owners and distributors — not accountants.
               </p>
             </div>
           </Reveal>
 
-          {/* Bento Grid */}
+          {/* Bento: 1 large left + 2 stacked right */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
             {/* Large cell */}
             <Reveal className="md:col-span-3 p-8 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md hover:border-[var(--accent-primary)] transition-all duration-300 shadow-xl group">
               <div className="w-14 h-14 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-6 group-hover:scale-105 transition-transform">
                 <BoltIcon className="w-7 h-7" />
               </div>
-              <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mb-2">15-Second Counter Billing (Keyboard-First)</h3>
+              <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mb-2">10-Second GST Invoicing</h3>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-md font-body">
-                Keep counter lines moving fast during mandi peak hours. Complete keyboard navigation (<code className="font-mono text-xs bg-[var(--bg-primary)] px-1.5 py-0.5 rounded">Enter</code>, <code className="font-mono text-xs bg-[var(--bg-primary)] px-1.5 py-0.5 rounded">Tab</code>, <code className="font-mono text-xs bg-[var(--bg-primary)] px-1.5 py-0.5 rounded">Ctrl+S</code>). Auto-computes CGST/SGST/IGST and prints formal A4, paper-saving A5, or thermal delivery slips in seconds.
+                Create clean GST tax bills with auto-calculated CGST, SGST, and IGST. Auto-fills customer details and prints formal A4 or A5 invoices with your branding.
               </p>
             </Reveal>
 
@@ -517,9 +459,9 @@ export default function LandingPage() {
                 <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-4 group-hover:scale-105 transition-transform">
                   <ArchiveBoxIcon className="w-6 h-6" />
                 </div>
-                <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Multi-Godown & Batch (FEFO) Control</h3>
+                <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Real-Time Stock Updates</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed font-body">
-                  Transfer stock across godowns without missing items. Automatically route oldest expiring batches first to eliminate inventory dead-stock.
+                  Stock deducts as invoices are generated. Low-stock alerts keep you ahead.
                 </p>
               </Reveal>
 
@@ -527,9 +469,9 @@ export default function LandingPage() {
                 <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-4 group-hover:scale-105 transition-transform">
                   <DocumentChartBarIcon className="w-6 h-6" />
                 </div>
-                <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Real Double-Entry Accounting</h3>
+                <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Ledgers & Tax Reports</h3>
                 <p className="text-sm text-[var(--text-muted)] leading-relaxed font-body">
-                  An immutable General Ledger, live customer outstanding balances, credit limits, and instant P&L and Balance Sheet reports.
+                  Track customer balances, record settlements, and export GSTR-1 and GSTR-3B summaries.
                 </p>
               </Reveal>
             </div>
@@ -543,10 +485,10 @@ export default function LandingPage() {
           <Reveal>
             <div className="max-w-2xl mx-auto text-center mb-4">
               <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
-                Inspect the system in action
+                See the whole system
               </h2>
               <p className="mt-3 text-[var(--text-muted)] text-sm sm:text-base font-body">
-                Clean visual density built for high-throughput daily trade operations.
+                From billing to staff permissions — every module built for smooth daily trade.
               </p>
             </div>
           </Reveal>
@@ -561,11 +503,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── 5. HEAD-TO-HEAD COMPETITOR COMPARISON ─── */}
-      <section id="comparison" className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-primary)]">
+      {/* ─── 5. WHY OWN / RENT VS OWN CALCULATOR ─── */}
+      <section id="why-own" className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-primary)]">
         <div className="max-w-5xl mx-auto">
           <Reveal>
-            <CompetitorComparison />
+            <RentVsOwnCalculator />
           </Reveal>
         </div>
       </section>
@@ -575,14 +517,11 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mx-auto text-center mb-16">
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] font-mono">
-                Transparent Pricing Architecture
-              </span>
-              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight mt-1">
-                Choose the way you want to work
+              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
+                Choose the plan that fits your business
               </h2>
               <p className="mt-3 text-[var(--text-muted)] text-sm sm:text-base font-body">
-                Start with our high-value annual cloud subscription, or own your software license forever with complete customization.
+                Flexible annual cloud subscriptions, or own your software license forever with complete customization.
               </p>
             </div>
           </Reveal>
@@ -595,7 +534,7 @@ export default function LandingPage() {
                   <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] font-mono">Cloud SaaS</div>
                   <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">Annual Professional</h3>
                   <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed font-body">
-                    Best for growing wholesalers & distributors wanting fast cloud setup with zero IT headaches.
+                    Best for single-business shops and distributors wanting zero setup headaches.
                   </p>
 
                   <div className="mt-6 pb-6 border-b border-[var(--border-subtle)]">
@@ -604,25 +543,25 @@ export default function LandingPage() {
                       <span className="text-xs text-[var(--text-muted)]">/ month</span>
                     </div>
                     <div className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">Billed annually at ₹17,999/year</div>
-                    <div className="mt-4 p-3 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
-                      <div className="flex justify-between"><span>Hosting & Backups:</span><span className="text-[var(--status-success)] font-semibold">Included</span></div>
-                      <div className="flex justify-between"><span>GST Statutory Updates:</span><span className="text-[var(--status-success)] font-semibold">Included</span></div>
+                    <div className="mt-4 p-3.5 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1.5 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
+                      <div className="flex justify-between"><span>Hosting & Backups:</span><span className="text-[var(--text-primary)] font-medium">Included</span></div>
+                      <div className="flex justify-between"><span>GST Statutory Updates:</span><span className="text-[var(--text-primary)] font-medium">Included</span></div>
                     </div>
                   </div>
 
                   <ul className="mt-6 space-y-2.5 text-xs text-[var(--text-muted)]">
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Up to 2 Godowns / Warehouses</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Up to 3 Active User Logins</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Full GST Billing & Double-Entry Ledgers</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Generous staff logins and devices</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Full GST billing & stock management</li>
                     <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> 1-Click Tally XML Export for your CA</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Automated daily cloud snapshot backups</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Automated daily cloud backups</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> GST statutory updates & WhatsApp support</li>
                   </ul>
                 </div>
 
                 <div className="mt-8 pt-4">
                   <Link
                     to="/signup"
-                    className="btn-secondary !text-xs !py-3 w-full text-center block"
+                    className="btn-secondary !text-xs !py-3 w-full text-center block cursor-pointer"
                   >
                     Start 14-Day Free Trial
                   </Link>
@@ -630,10 +569,11 @@ export default function LandingPage() {
               </div>
             </Reveal>
 
-            {/* Tier 2: Lifetime License & Custom ERP (★ Most Popular) */}
+            {/* Tier 2: Lifetime License & Custom ERP (★ Most Popular - Centered Badge) */}
             <Reveal delay={0.1}>
               <div className="h-full p-7 rounded-3xl border-2 border-[var(--accent-primary)] bg-[var(--bg-surface)] flex flex-col justify-between relative shadow-2xl">
-                <div className="absolute -top-3.5 left-6 px-3.5 py-0.5 bg-[var(--accent-primary)] text-white text-xs font-black uppercase rounded-full shadow-md flex items-center gap-1.5">
+                {/* Centered Badge */}
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-[var(--accent-primary)] text-white text-xs font-black uppercase rounded-full shadow-md flex items-center gap-1.5 whitespace-nowrap z-20">
                   <SparklesIcon className="w-3.5 h-3.5" />
                   Lifetime Ownership · Complete Flexibility
                 </div>
@@ -642,24 +582,24 @@ export default function LandingPage() {
                   <div className="text-xs font-semibold uppercase tracking-wider text-[var(--accent-primary)] font-mono">Perpetual License</div>
                   <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">Lifetime / Custom ERP</h3>
                   <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed font-body">
-                    Buy once, own forever. Tailored for established distributors who want their own brand, custom workflows, and private data.
+                    Buy once, own forever. Complete flexibility: customize your Cenvora from logos to adding new features.
                   </p>
 
                   <div className="mt-6 pb-6 border-b border-[var(--border-subtle)]">
                     <div className="text-3xl font-extrabold text-[var(--text-primary)] font-mono font-tabular">Custom Quote</div>
                     <div className="text-xs text-[var(--accent-primary)] mt-0.5 font-bold">Contact Founders / Sales for Tailored Pricing</div>
-                    <div className="mt-4 p-3 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
-                      <div className="flex justify-between"><span>Software License:</span><span className="text-[var(--text-primary)] font-semibold">Perpetual (Yours Forever)</span></div>
-                      <div className="flex justify-between"><span>Customization:</span><span className="text-[var(--text-primary)] font-semibold">Full Workflow Flexibility</span></div>
+                    <div className="mt-4 p-3.5 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1.5 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
+                      <div className="flex justify-between"><span>Software License:</span><span className="text-[var(--text-primary)] font-medium">Perpetual (Yours Forever)</span></div>
+                      <div className="flex justify-between"><span>Customization:</span><span className="text-[var(--text-primary)] font-medium">Full Workflow Flexibility</span></div>
                     </div>
                   </div>
 
                   <ul className="mt-6 space-y-2.5 text-xs text-[var(--text-primary)] font-medium">
                     <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> <strong>Complete Flexibility:</strong> Customize from your logos to adding custom workflows</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Custom branding on domain (erp.yourbrand.com) & PDFs</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Your custom domain (erp.yourbrand.com) with white-label PDFs</li>
                     <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Dedicated, isolated private database container</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> VIP 24-Hour White-Glove Tally/Excel Data Migration</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Direct founder & dedicated engineer support on WhatsApp</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> 1-Click Tally XML export so your CA never complains</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Priority direct founder & engineer support on WhatsApp</li>
                   </ul>
                 </div>
 
@@ -668,7 +608,7 @@ export default function LandingPage() {
                     href="https://wa.me/917205289643?text=Hi%20Cenvora%20Team%2C%20I%20am%20interested%20in%20the%20Lifetime%20License%20and%20want%20to%20discuss%20customizing%20Cenvora%20for%20my%20business."
                     target="_blank"
                     rel="noreferrer"
-                    className="btn-primary !text-xs !py-3 w-full text-center block shadow-md"
+                    className="btn-primary !text-xs !py-3 w-full text-center block shadow-md cursor-pointer"
                   >
                     Contact Founders on WhatsApp
                   </a>
@@ -676,34 +616,30 @@ export default function LandingPage() {
               </div>
             </Reveal>
 
-            {/* Tier 3: Multi-Branch Scale (SaaS) */}
+            {/* Tier 3: Enterprise / Self-Hosted */}
             <Reveal delay={0.2}>
               <div className="h-full p-7 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md flex flex-col justify-between hover:border-[var(--accent-primary)] transition-all">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] font-mono">Multi-Branch SaaS</div>
-                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">Multi-Branch Enterprise</h3>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] font-mono">Tier 3</div>
+                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">Enterprise / Self-Hosted</h3>
                   <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed font-body">
-                    For high-volume multi-location businesses needing unlimited warehouses and high concurrency.
+                    For businesses that want the software deployed on their own private cloud or local server.
                   </p>
 
                   <div className="mt-6 pb-6 border-b border-[var(--border-subtle)]">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-extrabold text-[var(--text-primary)] font-mono font-tabular">₹2,999</span>
-                      <span className="text-xs text-[var(--text-muted)]">/ month</span>
-                    </div>
-                    <div className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">Billed annually at ₹35,999/year</div>
-                    <div className="mt-4 p-3 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
-                      <div className="flex justify-between"><span>Godowns / Branches:</span><span className="text-[var(--text-primary)] font-semibold">Unlimited</span></div>
-                      <div className="flex justify-between"><span>Account Manager:</span><span className="text-[var(--status-success)] font-semibold">Dedicated</span></div>
+                    <div className="text-3xl font-extrabold text-[var(--text-primary)] font-mono font-tabular">Custom Quote</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">On-Premise / Private AWS Deployment</div>
+                    <div className="mt-4 p-3.5 bg-[var(--bg-primary)] rounded-xl text-xs space-y-1.5 text-[var(--text-muted)] border border-[var(--border-subtle)] font-mono font-tabular">
+                      <div className="flex justify-between"><span>Deployment:</span><span className="text-[var(--text-primary)] font-medium">Your AWS / Private Cloud</span></div>
+                      <div className="flex justify-between"><span>Data Control:</span><span className="text-[var(--accent-primary)] font-medium">100% On-Premise</span></div>
                     </div>
                   </div>
 
                   <ul className="mt-6 space-y-2.5 text-xs text-[var(--text-muted)]">
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Unlimited Godowns & Warehouses</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Up to 10 User Logins & Billing Desks</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Advanced Batch & FEFO Expiry Routing</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Multi-location stock transfer journals</li>
-                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> 24/7 Phone & Priority WhatsApp SLA</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Installed on your own AWS or private server</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Assistance with full data migration from Tally/Excel</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Custom integrations and custom APIs available</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Dedicated SLA and security audit compliance</li>
                   </ul>
                 </div>
 
@@ -712,39 +648,12 @@ export default function LandingPage() {
                     onClick={() => setIsCalendlyOpen(true)}
                     className="btn-secondary !text-xs !py-3 w-full text-center block cursor-pointer"
                   >
-                    Schedule Live Consultation
+                    Schedule Consultation
                   </button>
                 </div>
               </div>
             </Reveal>
           </div>
-
-          {/* Grand Slam Risk Reversal & Bonus Callout */}
-          <Reveal className="mt-14 p-8 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md shadow-xl max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] font-mono">
-                  Zero-Risk Onboarding
-                </span>
-                <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mt-1">
-                  24-Hour White-Glove Data Migration
-                </h3>
-                <p className="text-xs text-[var(--text-muted)] mt-2 leading-relaxed">
-                  Send us your Tally backup or Excel spreadsheets. Our engineers will import all your parties, opening balances, and warehouse stock within 24 hours so you experience zero business downtime.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
-                <div className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-2">
-                  <ShieldCheckIcon className="w-5 h-5 text-[var(--accent-primary)]" />
-                  60-Day Unconditional Double-Safety Guarantee
-                </div>
-                <p className="text-xs text-[var(--text-muted)] mt-2 leading-relaxed">
-                  Run Cenvora alongside your existing software for 60 full days. If your counter billing isn't faster, your stock isn't 100% accurate, or your CA has any trouble with the Tally export, we will refund every single rupee and export all your data back to Excel.
-                </p>
-              </div>
-            </div>
-          </Reveal>
         </div>
       </section>
 
@@ -753,10 +662,7 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto">
           <Reveal>
             <div className="text-center mb-14">
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] font-mono">
-                Got Questions?
-              </span>
-              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight mt-1">
+              <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
                 Frequently Asked Questions
               </h2>
             </div>
@@ -770,10 +676,10 @@ export default function LandingPage() {
         <Reveal>
           <div className="max-w-2xl mx-auto">
             <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
-              See Cenvora live on your screen in 15 minutes.
+              See it live in 20 minutes.
             </h2>
             <p className="mt-3 text-[var(--text-muted)] text-sm font-body">
-              Book a screen walkthrough or chat with our founding team on WhatsApp.
+              Book a screen walkthrough or chat with our team on WhatsApp.
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -781,10 +687,10 @@ export default function LandingPage() {
                 onClick={() => setIsCalendlyOpen(true)}
                 className="w-full sm:w-auto px-7 py-3.5 btn-primary !text-sm cursor-pointer shadow-lg"
               >
-                Book a Free 15-Min Demo
+                Book a Free Demo
               </button>
               <a
-                href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20would%20like%20to%20discuss%20the%20ERP%20for%20my%20business."
+                href="https://wa.me/917205289643"
                 target="_blank"
                 rel="noreferrer"
                 className="w-full sm:w-auto px-7 py-3.5 btn-secondary !text-sm flex items-center justify-center gap-2 cursor-pointer shadow-sm"
@@ -793,12 +699,13 @@ export default function LandingPage() {
               </a>
             </div>
 
+            {/* Trial link */}
             <div className="mt-5">
               <Link
                 to="/signup"
                 className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs font-medium transition-colors inline-flex items-center gap-1.5"
               >
-                Or start an instant 14-day free trial <ArrowRightIcon className="w-3.5 h-3.5" />
+                Or start a 14-day free trial <ArrowRightIcon className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
@@ -814,7 +721,7 @@ export default function LandingPage() {
               <BrandLogo className="h-9 sm:h-10 w-auto" />
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              Multi-godown GST billing, inventory, and double-entry accounting ERP for Indian wholesale distributors and manufacturers with 1-click Tally export.
+              Simple business software. GST billing, inventory, and customer management for Indian businesses.
             </p>
             <p className="mt-4 text-[var(--text-muted)] font-mono">&copy; {new Date().getFullYear()} Cenvora.</p>
           </div>
@@ -824,7 +731,7 @@ export default function LandingPage() {
             <h4 className="text-[var(--text-primary)] font-semibold mb-3 font-display text-sm">Product</h4>
             <ul className="space-y-2">
               <li><a href="#features" className="hover:text-[var(--text-primary)] transition-colors">Features</a></li>
-              <li><a href="#comparison" className="hover:text-[var(--text-primary)] transition-colors">Comparison</a></li>
+              <li><a href="#why-own" className="hover:text-[var(--text-primary)] transition-colors">Why Own?</a></li>
               <li><a href="#pricing" className="hover:text-[var(--text-primary)] transition-colors">Pricing</a></li>
               <li><Link to="/gst-hsn-guide" className="hover:text-[var(--text-primary)] transition-colors">HSN Lookup</Link></li>
               <li><Link to="/sitemap" className="hover:text-[var(--text-primary)] transition-colors">Sitemap</Link></li>
