@@ -249,6 +249,10 @@ const FAQ_ITEMS = [
     q: 'Where is our data stored? Is it private?',
     a: 'Your data is stored in dedicated, encrypted databases located in Indian data centers. We never sell or share your business data, and your records are completely isolated from other businesses.',
   },
+  {
+    q: 'Can counter billing staff operate this with keyboard shortcuts only?',
+    a: 'Yes. Cenvora is optimized for rapid counter operation with keyboard navigation (Enter to advance inputs, Tab, Ctrl+S to save, Ctrl+P to print) so operators can issue invoices without touching a mouse.',
+  },
 ];
 
 const FaqAccordion = () => {
