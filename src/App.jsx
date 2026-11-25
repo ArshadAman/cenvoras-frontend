@@ -6,6 +6,7 @@ import ContactUs from './pages/ContactUs'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
 import Sitemap from './pages/Sitemap'
+import CAPortal from './pages/CAPortal'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
@@ -144,6 +145,7 @@ function App() {
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/sitemap" element={<Sitemap />} />
+        <Route path="/ca-portal" element={<CAPortal />} />
 
         {/* --- PROTECTED ROUTES WITH LAYOUT --- */}
         <Route element={isAuthenticated ? <AppLayout onLogout={handleLogout} /> : <Navigate to="/" replace />}>
