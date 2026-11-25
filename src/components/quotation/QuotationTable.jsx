@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import {
@@ -32,6 +33,7 @@ const DEFAULT_COLUMN_WIDTHS = {
 };
 
 export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
@@ -269,6 +271,24 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                       }`}>
                         {q.status?.replace('_', ' ')}
                       </span>
+                      {q.converted_orders && q.converted_orders.length > 0 && (
+                        <div className="text-[11px] text-[var(--text-muted)] mt-1 font-mono flex flex-wrap items-center gap-1">
+                          <span>→</span>
+                          {q.converted_orders.map((order, idx) => (
+                            <React.Fragment key={order.id || idx}>
+                              {idx > 0 && <span>,</span>}
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/sales-orders?orderNumber=${encodeURIComponent(order.order_number)}&orderId=${order.id}`)}
+                                className="text-[var(--accent-primary)] hover:underline font-semibold focus:outline-none"
+                                title={`View Sales Order ${order.order_number}`}
+                              >
+                                {order.order_number}
+                              </button>
+                            </React.Fragment>
+                          ))}
+                        </div>
+                      )}
                     </td>
                     <td className={LIST_TD}>
                       <div className="flex items-center justify-center gap-1.5">
@@ -396,6 +416,24 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                         }`}>
                           {q.status?.replace('_', ' ')}
                         </span>
+                        {q.converted_orders && q.converted_orders.length > 0 && (
+                          <div className="text-[11px] text-[var(--text-muted)] mt-1 font-mono flex flex-wrap items-center justify-end gap-1">
+                            <span>→</span>
+                            {q.converted_orders.map((order, idx) => (
+                              <React.Fragment key={order.id || idx}>
+                                {idx > 0 && <span>,</span>}
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/sales-orders?orderNumber=${encodeURIComponent(order.order_number)}&orderId=${order.id}`)}
+                                  className="text-[var(--accent-primary)] hover:underline font-semibold focus:outline-none"
+                                  title={`View Sales Order ${order.order_number}`}
+                                >
+                                  {order.order_number}
+                                </button>
+                              </React.Fragment>
+                            ))}
+                          </div>
+                        )}
                      </div>
                   </div>
 
