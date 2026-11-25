@@ -24,6 +24,7 @@ import DateInputField from "../common/DateInputField";
 import CustomerForm from "../customers/CustomerForm";
 import useEscKey from "../../hooks/useEscStack";
 import useUnsavedPrompt from "../../hooks/useUnsavedPrompt";
+import useCounterBillingShortcuts from "../../hooks/useCounterBillingShortcuts";
 import { getTodayKolkata } from "../../utils/date";
 import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
 import { GST_RATES, gstRatesWithLegacy } from "../../utils/gstRates";
@@ -423,6 +424,7 @@ export function ProductAutocomplete({ idx, values, setFieldValue, onInputChange,
                   setIsFocused(false);
                 }}
                 placeholder="Product name"
+                data-counter-item-search="true"
                 className={`${ITEM_INPUT_CLASS} transition-all ${showDescription && !descExpanded && !hasDescription ? "!pr-7" : ""}`}
                 autoComplete="off"
                 onKeyDown={(e) => {
@@ -1072,50 +1074,13 @@ export default function SalesForm({
   // Register hierarchical ESC key navigation for this form (auto-saves draft if data entered)
   useEscKey(() => (handleBeforeCloseRef.current ? handleBeforeCloseRef.current() : onClose()), isOpen, 10);
 
-  // Keyboard Shortcuts Logic
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // F2 to Save
-      if (e.key === "F2") {
-        e.preventDefault();
-        const submitBtn = document.querySelector('button[type="submit"]');
-        if(submitBtn) {
-            submitBtn.click();
-            toast.info(`Saving ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'} (F2)...`);
-        }
-      }
-
-      // Enter Navigation (Enter acts like Tab)
-      if (e.key === "Enter") {
-        const target = e.target;
-        // Only if it's an input or select, and NOT a button/textarea
-        if ((target.tagName === "INPUT" || target.tagName === "SELECT") && !target.dataset.noEnter) {
-          e.preventDefault();
-          const form = target.form;
-          if (form) {
-              const index = Array.prototype.indexOf.call(form, target);
-              // Find next navigable element
-              let nextIndex = index + 1;
-              while (form.elements[nextIndex]) {
-                 const next = form.elements[nextIndex];
-                 // Skip hidden, disabled, or readOnly that shouldn't be focused
-                 if (next.tagName !== "FIELDSET" && !next.hidden && !next.disabled && next.offsetParent !== null && next.tabIndex >= 0) {
-                     next.focus();
-                     break;
-                 }
-                 nextIndex++;
-              }
-              // If last element, maybe add row? For now just stop.
-          }
-        }
-      }
-    };
-
-    if (isOpen) {
-        window.addEventListener("keydown", handleKeyDown);
-    }
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  // Counter Billing Keyboard Shortcuts (F2/Ctrl+S Save, F3 Party, F8 Item/Barcode, Alt+N +Row, Enter->Tab)
+  useCounterBillingShortcuts({
+    isOpen,
+    onSaveToast: () => {
+      toast.info(`Saving ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : 'Invoice'}...`);
+    },
+  });
   const queryClient = useQueryClient();
   const isEdit = !!editData && !!editData.id;
   const formikRef = React.useRef(null);
@@ -1930,10 +1895,16 @@ export default function SalesForm({
                 ? `Edit ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : salesFormDocName(companyProfile)}`
                 : `New ${isSalesOrder ? 'Sales Order' : isDeliveryChallan ? 'Delivery Challan' : isQuotation ? 'Quotation' : salesFormDocName(companyProfile)}`}
             </h2>
-             <p className="text-xs text-[var(--text-secondary)] flex items-center gap-2">
-              <span>Press <kbd className="bg-[var(--bg-primary)] px-1.5 py-0.5 rounded text-[var(--text-primary)] border border-[var(--border-subtle)]">F2</kbd> to save</span>
+             <p className="text-xs text-[var(--text-secondary)] flex flex-wrap items-center gap-2">
+              <span><kbd className="bg-[var(--bg-primary)] px-1.5 py-0.5 rounded text-[var(--text-primary)] border border-[var(--border-subtle)]">F2</kbd> / <kbd className="bg-[var(--bg-primary)] px-1.5 py-0.5 rounded text-[var(--text-primary)] border border-[var(--border-subtle)]">Ctrl+S</kbd> Save</span>
               <span>•</span>
-              <span><kbd className="bg-[var(--bg-primary)] px-1.5 py-0.5 rounded text-[var(--text-primary)] border border-[var(--border-subtle)]">Esc</kbd> to close</span>
+              <span><kbd className="bg-[var(--bg-primary)] px-1.5 py-0.5 rounded text-[var(--text-primary)] border border-[var(--border-subtle)]">F3</kbd> Party</span>
+              <span>•</span>
+              <span><kbd className="bg-[var(--bg-primary)] px-1.5 py-0.5 rounded text-[var(--text-primary)] border border-[var(--border-subtle)]">F8</kbd> Item</span>
+              <span>•</span>
+              <span><kbd className="bg-[var(--bg-primary)] px-1.5 py-0.5 rounded text-[var(--text-primary)] border border-[var(--border-subtle)]">Alt+N</kbd> +Row</span>
+              <span>•</span>
+              <span><kbd className="bg-[var(--bg-primary)] px-1.5 py-0.5 rounded text-[var(--text-primary)] border border-[var(--border-subtle)]">Esc</kbd> Close</span>
             </p>
           </div>
           <button
@@ -4068,6 +4039,7 @@ export default function SalesForm({
                                 storage_condition: "",
                                 isExistingProduct: false,
                               })}
+                              data-counter-add-item="true"
                               className="btn-secondary flex items-center gap-2 px-4 py-2 text-sm"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
