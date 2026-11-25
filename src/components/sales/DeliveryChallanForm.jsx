@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DateInputField from "../common/DateInputField";
+import { sortProductsByRelevance } from "../../utils/productSearch";
 
 // Reuse ProductAutocomplete and CustomerAutocomplete from SalesOrderForm logic (duplicated for now for independence)
 // Ideally these should be shared components
@@ -55,8 +56,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setFieldValue(`items.${idx}.product`, value);
     
     if (value.trim()) {
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(value.toLowerCase())
+      const filtered = sortProductsByRelevance(
+        products.filter(product =>
+          product.name.toLowerCase().includes(value.toLowerCase())
+        ),
+        value
       );
       setFilteredProducts(filtered);
       setShowDropdown(filtered.length > 0);

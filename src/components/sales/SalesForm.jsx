@@ -30,7 +30,7 @@ import { GST_RATES, gstRatesWithLegacy } from "../../utils/gstRates";
 import { calculateLineAmount, calculateLineTax, calculateLineGross, calculateChargesBreakup } from "../../utils/lineAmount";
 import AdditionalChargesSection from "../common/AdditionalChargesSection";
 import { yupGstinOptional } from "../../utils/gstin";
-import { matchesProductSearch, filterProductsBySearch } from "../../utils/productSearch";
+import { matchesProductSearch, filterProductsBySearch, sortProductsByRelevance } from "../../utils/productSearch";
 
 const ITEM_CELL_FOCUS = "focus:border-[var(--border-focus)] focus:ring-2 focus:ring-[var(--focus-ring)] focus:bg-[var(--input-bg-focus)] outline-none";
 const HEADER_FIELD_FOCUS = "focus:border-[var(--border-focus)] focus:ring-2 focus:ring-[var(--focus-ring)] focus:bg-[var(--input-bg-focus)] outline-none";
@@ -295,7 +295,7 @@ export function ProductAutocomplete({ idx, values, setFieldValue, onInputChange,
         const map = new Map();
         prev.forEach((p) => { if (p?.id) map.set(p.id, p); });
         validCached.forEach((p) => { if (p?.id && !map.has(p.id)) map.set(p.id, p); });
-        return Array.from(map.values());
+        return sortProductsByRelevance(Array.from(map.values()), query);
       });
       return;
     }
@@ -313,7 +313,7 @@ export function ProductAutocomplete({ idx, values, setFieldValue, onInputChange,
               const map = new Map();
               prev.forEach((p) => { if (p?.id) map.set(p.id, p); });
               validRemoteItems.forEach((p) => { if (p?.id && !map.has(p.id)) map.set(p.id, p); });
-              return Array.from(map.values());
+              return sortProductsByRelevance(Array.from(map.values()), query);
             });
           }
         }

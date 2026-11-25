@@ -23,6 +23,7 @@ import { autofillTaxFromLearnedHsn } from "../../utils/hsnAutofill";
 import { yupGstinOptional } from "../../utils/gstin";
 import AdditionalChargesSection from "../common/AdditionalChargesSection";
 import { calculateChargesBreakup } from "../../utils/lineAmount";
+import { sortProductsByRelevance } from "../../utils/productSearch";
 
 // Helper for Indian States (same as Sales)
 const INDIAN_STATES = [
@@ -142,8 +143,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, products, showManufac
     setFieldValue(`items.${idx}.product_description`, "");
 
     if (value.trim()) {
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(value.toLowerCase())
+      const filtered = sortProductsByRelevance(
+        products.filter(product =>
+          product.name.toLowerCase().includes(value.toLowerCase())
+        ),
+        value
       );
       setFilteredProducts(filtered);
       setShowDropdown(filtered.length > 0);
@@ -164,8 +168,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, products, showManufac
                 onChange={handleInputChange}
                 onFocus={() => {
                   const query = (inputValue || "").trim().toLowerCase();
-                  const filtered = products.filter(product =>
-                    (product.name || "").toLowerCase().includes(query)
+                  const filtered = sortProductsByRelevance(
+                    products.filter(product =>
+                      (product.name || "").toLowerCase().includes(query)
+                    ),
+                    query
                   );
                   setFilteredProducts(filtered);
                   setShowDropdown(filtered.length > 0);

@@ -234,4 +234,26 @@ describe('ProductAutocomplete - Option B: Pinned Dropdown', () => {
     expect(screen.queryByText(/97866-125ml: Methylene Blue/i)).toBeNull();
     expect(screen.queryByText(/97866-250ml: Methylene Blue/i)).toBeNull();
   });
+
+  it('orders closest matching product at the top of the dropdown', () => {
+    const relevanceProducts = [
+      { id: 1, name: 'FTP-RK-200L: Racked Pipette Tips with Filter 200ul Long', item_code: 'FTP-RK-200L', price: 415 },
+      { id: 2, name: 'FTP-RK-200: Racked Pipette Tips with Filter 200ul', item_code: 'FTP-RK-200', price: 415 },
+      { id: 3, name: 'TP-RK-200L: Racked Pipette Tips 200ul Long', item_code: 'TP-RK-200L', price: 248 },
+      { id: 4, name: 'TP-RK-200: Racked Pipette Tips 200ul', item_code: 'TP-RK-200', price: 248 },
+    ];
+    renderAutocomplete({ products: relevanceProducts });
+    const input = screen.getByPlaceholderText('Product name');
+
+    fireEvent.change(input, { target: { value: 'tp-rk-200' } });
+
+    const optionTexts = Array.from(document.body.querySelectorAll('[data-index]'))
+      .filter((el) => Number(el.getAttribute('data-index')) < relevanceProducts.length)
+      .map((el) => el.textContent);
+
+    expect(optionTexts[0]).toContain('TP-RK-200:');
+    expect(optionTexts[1]).toContain('TP-RK-200L:');
+    expect(optionTexts[2]).toContain('FTP-RK-200:');
+    expect(optionTexts[3]).toContain('FTP-RK-200L:');
+  });
 });
