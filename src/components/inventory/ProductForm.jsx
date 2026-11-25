@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { createProduct, updateProduct, getManufacturers } from "../../api/inventory";
@@ -19,67 +19,72 @@ const STORAGE_PRESETS = [
   "-80°C",
 ];
 
-const productSchema = Yup.object().shape({
-  item_code: Yup.string()
-    .max(100, "Item code must be 100 characters or less")
-    .nullable(),
-  name: Yup.string()
-    .required("Product name is required")
-    .max(255, "Name must be 255 characters or less"),
-  manufacturer: Yup.string()
-    .max(255, "Manufacturer must be 255 characters or less")
-    .nullable(),
-  internal_reference: Yup.string()
-    .max(100, "Internal reference must be 100 characters or less")
-    .nullable(),
-  description: Yup.string().nullable(),
-  tax: Yup.number()
-    .min(0, "Tax cannot be negative")
-    .max(100, "Tax cannot exceed 100%")
-    .nullable(),
-  hsn_sac_code: Yup.string()
-    .transform((v) => (v == null ? "" : String(v).trim()))
-    .required("HSN/SAC code is required.")
-    .test("not-na", "HSN/SAC code is required.", (value) => Boolean(value) && value.toUpperCase() !== "N/A")
-    .test("min-digits", "HSN/SAC code must be at least 4 digits (6 digits if turnover > ₹5 Cr).", (value) => {
-      const digits = String(value || "").replace(/\D/g, "");
-      return digits.length >= 4;
-    })
-    .max(20, "HSN/SAC code must be 20 characters or less"),
-  unit: Yup.string()
-    .required("Unit is required")
-    .max(50, "Unit must be 50 characters or less"),
-  secondary_unit: Yup.string()
-    .max(20, "Secondary unit must be 20 characters or less")
-    .nullable(),
-  conversion_factor: Yup.number()
-    .integer("Conversion factor must be a whole number")
-    .min(1, "Conversion factor must be at least 1")
-    .nullable(),
-  cost_price: Yup.string()
-    .nullable()
-    .test("is-decimal-or-empty", "Cost price must be a valid decimal number", (value) => {
-      if (value === null || value === undefined || value === "") return true;
-      return /^(\d+(\.\d{1,4})?|\.\d{1,4})$/.test(String(value).trim());
+export const getProductSchema = (isEdit = false) =>
+  Yup.object().shape({
+    item_code: Yup.string()
+      .max(100, "Item code must be 100 characters or less")
+      .nullable(),
+    name: Yup.string()
+      .required("Product name is required")
+      .max(255, "Name must be 255 characters or less"),
+    manufacturer: Yup.string()
+      .max(255, "Manufacturer must be 255 characters or less")
+      .nullable(),
+    internal_reference: Yup.string()
+      .max(100, "Internal reference must be 100 characters or less")
+      .nullable(),
+    description: Yup.string().nullable(),
+    tax: Yup.number()
+      .min(0, "Tax cannot be negative")
+      .max(100, "Tax cannot exceed 100%")
+      .nullable(),
+    hsn_sac_code: Yup.string()
+      .transform((v) => (v == null ? "" : String(v).trim()))
+      .required("HSN/SAC code is required.")
+      .test("not-na", "HSN/SAC code is required.", (value) => Boolean(value) && value.toUpperCase() !== "N/A")
+      .test("min-digits", "HSN/SAC code must be at least 4 digits (6 digits if turnover > ₹5 Cr).", (value) => {
+        const digits = String(value || "").replace(/\D/g, "");
+        return digits.length >= 4;
+      })
+      .max(20, "HSN/SAC code must be 20 characters or less"),
+    unit: Yup.string()
+      .required("Unit is required")
+      .max(50, "Unit must be 50 characters or less"),
+    secondary_unit: Yup.string()
+      .max(20, "Secondary unit must be 20 characters or less")
+      .nullable(),
+    conversion_factor: Yup.number()
+      .integer("Conversion factor must be a whole number")
+      .min(1, "Conversion factor must be at least 1")
+      .nullable(),
+    cost_price: Yup.string()
+      .nullable()
+      .test("is-decimal-or-empty", "Cost price must be a valid decimal number", (value) => {
+        if (value === null || value === undefined || value === "") return true;
+        return /^(\d+(\.\d{1,4})?|\.\d{1,4})$/.test(String(value).trim());
+      }),
+    sale_price: Yup.string()
+      .required("Sale price is required")
+      .test("is-decimal", "Sale price must be a valid decimal number", (value) => {
+        if (value === null || value === undefined || value === "") return false;
+        return /^(\d+(\.\d{1,4})?|\.\d{1,4})$/.test(String(value).trim());
+      }),
+    stock: isEdit
+      ? Yup.number().typeError("Stock must be a number").nullable()
+      : Yup.number()
+          .typeError("Stock must be a number")
+          .min(0, "Initial stock cannot be negative")
+          .required("Stock is required"),
+    low_stock_alert: Yup.number()
+      .integer("Low stock alert must be a whole number")
+      .min(0, "Low stock alert must be positive"),
+    meta: Yup.object().shape({
+      expiry_date: Yup.string().nullable(),
+      storage_condition: Yup.string().max(150, "Storage condition must be 150 characters or less").nullable(),
     }),
-  sale_price: Yup.string()
-    .required("Sale price is required")
-    .test("is-decimal", "Sale price must be a valid decimal number", (value) => {
-      if (value === null || value === undefined || value === "") return false;
-      return /^(\d+(\.\d{1,4})?|\.\d{1,4})$/.test(String(value).trim());
-    }),
-  stock: Yup.number()
-    .typeError("Stock must be a whole number")
-    .integer("Stock must be a whole number")
-    .required("Stock is required"),
-  low_stock_alert: Yup.number()
-    .integer("Low stock alert must be a whole number")
-    .min(0, "Low stock alert must be positive"),
-  meta: Yup.object().shape({
-    expiry_date: Yup.string().nullable(),
-    storage_condition: Yup.string().max(150, "Storage condition must be 150 characters or less").nullable(),
-  }),
-});
+  });
+
+export const productSchema = getProductSchema(false);
 
 // Storage Condition Dropdown + Custom Field Component
 function StorageConditionSelector({ value, onChange, inputClass, labelClass }) {
@@ -224,6 +229,7 @@ export default function ProductForm({ product, onClose }) {
   useEscKey(onClose, true, 10);
   const queryClient = useQueryClient();
   const isEdit = !!product;
+  const validationSchema = useMemo(() => getProductSchema(isEdit), [isEdit]);
 
   const { data: manufacturerList = [] } = useQuery({
     queryKey: ['inventory-manufacturers'],
@@ -324,7 +330,7 @@ export default function ProductForm({ product, onClose }) {
       conversion_factor: values.conversion_factor ? parseInt(values.conversion_factor) : 1,
       cost_price: values.cost_price,
       sale_price: values.sale_price,
-      stock: values.stock === "" || values.stock == null ? 0 : Number(values.stock),
+      ...(isEdit ? {} : { stock: values.stock === "" || values.stock == null ? 0 : Number(values.stock) }),
       low_stock_alert: parseInt(values.low_stock_alert) || 0,
       meta: metaData,
     };
@@ -390,7 +396,7 @@ export default function ProductForm({ product, onClose }) {
 
         <Formik
           initialValues={initialValues}
-          validationSchema={productSchema}
+          validationSchema={validationSchema}
           onSubmit={handleSubmit}
           enableReinitialize
         >
@@ -516,15 +522,26 @@ export default function ProductForm({ product, onClose }) {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Stock *</label>
+                  <label className={labelClass}>Stock {isEdit ? "" : "*"}</label>
                   <Field
                     name="stock"
                     type="number"
-                    min="0"
-                    className={inputClass}
+                    {...(!isEdit ? { min: "0" } : {})}
+                    readOnly={isEdit}
+                    className={`${inputClass} ${isEdit ? "opacity-80 cursor-not-allowed bg-[var(--bg-secondary)]" : ""}`}
                     placeholder="0"
                   />
                   <ErrorMessage name="stock" component="div" className="text-red-400 text-xs mt-0.5" />
+                  {isEdit && Number(values.stock) < 0 && (
+                    <div className="text-amber-400 text-xs mt-1">
+                      Stock is negative ({values.stock}). Add a Purchase Bill or use Stock Adjustment to correct it.
+                    </div>
+                  )}
+                  {isEdit && Number(values.stock) >= 0 && (
+                    <p className="text-[var(--text-muted)] text-[11px] mt-0.5">
+                      Stock is adjusted via Purchase Bills, Sales Invoices, or Stock Adjustments.
+                    </p>
+                  )}
                 </div>
               </div>
 
