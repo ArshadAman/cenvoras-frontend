@@ -13,6 +13,7 @@ import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { sortProductsByRelevance } from "../../utils/productSearch";
 
 // Product Autocomplete Component (Reused logic)
 function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, products, showManufacturer = true }) {
@@ -69,8 +70,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, onInputChange, produc
     setSelectedIndex(-1);
 
     if (value.trim()) {
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(value.toLowerCase())
+      const filtered = sortProductsByRelevance(
+        products.filter(product =>
+          product.name.toLowerCase().includes(value.toLowerCase())
+        ),
+        value
       );
       setFilteredProducts(filtered);
       setShowDropdown(filtered.length > 0);

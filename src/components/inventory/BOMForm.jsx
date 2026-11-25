@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { sortProductsByRelevance } from "../../utils/productSearch";
 
 const BOMSchema = Yup.object().shape({
   name: Yup.string().required("BOM Name is required"),
@@ -40,8 +41,11 @@ function ProductAutocomplete({ idx, values, setFieldValue, products, fieldNamePr
     setFieldValue(`${fieldNamePrefix}.${idx}.product_name`, value);
     
     if (value.trim()) {
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(value.toLowerCase())
+      const filtered = sortProductsByRelevance(
+        products.filter(product =>
+          product.name.toLowerCase().includes(value.toLowerCase())
+        ),
+        value
       );
       setFilteredProducts(filtered);
       setShowDropdown(filtered.length > 0);
@@ -97,8 +101,11 @@ function FinishedGoodAutocomplete({ values, setFieldValue, products }) {
       setFieldValue('finished_good', ''); 
       
       if (value.trim()) {
-        const filtered = products.filter(product =>
-          product.name.toLowerCase().includes(value.toLowerCase())
+        const filtered = sortProductsByRelevance(
+          products.filter(product =>
+            product.name.toLowerCase().includes(value.toLowerCase())
+          ),
+          value
         );
         setFilteredProducts(filtered);
         // Only show dropdown if there are matches or we want to offer creation
