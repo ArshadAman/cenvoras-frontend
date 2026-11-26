@@ -10,8 +10,14 @@ export default function PurchaseUploadCsv({ onClose }) {
 
   const onDrop = useCallback(async (acceptedFiles) => {
     if (!acceptedFiles.length) return;
+    const file = acceptedFiles[0];
+    const lowerName = (file.name || '').toLowerCase();
+    if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
+      toast.error('Excel files (.xlsx / .xls) are not supported. Please save your file as CSV before importing.');
+      return;
+    }
     const formData = new FormData();
-    formData.append("file", acceptedFiles[0]);
+    formData.append("file", file);
     setUploadProgress(0);
     setIsUploading(true);
     try {
@@ -25,7 +31,8 @@ export default function PurchaseUploadCsv({ onClose }) {
       toast.success("CSV uploaded successfully!");
       onClose();
     } catch (err) {
-      toast.error("CSV upload failed.");
+      const resp = err?.response?.data;
+      toast.error(resp?.error || resp?.message || resp?.detail || "CSV upload failed.");
     } finally {
       setIsUploading(false);
       setUploadProgress(0);

@@ -21,16 +21,23 @@ export default function SalesUploadCsv({ isOpen, onClose }) {
       setUploadProgress(0);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to upload CSV file");
+      const resp = error?.response?.data;
+      toast.error(resp?.error || resp?.message || resp?.detail || error.message || "Failed to upload CSV file");
       setUploadProgress(0);
     },
   });
 
   const handleFileSelect = (selectedFile) => {
-    if (selectedFile && (/\.csv$/i.test(selectedFile.name) || selectedFile.type === 'text/csv' || selectedFile.type === 'application/vnd.ms-excel')) {
+    if (!selectedFile) return;
+    const lowerName = (selectedFile.name || '').toLowerCase();
+    if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
+      toast.error('Excel files (.xlsx / .xls) are not supported. Please save your file as CSV before importing.');
+      return;
+    }
+    if (/\.csv$/i.test(selectedFile.name) || selectedFile.type === 'text/csv' || selectedFile.type === 'application/vnd.ms-excel') {
       setFile(selectedFile);
     } else {
-      toast.error('Please select a valid CSV file');
+      toast.error('Please select a valid CSV file. Save your spreadsheet as CSV before importing.');
     }
   };
 

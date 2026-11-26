@@ -253,8 +253,15 @@ export default function InventoryTable({ onEdit, onView, onDelete, onStockAdjust
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      toast.error('Please select a valid CSV file.');
+    const lowerName = (file.name || '').toLowerCase();
+    if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
+      toast.error('Excel files (.xlsx / .xls) are not supported. Please save your file as CSV before importing.');
+      event.target.value = '';
+      return;
+    }
+
+    if (!lowerName.endsWith('.csv')) {
+      toast.error('Please select a valid CSV file. Save your spreadsheet as CSV before importing.');
       event.target.value = '';
       return;
     }

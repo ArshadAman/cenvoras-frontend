@@ -69,10 +69,21 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
   useEffect(() => {
     if (!file || !isOpen) return;
 
+    const lowerName = (file.name || '').toLowerCase();
+    if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
+      setParseError('Excel files (.xlsx / .xls) are not supported directly. Please save your file as CSV before importing.');
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const text = e.target.result;
+        if (typeof text === 'string' && (text.startsWith('PK\x03\x04') || text.includes('\x00'))) {
+          setParseError('This file appears to be an Excel (.xlsx / .xls) or binary file. Please save your file as CSV before importing.');
+          return;
+        }
+
         const rows = parseCsvRows(text);
         if (rows.length < 2) {
           setParseError('The selected CSV file must have at least a header row and one data row.');
@@ -227,7 +238,57 @@ export default function InventoryCsvMappingModal({ file, isOpen, onClose, onSucc
     } catch (err) {
       console.error('CSV import error:', err);
       const resp = err?.response?.data;
-      toast.error(resp?.error || resp?.message || 'Failed to process CSV import');
+      const status = err?.response?.status;
+
+      let errorMsg = '';
+      if (typeof resp === 'string') {
+        const stripped = resp.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (stripped) {
+          errorMsg = stripped.length > 200 ? `${stripped.slice(0, 200)}...` : stripped;
+        }
+      } else if (resp && typeof resp === 'object') {
+        if (resp.error) {
+          errorMsg = String(resp.error);
+        } else if (resp.message) {
+          errorMsg = String(resp.message);
+        } else if (resp.detail) {
+          errorMsg = String(resp.detail);
+        } else if (Array.isArray(resp.non_field_errors) && resp.non_field_errors.length > 0) {
+          errorMsg = String(resp.non_field_errors[0]);
+        } else {
+          const entries = Object.entries(resp);
+          if (entries.length > 0) {
+            const [k, v] = entries[0];
+            if (Array.isArray(v) && v.length > 0) {
+              errorMsg = `${k}: ${v[0]}`;
+            } else if (typeof v === 'string') {
+              errorMsg = `${k}: ${v}`;
+            }
+          }
+        }
+      }
+
+      if (!errorMsg) {
+        if (status === 413) {
+          errorMsg = 'File is too large. Maximum allowed size is 10MB.';
+        } else if (status === 415) {
+          errorMsg = 'Unsupported file format. Please upload a CSV file.';
+        } else if (status === 400) {
+          errorMsg = 'Bad request: Please verify the CSV columns and data types.';
+        } else if (status === 403) {
+          errorMsg = 'Permission denied: You do not have access to import inventory.';
+        } else if (status === 401) {
+          errorMsg = 'Session expired. Please log in again.';
+        } else if (status >= 500) {
+          errorMsg = `Server error (${status}): Bulk import failed on the server. Please check server logs.`;
+        } else if (err?.message) {
+          errorMsg = err.message;
+        } else {
+          errorMsg = 'Failed to process CSV import. Please verify file format and columns.';
+        }
+      }
+
+      toast.error(errorMsg, { autoClose: 7000 });
     } finally {
       setIsSubmitting(false);
       setUploadProgress(0);
