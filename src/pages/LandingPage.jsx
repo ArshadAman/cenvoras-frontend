@@ -136,97 +136,6 @@ const ProductShowcase = () => {
   );
 };
 
-// Rent vs Own Calculator
-const RentVsOwnCalculator = () => {
-  const [users, setUsers] = useState(6);
-
-  const saasMonthlyPerUser = 1500;
-  const saas3YearCost = users * saasMonthlyPerUser * 12 * 3;
-  const cenvora3YearCost = 75000 + (12000 * 3);
-  const savings = Math.max(0, saas3YearCost - cenvora3YearCost);
-
-  const formatINR = (val) => '₹' + Math.round(val).toLocaleString('en-IN');
-
-  return (
-    <div className="w-full max-w-4xl mx-auto bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
-      <div className="max-w-2xl mb-8">
-        <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
-          Why rent your business software when you can own it?
-        </h3>
-        <p className="text-[var(--text-muted)] text-sm sm:text-base mt-3 leading-relaxed font-body">
-          Monthly subscription ERPs charge per employee. When your team grows, your costs skyrocket. With Cenvora, you pay once and add team members at zero extra per-user penalty.
-        </p>
-      </div>
-
-      {/* Slider */}
-      <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl p-5 mb-8">
-        <div className="flex justify-between items-center mb-3">
-          <label className="text-sm font-medium text-[var(--text-primary)] font-body">
-            How many people need access?
-          </label>
-          <span className="text-base font-bold text-[var(--text-primary)] bg-[var(--bg-surface)] px-3.5 py-1 rounded-xl border border-[var(--border-subtle)] font-mono font-tabular">
-            {users} Users
-          </span>
-        </div>
-        <input 
-          type="range" 
-          min="2" 
-          max="30" 
-          value={users} 
-          onChange={(e) => setUsers(Number(e.target.value))}
-          className="w-full h-2 bg-[var(--bg-surface)] rounded-lg appearance-none cursor-pointer accent-[var(--accent-primary)]"
-        />
-        <div className="flex justify-between text-xs text-[var(--text-muted)] mt-2 font-mono font-medium">
-          <span>2 users</span>
-          <span>15 users</span>
-          <span>30 users</span>
-        </div>
-      </div>
-
-      {/* Comparison */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="p-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-primary)]">
-          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Monthly Subscription ERP</div>
-          <div className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mt-2 font-mono font-tabular">{formatINR(saas3YearCost)}</div>
-          <p className="text-xs text-[var(--text-muted)] mt-1.5">Total cost over 3 years (at ~₹1,500/user/month).</p>
-          <ul className="mt-5 space-y-2.5 text-xs text-[var(--text-muted)] border-t border-[var(--border-subtle)] pt-4">
-            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Recurring fees that never stop</li>
-            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Price hikes every time you hire</li>
-            <li className="flex items-center gap-2"><span className="opacity-60 font-bold">✕</span> Lose your database if you stop paying</li>
-          </ul>
-        </div>
-
-        <div className="p-6 rounded-2xl border-2 border-[var(--accent-primary)] bg-[var(--bg-surface)] shadow-xl">
-          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--accent-primary)]">Cenvora (Buy Once, Own Forever)</div>
-          <div className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mt-2 font-mono font-tabular">{formatINR(cenvora3YearCost)}</div>
-          <p className="text-xs text-[var(--text-muted)] mt-1.5">Total cost over 3 years (Perpetual license + standard maintenance).</p>
-          <ul className="mt-5 space-y-2.5 text-xs text-[var(--text-primary)] border-t border-[var(--border-subtle)] pt-4">
-            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> One-time license with generous team access</li>
-            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Complete flexibility to customize features & logo</li>
-            <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[var(--accent-primary)] shrink-0" /> Your database is 100% yours forever</li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Savings */}
-      <div className="p-6 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="text-xs text-[var(--text-muted)] font-medium">Estimated 3-Year Savings</div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-[var(--accent-primary)] mt-0.5 font-mono font-tabular">Save {formatINR(savings)}</div>
-        </div>
-        <a
-          href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20checked%20the%20pricing%20calculator%20and%20want%20to%20know%20more%20about%20the%20perpetual%20license."
-          target="_blank"
-          rel="noreferrer"
-          className="btn-primary !text-sm !py-3 !px-6 whitespace-nowrap shadow-md cursor-pointer"
-        >
-          Talk to Us on WhatsApp
-        </a>
-      </div>
-    </div>
-  );
-};
-
 // Animated FAQ Accordion
 const FAQ_ITEMS = [
   {
@@ -341,7 +250,6 @@ export default function LandingPage() {
         links={[
           { label: 'Features', href: '#features' },
           { label: 'Pricing', href: '#pricing' },
-          { label: 'Why Own?', href: '#why-own' },
           { label: 'HSN Lookup', href: '/gst-hsn-guide' },
           { label: 'Contact', href: '/contact' },
         ]}
@@ -504,15 +412,6 @@ export default function LandingPage() {
       <section className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-surface)]/40">
         <div className="max-w-5xl mx-auto">
           <DetailedFeatures />
-        </div>
-      </section>
-
-      {/* ─── 5. WHY OWN / RENT VS OWN CALCULATOR ─── */}
-      <section id="why-own" className="relative z-10 py-24 border-t border-[var(--border-subtle)] px-6 bg-[var(--bg-primary)]">
-        <div className="max-w-5xl mx-auto">
-          <Reveal>
-            <RentVsOwnCalculator />
-          </Reveal>
         </div>
       </section>
 
@@ -735,7 +634,6 @@ export default function LandingPage() {
             <h4 className="text-[var(--text-primary)] font-semibold mb-3 font-display text-sm">Product</h4>
             <ul className="space-y-2">
               <li><a href="#features" className="hover:text-[var(--text-primary)] transition-colors">Features</a></li>
-              <li><a href="#why-own" className="hover:text-[var(--text-primary)] transition-colors">Why Own?</a></li>
               <li><a href="#pricing" className="hover:text-[var(--text-primary)] transition-colors">Pricing</a></li>
               <li><Link to="/gst-hsn-guide" className="hover:text-[var(--text-primary)] transition-colors">HSN Lookup</Link></li>
               <li><Link to="/sitemap" className="hover:text-[var(--text-primary)] transition-colors">Sitemap</Link></li>
