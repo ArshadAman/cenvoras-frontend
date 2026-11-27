@@ -51,7 +51,7 @@ export default function ContactUs() {
         <div className="grid gap-5 sm:grid-cols-3">
           {/* Card 1: WhatsApp */}
           <a
-            href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20have%20a%20question%20about%20your%20billing%20software."
+            href="https://wa.me/918456966867?text=Hi%20Cenvora%2C%20I%20have%20a%20question%20about%20your%20billing%20software."
             target="_blank"
             rel="noreferrer"
             className="p-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--accent-primary)]/40 transition-colors flex flex-col justify-between shadow-sm"
@@ -65,7 +65,7 @@ export default function ContactUs() {
                 Fastest way to get quick answers and pricing details.
               </p>
               <div className="mt-4 font-mono font-semibold text-sm text-[var(--status-success)]">
-                +91 7205289643
+                +91 84569 66867
               </div>
             </div>
             <div className="mt-6 pt-3 border-t border-[var(--border-subtle)] flex items-center gap-1 text-xs text-[var(--text-secondary)] font-medium">
