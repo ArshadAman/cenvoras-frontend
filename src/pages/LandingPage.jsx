@@ -294,7 +294,7 @@ export default function LandingPage() {
               </button>
 
               <a
-                href="https://wa.me/917205289643?text=Hi%20Cenvora%2C%20I%20would%20like%20to%20see%20a%20quick%20demo%20of%20the%20billing%20software."
+                href="https://wa.me/918456966867?text=Hi%20Cenvora%2C%20I%20would%20like%20to%20see%20a%20quick%20demo%20of%20the%20billing%20software."
                 target="_blank"
                 rel="noreferrer"
                 className="btn-secondary !text-sm !py-3.5 !px-6 flex items-center gap-2 cursor-pointer shadow-sm"
@@ -508,7 +508,7 @@ export default function LandingPage() {
 
                 <div className="mt-8 pt-4">
                   <a
-                    href="https://wa.me/917205289643?text=Hi%20Cenvora%20Team%2C%20I%20am%20interested%20in%20the%20Lifetime%20License%20and%20want%20to%20discuss%20customizing%20Cenvora%20for%20my%20business."
+                    href="https://wa.me/918456966867?text=Hi%20Cenvora%20Team%2C%20I%20am%20interested%20in%20the%20Lifetime%20License%20and%20want%20to%20discuss%20customizing%20Cenvora%20for%20my%20business."
                     target="_blank"
                     rel="noreferrer"
                     className="btn-primary !text-xs !py-3 w-full text-center block shadow-md cursor-pointer"
@@ -593,7 +593,7 @@ export default function LandingPage() {
                 Book a Free Demo
               </button>
               <a
-                href="https://wa.me/917205289643"
+                href="https://wa.me/918456966867"
                 target="_blank"
                 rel="noreferrer"
                 className="w-full sm:w-auto px-7 py-3.5 btn-secondary !text-sm flex items-center justify-center gap-2 cursor-pointer shadow-sm"
@@ -649,12 +649,12 @@ export default function LandingPage() {
               <li><Link to="/terms" className="hover:text-[var(--text-primary)] transition-colors">Terms of Service</Link></li>
               <li>
                 <a
-                  href="https://wa.me/917205289643"
+                  href="https://wa.me/918456966867"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-[var(--text-primary)] transition-colors inline-flex items-center gap-1.5"
                 >
-                  WhatsApp (+91 7205289643)
+                  WhatsApp (+91 84569 66867)
                 </a>
               </li>
             </ul>

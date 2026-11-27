@@ -83,7 +83,7 @@ export default function PrivacyPolicy() {
             <p>
               If you have any questions about how your data is handled, please contact our team at{' '}
               <a href="mailto:support@cenvora.co.in" className="text-[var(--accent-primary)] hover:underline">support@cenvora.co.in</a> or message us on WhatsApp at{' '}
-              <span className="text-[var(--status-success)] font-mono">+91 7205289643</span>.
+              <span className="text-[var(--status-success)] font-mono">+91 84569 66867</span>.
             </p>
           </section>
         </div>
