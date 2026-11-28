@@ -438,7 +438,7 @@ export default function Layout({ children, onLogout }) {
                 <span
                   className={`px-2 py-0.5 rounded-md text-xs font-bold tracking-wider uppercase border truncate max-w-[85px] ${
                     isVipAccess
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+                      ? 'badge-success'
                       : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-default)]'
                   }`}
                   title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
@@ -945,11 +945,11 @@ export default function Layout({ children, onLogout }) {
             <div className="px-4 pt-4 md:px-6 md:pt-6">
               <div className="mx-auto max-w-7xl space-y-3">
                 {showQueuedBanner && (
-                  <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-cyan-500/15 via-sky-500/10 to-blue-500/15 p-4 md:p-5">
+                  <div className="rounded-2xl border border-[var(--status-info-border)] bg-[var(--status-info-bg)] p-4 md:p-5">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300">Downgrade Scheduled</p>
-                        <p className="mt-1 text-sm text-gray-100">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--status-info-text)]">Downgrade Scheduled</p>
+                        <p className="mt-1 text-sm text-[var(--text-primary)]">
                           Your account will move to Free on {queuedDate.toLocaleDateString()} after the current cycle ends.
                         </p>
                       </div>
@@ -958,10 +958,10 @@ export default function Layout({ children, onLogout }) {
                 )}
 
                 {(showExpiringBanner || showExpiredBanner) && (
-                  <div className={`rounded-2xl border p-4 md:p-5 ${showExpiredBanner ? 'border-rose-400/35 bg-gradient-to-r from-rose-500/20 via-red-500/15 to-orange-500/20' : 'border-amber-400/30 bg-gradient-to-r from-amber-500/20 via-yellow-500/12 to-orange-500/18'}`}>
+                  <div className={`rounded-2xl border p-4 md:p-5 ${showExpiredBanner ? 'border-[var(--status-danger-border)] bg-[var(--status-danger-bg)]' : 'border-[var(--status-warning-border)] bg-[var(--status-warning-bg)]'}`}>
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className={`text-xs font-semibold uppercase tracking-wider ${showExpiredBanner ? 'text-rose-200' : 'text-amber-200'}`}>
+                        <p className={`text-xs font-semibold uppercase tracking-wider ${showExpiredBanner ? 'text-[var(--status-danger-text)]' : 'text-[var(--status-warning-text)]'}`}>
                           {showExpiredBanner ? 'Plan Expired' : 'Renewal Reminder'}
                         </p>
                         <p className="mt-1 text-sm text-gray-100">

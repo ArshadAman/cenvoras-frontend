@@ -10,7 +10,7 @@ export default {
         obsidian: {
           canvas: 'var(--bg-primary)',
           card: 'var(--bg-surface)',
-          elevated: 'var(--bg-surface)',
+          elevated: 'var(--bg-elevated)',
           active: 'var(--bg-primary)',
         },
         sovereign: {
@@ -131,12 +131,17 @@ export default {
           500: 'var(--accent-primary)',
           600: 'var(--accent-primary)',
         },
+        converted: {
+          DEFAULT: 'var(--status-converted)',
+          bg: 'var(--status-converted-bg)',
+          border: 'var(--status-converted-border)',
+        },
         indigo: {
-          DEFAULT: 'var(--accent-primary)',
-          300: 'var(--accent-primary)',
-          400: 'var(--accent-primary)',
-          500: 'var(--accent-primary)',
-          600: 'var(--accent-primary)',
+          DEFAULT: 'var(--status-converted)',
+          300: 'var(--status-converted)',
+          400: 'var(--status-converted)',
+          500: 'var(--status-converted)',
+          600: 'var(--status-converted)',
         },
       },
       borderColor: {

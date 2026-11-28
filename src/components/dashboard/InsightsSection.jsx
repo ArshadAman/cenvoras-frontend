@@ -7,6 +7,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { getChartColor } from '../../utils/chartColors';
 
 /**
  * InsightsSection - Profit Finder / Business Intelligence
@@ -34,8 +35,6 @@ export default function InsightsSection({ data, isLoading }) {
     return `${getCurrencySymbol()}${value.toLocaleString('en-IN')}`;
   };
 
-  const colors = ['var(--accent-primary)', 'var(--accent-secondary)', 'var(--status-info)', 'var(--status-success)', 'var(--status-warning)'];
-
   return (
     <section className="bento-card !p-5 h-full flex flex-col">
       <div className="flex items-center gap-2 mb-5 flex-shrink-0">
@@ -58,7 +57,7 @@ export default function InsightsSection({ data, isLoading }) {
               {topProducts.map((product, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-[var(--bg-primary)] border border-[var(--border-subtle)]" 
-                       style={{ color: colors[i] }}>
+                       style={{ color: getChartColor(i) }}>
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -71,7 +70,7 @@ export default function InsightsSection({ data, isLoading }) {
                         className="h-1.5 rounded-full" 
                         style={{ 
                           width: `${product.percent_of_total || 0}%`,
-                          backgroundColor: colors[i] 
+                          backgroundColor: getChartColor(i) 
                         }}
                       />
                     </div>

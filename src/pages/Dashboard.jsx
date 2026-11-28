@@ -26,6 +26,7 @@ import { getSubscriptionEntitlements } from '../api/subscription'
 import { getKolkataMonthBounds } from '../utils/date'
 import { getGSTR1Export } from '../api/gst'
 import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { FINANCIAL_SERIES_COLORS, getChartColor } from '../utils/chartColors';
 
 // Skeleton for loading
 function SkeletonCard() {
@@ -233,7 +234,6 @@ export default function Dashboard({ onLogout }) {
   }, [stockPointsRaw, lowStock]);
 
   const stockTotal = stockSplitData.reduce((sum, item) => sum + Number(item.value || 0), 0);
-  const stockColors = ['var(--accent-primary)', 'var(--accent-secondary)', 'var(--status-info)', 'var(--status-success)', 'var(--status-warning)', 'var(--status-danger)', 'var(--text-muted)'];
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
   const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
@@ -385,20 +385,20 @@ export default function Dashboard({ onLogout }) {
                   <Line
                     type="monotone"
                     dataKey="Sales"
-                    stroke="var(--accent-primary)"
+                    stroke={FINANCIAL_SERIES_COLORS.sales}
                     strokeWidth={3}
                     connectNulls
-                    dot={{ r: 3, fill: 'var(--accent-primary)', strokeWidth: 0 }}
-                    activeDot={{ r: 7, fill: 'var(--accent-primary)', stroke: 'var(--bg-primary)', strokeWidth: 1 }}
+                    dot={{ r: 3, fill: FINANCIAL_SERIES_COLORS.sales, strokeWidth: 0 }}
+                    activeDot={{ r: 7, fill: FINANCIAL_SERIES_COLORS.sales, stroke: 'var(--bg-primary)', strokeWidth: 1 }}
                   />
                   <Line
                     type="monotone"
                     dataKey="Purchases"
-                    stroke="var(--accent-secondary)"
+                    stroke={FINANCIAL_SERIES_COLORS.purchases}
                     strokeWidth={3}
                     connectNulls
-                    dot={{ r: 3, fill: 'var(--accent-secondary)', strokeWidth: 0 }}
-                    activeDot={{ r: 7, fill: 'var(--accent-secondary)', stroke: 'var(--bg-primary)', strokeWidth: 1 }}
+                    dot={{ r: 3, fill: FINANCIAL_SERIES_COLORS.purchases, strokeWidth: 0 }}
+                    activeDot={{ r: 7, fill: FINANCIAL_SERIES_COLORS.purchases, stroke: 'var(--bg-primary)', strokeWidth: 1 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -432,7 +432,7 @@ export default function Dashboard({ onLogout }) {
                     {stockSplitData.map((_, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={stockColors[index % stockColors.length]}
+                        fill={getChartColor(index)}
                         stroke={index === activeStockIndex ? 'var(--text-primary)' : 'rgba(0,0,0,0)'}
                         strokeWidth={index === activeStockIndex ? 1.4 : 0}
                       />
