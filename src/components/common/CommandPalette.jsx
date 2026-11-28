@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { backdropVariants, commandPaletteVariants } from '../../utils/motion';
 import {
   MagnifyingGlassIcon,
   ChartBarIcon,
@@ -268,9 +270,19 @@ const COMMAND_ITEMS = [
     icon: UserIcon,
     badge: 'Settings',
   },
+  {
+    id: 'act-keyboard-shortcuts',
+    title: 'Keyboard Shortcuts Reference',
+    category: 'Mastery',
+    keywords: 'shortcuts hotkeys keyboard f2 f3 f8 help mastery',
+    action: 'shortcuts',
+    icon: CommandLineIcon,
+    badge: 'Help',
+    shortcut: '?',
+  },
 ];
 
-export default function CommandPalette({ isOpen, onClose }) {
+export default function CommandPalette({ isOpen, onClose, onOpenShortcuts }) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef(null);
@@ -306,6 +318,17 @@ export default function CommandPalette({ isOpen, onClose }) {
     setSelectedIndex(0);
   }, [query]);
 
+  const executeItem = useCallback((item) => {
+    onClose();
+    if (item.action === 'shortcuts') {
+      if (onOpenShortcuts) onOpenShortcuts();
+      return;
+    }
+    if (item.path) {
+      navigate(item.path);
+    }
+  }, [onClose, onOpenShortcuts, navigate]);
+
   // Handle keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
@@ -320,9 +343,7 @@ export default function CommandPalette({ isOpen, onClose }) {
       } else if (e.key === 'Enter') {
         e.preventDefault();
         if (filteredItems[selectedIndex]) {
-          const item = filteredItems[selectedIndex];
-          onClose();
-          navigate(item.path);
+          executeItem(filteredItems[selectedIndex]);
         }
       } else if (e.key === 'Escape') {
         e.preventDefault();
@@ -332,7 +353,7 @@ export default function CommandPalette({ isOpen, onClose }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, filteredItems, selectedIndex, navigate, onClose]);
+  }, [isOpen, filteredItems, selectedIndex, executeItem, onClose]);
 
   // Scroll active item into view
   useEffect(() => {
@@ -343,24 +364,34 @@ export default function CommandPalette({ isOpen, onClose }) {
     }
   }, [selectedIndex]);
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Command Palette"
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 sm:px-6"
-    >
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Command Palette"
+          className="fixed inset-0 z-50 flex items-start justify-center pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:pt-20 px-4 sm:px-6"
+        >
+          {/* Backdrop */}
+          <motion.div
+            variants={backdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+            aria-hidden="true"
+          />
 
-      {/* Palette Container */}
-      <div className="relative w-full max-w-xl bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[75vh] animate-in fade-in zoom-in-95 duration-150 text-[var(--text-primary)]">
+          {/* Palette Container */}
+          <motion.div
+            variants={commandPaletteVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="relative w-full max-w-xl bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[75vh] max-h-[75dvh] text-[var(--text-primary)]"
+          >
         {/* Search Input Bar */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/40">
           <MagnifyingGlassIcon className="w-5 h-5 text-[var(--text-muted)] shrink-0" />
@@ -394,12 +425,9 @@ export default function CommandPalette({ isOpen, onClose }) {
                   key={item.id}
                   data-index={index}
                   type="button"
-                  onClick={() => {
-                    onClose();
-                    navigate(item.path);
-                  }}
+                  onClick={() => executeItem(item)}
                   onMouseEnter={() => setSelectedIndex(index)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-sm transition-all duration-100 ${
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-sm transition-colors duration-100 ${
                     isSelected
                       ? 'bg-[var(--accent-primary)]/15 text-[var(--text-primary)] border border-[var(--accent-primary)]/30 shadow-sm'
                       : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] border border-transparent'
@@ -415,18 +443,27 @@ export default function CommandPalette({ isOpen, onClose }) {
                     </div>
                     <div className="truncate">
                       <span className="font-medium text-[var(--text-primary)]">{item.title}</span>
-                      <span className="text-xs text-[var(--text-muted)] ml-2 hidden sm:inline">{item.path}</span>
+                      {item.path && (
+                        <span className="text-xs text-[var(--text-muted)] ml-2 hidden sm:inline">{item.path}</span>
+                      )}
                     </div>
                   </div>
-                  <span
-                    className={`text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border shrink-0 ml-2 ${
-                      isSelected
-                        ? 'bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border-[var(--accent-primary)]/30'
-                        : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)]'
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    {item.shortcut && (
+                      <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border-default)] text-[var(--text-primary)] font-mono text-[11px]">
+                        {item.shortcut}
+                      </kbd>
+                    )}
+                    <span
+                      className={`text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border ${
+                        isSelected
+                          ? 'bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border-[var(--accent-primary)]/30'
+                          : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)]'
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  </div>
                 </button>
               );
             })
@@ -448,7 +485,9 @@ export default function CommandPalette({ isOpen, onClose }) {
           </div>
           <span className="text-[11px] font-medium">Cenvora Quick Action</span>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

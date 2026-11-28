@@ -5,6 +5,7 @@ import { getPurchaseBills } from "../../api/purchase";
 import { listPurchaseOrders } from "../../api/purchase_orders";
 import { getDebitNotes } from "../../api/gst";
 import { format } from "date-fns";
+import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -151,7 +152,7 @@ export default function VendorDetailsModal({ isOpen, onClose, vendor }) {
       pdf.save(`vendor-statement-${vendorDetails?.name?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || vendor?.id}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      toast.error('Could not generate the vendor statement PDF. Please try again.');
     }
   };
 

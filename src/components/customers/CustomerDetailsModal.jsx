@@ -7,6 +7,7 @@ import { getDeliveryChallans } from "../../api/delivery_challan";
 import { getSalesOrders } from "../../api/sales_order";
 import { getQuotations } from "../../api/quotation";
 import { format } from "date-fns";
+import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -205,7 +206,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
       pdf.save(`customer-statement-${customerDetails?.name?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || customer?.id}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      toast.error('Could not generate the customer statement PDF. Please try again.');
     }
   };
 
@@ -971,7 +972,8 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
                               </td>
                               <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                 <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                  q.status === 'converted' || q.status === 'approved' ? 'badge-success' :
+                                  q.status === 'converted' ? 'badge-converted' :
+                                  q.status === 'approved' ? 'badge-success' :
                                   q.status === 'rejected' ? 'badge-danger' :
                                   q.status === 'pending' ? 'badge-warning' :
                                   'badge-neutral'

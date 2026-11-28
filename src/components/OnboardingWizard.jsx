@@ -104,7 +104,7 @@ export default function OnboardingWizard({ profile, onClose }) {
       queryClient.invalidateQueries(['profile']);
       queryClient.invalidateQueries(['userProfile']);
       localStorage.removeItem('onboarding_wizard_draft'); // Clean up draft on success
-      toast.success('Onboarding details saved successfully!');
+      toast.success('Business profile ready — you can now issue GST-compliant invoices.');
       
       setIsOpen(false);
       if (onClose) onClose();
@@ -289,7 +289,7 @@ export default function OnboardingWizard({ profile, onClose }) {
                     value={formData.first_name}
                     onChange={handleInputChange}
                     className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all"
-                    placeholder="E.g. John"
+                    placeholder="E.g. Aarav"
                     required
                   />
                 </div>
@@ -301,7 +301,7 @@ export default function OnboardingWizard({ profile, onClose }) {
                     value={formData.last_name}
                     onChange={handleInputChange}
                     className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all"
-                    placeholder="E.g. Doe"
+                    placeholder="E.g. Mehta"
                   />
                 </div>
               </div>
@@ -343,7 +343,7 @@ export default function OnboardingWizard({ profile, onClose }) {
                   value={formData.business_name}
                   onChange={handleInputChange}
                   className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all"
-                  placeholder="E.g. Acme Retailers"
+                  placeholder="E.g. Mehta Traders & Co."
                   required
                 />
               </div>
@@ -356,7 +356,7 @@ export default function OnboardingWizard({ profile, onClose }) {
                   onChange={handleInputChange}
                   rows="3"
                   className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all resize-none"
-                  placeholder="E.g. 123 Main Street, Sector 5..."
+                  placeholder="E.g. 42 MG Road, Indiranagar, Bengaluru 560038"
                 ></textarea>
               </div>
             </div>
@@ -432,9 +432,13 @@ export default function OnboardingWizard({ profile, onClose }) {
                       name="gstin"
                       value={formData.gstin}
                       onChange={(e) => setFormData(prev => ({ ...prev, gstin: e.target.value.toUpperCase() }))}
-                      className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all"
+                      className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-all font-mono"
                       placeholder="29ABCDE1234F1Z5"
+                      maxLength={15}
                     />
+                    <p className="text-[11px] text-[var(--text-muted)] leading-snug">
+                      Enables B2B tax invoices and GSTR-1 exports. You can add or update this later in Profile.
+                    </p>
                   </div>
                 )}
 

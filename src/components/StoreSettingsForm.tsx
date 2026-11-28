@@ -4,6 +4,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
 import { State, City } from 'country-state-city';
+import { toast } from 'react-toastify';
 import { GSTIN_REGEX, GSTIN_INVALID_MSG } from '../utils/gstin';
 
 const StoreSettingsSchema = Yup.object().shape({
@@ -50,7 +51,7 @@ export const StoreSettingsForm: React.FC = () => {
             trn: values.trn,
           });
           setSubmitting(false);
-          alert('Settings saved successfully!');
+          toast.success('Regional tax settings saved.');
         }}
       >
         {({ values, setFieldValue, isSubmitting }) => {

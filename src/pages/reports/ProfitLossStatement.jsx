@@ -93,7 +93,7 @@ export default function ProfitLossStatement() {
             </div>
 
             {/* Revenue Details */}
-            <div className="bento-card p-0 overflow-hidden">
+            <div className="bento-card p-0 overflow-x-auto">
               <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
                 <h3 className="text-[var(--text-primary)] font-semibold flex items-center gap-2">
                   <ArrowTrendingUpIcon className="w-4 h-4 text-[var(--status-success)]" /> Revenue
@@ -128,7 +128,7 @@ export default function ProfitLossStatement() {
             </div>
 
             {/* Expenses Details */}
-            <div className="bento-card p-0 overflow-hidden">
+            <div className="bento-card p-0 overflow-x-auto">
               <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">
                 <h3 className="text-[var(--text-primary)] font-semibold flex items-center gap-2">
                   <ArrowTrendingDownIcon className="w-4 h-4 text-[var(--status-danger)]" /> Expenses

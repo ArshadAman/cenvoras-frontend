@@ -22,10 +22,13 @@ import InsightsSection from '../components/dashboard/InsightsSection'
 import GstShieldSection from '../components/dashboard/GstShieldSection'
 import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
 import ExpiryCard from '../components/dashboard/ExpiryCard'
+import EmptyState from '../components/common/EmptyState'
+import SetupReadinessCard from '../components/dashboard/SetupReadinessCard'
 import { getSubscriptionEntitlements } from '../api/subscription'
 import { getKolkataMonthBounds } from '../utils/date'
 import { getGSTR1Export } from '../api/gst'
 import { getCurrencySymbol, formatCurrency } from '../utils/currency';
+import { FINANCIAL_SERIES_COLORS, getChartColor } from '../utils/chartColors';
 
 // Skeleton for loading
 function SkeletonCard() {
@@ -233,7 +236,6 @@ export default function Dashboard({ onLogout }) {
   }, [stockPointsRaw, lowStock]);
 
   const stockTotal = stockSplitData.reduce((sum, item) => sum + Number(item.value || 0), 0);
-  const stockColors = ['var(--accent-primary)', 'var(--accent-secondary)', 'var(--status-info)', 'var(--status-success)', 'var(--status-warning)', 'var(--status-danger)', 'var(--text-muted)'];
   const entitlements = subscriptionData?.data || {};
   const can = entitlements.can || {};
   const currentPlanName = entitlements.plan?.name || profileData?.profile?.plan_name || 'Starter';
@@ -248,32 +250,34 @@ export default function Dashboard({ onLogout }) {
         
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-3">
-              <SparklesIcon className="w-8 h-8 text-[var(--accent-primary)]" />
-              {(profileData?.profile?.business_name || profileData?.profile?.parent_business_name) 
-                ? `${profileData.profile.business_name || profileData.profile.parent_business_name} Smart Dashboard` 
-                : 'Smart Dashboard'}
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-2.5 sm:gap-3">
+              <SparklesIcon className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--accent-primary)] shrink-0" />
+              <span className="break-words">
+                {(profileData?.profile?.business_name || profileData?.profile?.parent_business_name) 
+                  ? `${profileData.profile.business_name || profileData.profile.parent_business_name} Smart Dashboard` 
+                  : 'Smart Dashboard'}
+              </span>
             </h1>
-            <p className="text-[var(--text-muted)] text-sm">Your intelligent business assistant</p>
+            <p className="text-[var(--text-muted)] text-sm">Real-time sales, inventory, and GST compliance overview</p>
             <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1 text-xs text-[var(--text-secondary)]">
               <span className="text-[var(--accent-primary)] font-semibold">{currentPlanName}</span>
               <span className="text-[var(--text-muted)]">plan active</span>
             </div>
           </div>
           
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2.5 sm:gap-3 w-full sm:w-auto">
             <button 
               onClick={handleRefreshAll}
               disabled={isRefreshing}
-              className="btn-secondary text-sm py-2 px-4 flex items-center gap-2"
+              className="btn-secondary text-sm py-2 px-4 min-h-[44px] sm:min-h-0 flex-1 sm:flex-none flex items-center justify-center gap-2"
             >
               <ArrowPathIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
             <button 
               onClick={() => handleQuickAction('sale')} 
-              className="btn-primary text-sm py-2 px-4"
+              className="btn-primary text-sm py-2 px-4 min-h-[44px] sm:min-h-0 flex-1 sm:flex-none flex items-center justify-center gap-2"
             >
               <PlusIcon className="w-4 h-4"/> Record Sales
             </button>
@@ -281,9 +285,36 @@ export default function Dashboard({ onLogout }) {
         </div>
 
         {/* 1. TODAY'S PULSE (New Smart Feature) */}
+        {smartError && !loadingSmart && (
+          <div
+            role="status"
+            className="rounded-2xl border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-sm"
+          >
+            <div className="flex items-center gap-2.5 text-[var(--text-primary)]">
+              <ExclamationTriangleIcon className="w-5 h-5 text-[var(--status-warning)] shrink-0" />
+              <span>Some live analytics could not be refreshed right now. Your accounting records are safe.</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => refetchSmart()}
+              className="btn-secondary !text-xs !py-1.5 !px-3"
+            >
+              Retry Analytics
+            </button>
+          </div>
+        )}
         <PulseSection 
           data={smartData?.pulse} 
           isLoading={loadingSmart} 
+        />
+
+        {/* 1B. WORKSPACE READINESS CHECKLIST (Ethical Goal-Gradient & Endowed Progress) */}
+        <SetupReadinessCard
+          profile={profileData?.profile}
+          metrics={metrics}
+          salesList={Array.isArray(sales) ? sales : sales?.data || sales?.results || []}
+          purchasesList={Array.isArray(purchases) ? purchases : purchases?.data || purchases?.results || []}
+          isLoading={loadingMetrics}
         />
 
         {/* 2. OVERVIEW CARDS (Total Sales, Purchases, etc.) */}
@@ -293,31 +324,31 @@ export default function Dashboard({ onLogout }) {
             {loadingMetrics
               ? Array(5).fill(0).map((_, i) => <SkeletonCard key={i} />)
               : cardData.map((card, i) => (
-                  <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 sm:p-5 xl:p-5 2xl:p-6 flex flex-col justify-between group hover:border-[var(--accent-primary)]/40 transition-all shadow-sm">
-                    <div className="flex justify-between items-start mb-3 sm:mb-4">
-                      <div className={`p-2.5 sm:p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] ${card.color}`}>
+                  <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 sm:p-5 xl:p-5 2xl:p-6 flex flex-col justify-between group hover:border-[var(--accent-primary)]/45 transition-colors duration-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_20px_-10px_rgba(0,0,0,0.14)]">
+                    <div className="flex justify-between items-start gap-2.5 mb-3 sm:mb-4">
+                      <div className="text-[11px] sm:text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider leading-snug pt-0.5">
+                        {card.label}
+                      </div>
+                      <div className={`p-2 sm:p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] shrink-0 ${card.color}`}>
                         {card.icon}
                       </div>
                     </div>
                     <div>
                       <div 
-                        className="text-lg sm:text-xl lg:text-xl xl:text-2xl 2xl:text-3xl font-black text-[var(--text-primary)] mb-1 tracking-tight font-mono font-tabular truncate"
+                        className="text-lg sm:text-xl lg:text-xl xl:text-2xl 2xl:text-3xl font-black text-[var(--text-primary)] tracking-tight font-mono font-tabular truncate"
                         title={card.value}
                       >
                         {card.value}
                       </div>
-                      <div className="text-[11px] sm:text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider min-h-[2.25rem] flex items-center leading-snug">
-                        {card.label}
-                      </div>
                       {card.subtitle ? (
                         <div 
-                          className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] mt-1 font-medium normal-case leading-tight line-clamp-2"
+                          className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] mt-1.5 font-medium normal-case leading-tight line-clamp-2 font-tabular"
                           title={typeof card.subtitle === 'string' ? card.subtitle : undefined}
                         >
                           {card.subtitle}
                         </div>
                       ) : (
-                        <div className="h-[14px] mt-1" />
+                        <div className="h-[14px] mt-1.5" />
                       )}
                     </div>
                   </div>
@@ -385,20 +416,20 @@ export default function Dashboard({ onLogout }) {
                   <Line
                     type="monotone"
                     dataKey="Sales"
-                    stroke="var(--accent-primary)"
+                    stroke={FINANCIAL_SERIES_COLORS.sales}
                     strokeWidth={3}
                     connectNulls
-                    dot={{ r: 3, fill: 'var(--accent-primary)', strokeWidth: 0 }}
-                    activeDot={{ r: 7, fill: 'var(--accent-primary)', stroke: 'var(--bg-primary)', strokeWidth: 1 }}
+                    dot={{ r: 3, fill: FINANCIAL_SERIES_COLORS.sales, strokeWidth: 0 }}
+                    activeDot={{ r: 7, fill: FINANCIAL_SERIES_COLORS.sales, stroke: 'var(--bg-primary)', strokeWidth: 1 }}
                   />
                   <Line
                     type="monotone"
                     dataKey="Purchases"
-                    stroke="var(--accent-secondary)"
+                    stroke={FINANCIAL_SERIES_COLORS.purchases}
                     strokeWidth={3}
                     connectNulls
-                    dot={{ r: 3, fill: 'var(--accent-secondary)', strokeWidth: 0 }}
-                    activeDot={{ r: 7, fill: 'var(--accent-secondary)', stroke: 'var(--bg-primary)', strokeWidth: 1 }}
+                    dot={{ r: 3, fill: FINANCIAL_SERIES_COLORS.purchases, strokeWidth: 0 }}
+                    activeDot={{ r: 7, fill: FINANCIAL_SERIES_COLORS.purchases, stroke: 'var(--bg-primary)', strokeWidth: 1 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -432,7 +463,7 @@ export default function Dashboard({ onLogout }) {
                     {stockSplitData.map((_, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={stockColors[index % stockColors.length]}
+                        fill={getChartColor(index)}
                         stroke={index === activeStockIndex ? 'var(--text-primary)' : 'rgba(0,0,0,0)'}
                         strokeWidth={index === activeStockIndex ? 1.4 : 0}
                       />
@@ -463,33 +494,50 @@ export default function Dashboard({ onLogout }) {
               <button onClick={() => navigate('/sales')} className="text-xs text-[var(--accent-primary)] hover:underline font-semibold">View All</button>
             </div>
             <div className="divide-y divide-[var(--border-subtle)]">
-              {(loadingSales ? Array(5).fill({}) : (Array.isArray(sales) ? sales : sales?.data || sales?.results || [])).slice(0, 5).map((invoice, i) =>
-                loadingSales ? (
-                  <div key={i} className="p-4 animate-pulse flex gap-4">
-                    <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
-                      <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+              {(() => {
+                const salesList = Array.isArray(sales) ? sales : sales?.data || sales?.results || [];
+                if (loadingSales) {
+                  return Array(5).fill({}).map((_, i) => (
+                    <div key={i} className="p-4 animate-pulse flex gap-4">
+                      <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
+                        <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div key={invoice.id || i} className="p-4 flex justify-between items-center hover:bg-[var(--bg-primary)]/40 transition-colors cursor-pointer" onClick={() => navigate(`/sales/${invoice.id}`)}>
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--status-info)]">
+                  ));
+                }
+                if (salesList.length === 0) {
+                  return (
+                    <div className="p-4">
+                      <EmptyState
+                        icon={CurrencyRupeeIcon}
+                        title="No sales invoices yet"
+                        description="Create your first GST-compliant invoice to start tracking revenue and receivables."
+                        action={{ label: 'Create First Invoice', icon: PlusIcon, onClick: () => navigate('/sales') }}
+                        className="!my-0 !p-6"
+                      />
+                    </div>
+                  );
+                }
+                return salesList.slice(0, 5).map((invoice, i) => (
+                  <div key={invoice.id || i} className="p-4 flex justify-between items-center hover:bg-[var(--bg-primary)]/40 transition-colors duration-150 cursor-pointer" onClick={() => navigate(`/sales/${invoice.id}`)}>
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="h-10 w-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--status-info)] shrink-0">
                         <CurrencyRupeeIcon className="w-5 h-5" />
                       </div>
-                      <div>
-                        <div className="text-sm font-semibold text-[var(--text-primary)]">{invoice.customer_name || 'Walk-in Customer'}</div>
-                        <div className="text-xs text-[var(--text-muted)]">{invoice.invoice_number}</div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-[var(--text-primary)] truncate">{invoice.customer_name || 'Walk-in Customer'}</div>
+                        <div className="text-xs text-[var(--text-muted)] font-mono font-tabular">{invoice.invoice_number}</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-[var(--text-primary)]">{formatCurrency(invoice.total_amount)}</div>
-                      <div className="text-xs text-[var(--text-muted)]">{invoice.invoice_date}</div>
+                    <div className="text-right shrink-0 ml-3">
+                      <div className="text-sm font-bold text-[var(--text-primary)] font-mono font-tabular">{formatCurrency(invoice.total_amount)}</div>
+                      <div className="text-xs text-[var(--text-muted)] font-tabular">{invoice.invoice_date}</div>
                     </div>
                   </div>
-                )
-              )}
+                ));
+              })()}
             </div>
           </div>
 
@@ -500,33 +548,50 @@ export default function Dashboard({ onLogout }) {
               <button onClick={() => navigate('/purchase')} className="text-xs text-[var(--accent-primary)] hover:underline font-semibold">View All</button>
             </div>
             <div className="divide-y divide-[var(--border-subtle)]">
-              {(loadingPurchases ? Array(5).fill({}) : (Array.isArray(purchases) ? purchases : purchases?.data || purchases?.results || [])).slice(0, 5).map((bill, i) =>
-                loadingPurchases ? (
-                  <div key={i} className="p-4 animate-pulse flex gap-4">
-                    <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
-                      <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+              {(() => {
+                const purchasesList = Array.isArray(purchases) ? purchases : purchases?.data || purchases?.results || [];
+                if (loadingPurchases) {
+                  return Array(5).fill({}).map((_, i) => (
+                    <div key={i} className="p-4 animate-pulse flex gap-4">
+                      <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
+                        <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div key={bill.id || i} className="p-4 flex justify-between items-center hover:bg-[var(--bg-primary)]/40 transition-colors cursor-pointer" onClick={() => navigate(`/purchases/${bill.id}`)}>
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-secondary)]">
+                  ));
+                }
+                if (purchasesList.length === 0) {
+                  return (
+                    <div className="p-4">
+                      <EmptyState
+                        icon={ShoppingBagIcon}
+                        title="No purchase bills yet"
+                        description="Record a vendor bill to track input tax credit (ITC) and update stock levels."
+                        action={{ label: 'Record Purchase Bill', icon: PlusIcon, onClick: () => navigate('/purchase') }}
+                        className="!my-0 !p-6"
+                      />
+                    </div>
+                  );
+                }
+                return purchasesList.slice(0, 5).map((bill, i) => (
+                  <div key={bill.id || i} className="p-4 flex justify-between items-center hover:bg-[var(--bg-primary)]/40 transition-colors duration-150 cursor-pointer" onClick={() => navigate(`/purchases/${bill.id}`)}>
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="h-10 w-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-secondary)] shrink-0">
                         <ShoppingBagIcon className="w-5 h-5" />
                       </div>
-                      <div>
-                        <div className="text-sm font-semibold text-[var(--text-primary)]">{bill.vendor_name || 'Vendor'}</div>
-                        <div className="text-xs text-[var(--text-muted)]">{bill.bill_number}</div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-[var(--text-primary)] truncate">{bill.vendor_name || 'Vendor'}</div>
+                        <div className="text-xs text-[var(--text-muted)] font-mono font-tabular">{bill.bill_number}</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-[var(--text-primary)]">{formatCurrency(bill.total_amount)}</div>
-                      <div className="text-xs text-[var(--text-muted)]">{bill.bill_date}</div>
+                    <div className="text-right shrink-0 ml-3">
+                      <div className="text-sm font-bold text-[var(--text-primary)] font-mono font-tabular">{formatCurrency(bill.total_amount)}</div>
+                      <div className="text-xs text-[var(--text-muted)] font-tabular">{bill.bill_date}</div>
                     </div>
                   </div>
-                )
-              )}
+                ));
+              })()}
             </div>
           </div>
         </section>

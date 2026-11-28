@@ -3,7 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTeamMembers, createTeamMember, deleteTeamMember, updateTeamMember } from '../../api/team';
 import { getUserProfile } from '../../api/users';
 import { UserPlusIcon, TrashIcon, ShieldCheckIcon, AdjustmentsHorizontalIcon, CurrencyDollarIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
 import useEscKey from '../../hooks/useEscStack';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import { showErrorToast } from '../../utils/toastUtils';
 
 const DEFAULT_PERMISSIONS = {
   sales: 'edit',
@@ -27,6 +30,7 @@ export default function TeamSettings() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [deleteMemberId, setDeleteMemberId] = useState(null);
   const [formData, setFormData] = useState({ ...EMPTY_TEAM_FORM, permissions: { ...DEFAULT_PERMISSIONS } });
 
   const resetForm = () => {
@@ -60,10 +64,11 @@ export default function TeamSettings() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
       await queryClient.refetchQueries({ queryKey: ['teamMembers'] });
+      toast.success('Team member added.');
       closeModal();
     },
     onError: (err) => {
-      alert(err.response?.data?.detail || err.response?.data?.password?.[0] || err.response?.data?.email?.[0] || 'Error adding team member');
+      showErrorToast(err, 'Could not add team member. Please check the details and try again.');
     }
   });
 
@@ -72,10 +77,11 @@ export default function TeamSettings() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
       await queryClient.refetchQueries({ queryKey: ['teamMembers'] });
+      toast.success('Team member updated.');
       closeModal();
     },
     onError: (err) => {
-      alert(err.response?.data?.detail || 'Error updating team member');
+      showErrorToast(err, 'Could not update team member. Please try again.');
     }
   });
 
@@ -84,6 +90,11 @@ export default function TeamSettings() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
       await queryClient.refetchQueries({ queryKey: ['teamMembers'] });
+      toast.success('Team member removed.');
+      setDeleteMemberId(null);
+    },
+    onError: (err) => {
+      showErrorToast(err, 'Could not remove team member.');
     }
   });
 
@@ -145,9 +156,7 @@ export default function TeamSettings() {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to remove this team member?")) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteMemberId(id);
   };
 
   const handlePermChange = (module, value) => {
@@ -398,6 +407,17 @@ export default function TeamSettings() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!deleteMemberId}
+        onClose={() => setDeleteMemberId(null)}
+        onConfirm={() => deleteMemberId && deleteMutation.mutate(deleteMemberId)}
+        title="Remove Team Member?"
+        description="They will immediately lose access to this Cenvora workspace. Historical audit logs and invoices they created remain preserved."
+        confirmLabel="Remove Member"
+        variant="destructive"
+        isPending={deleteMutation.isPending}
+      />
     </>
   );
 }

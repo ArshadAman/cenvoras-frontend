@@ -95,10 +95,10 @@ export default function DetailedFeatures() {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`text-left p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
+              className={`text-left p-4 rounded-xl border transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] flex items-start gap-3.5 ${
                 isActive 
-                  ? 'bg-[var(--bg-surface)] border-[var(--border-default)] text-[var(--text-primary)] shadow-md' 
-                  : 'bg-[var(--bg-primary)]/60 border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)]'
+                  ? 'bg-[var(--bg-surface)] border-[var(--border-default)] text-[var(--text-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_28px_-10px_rgba(0,0,0,0.16)]' 
+                  : 'bg-[var(--bg-primary)]/60 border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)]/50'
               }`}
             >
               <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${isActive ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)]' : 'bg-[var(--bg-primary)] text-[var(--text-muted)]'}`}>

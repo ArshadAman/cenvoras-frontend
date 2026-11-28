@@ -42,7 +42,7 @@ export default function Button({
   };
 
   const baseStyles =
-    'relative inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)]';
+    'relative inline-flex items-center justify-center font-semibold rounded-xl transition-[transform,background-color,border-color,box-shadow,filter,opacity] duration-100 select-none outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)] motion-reduce:transition-none';
 
   const sizeStyles = {
     sm: 'text-xs px-3 py-1.5 gap-1.5 min-h-[36px]',
@@ -65,7 +65,7 @@ export default function Button({
 
   const interactiveStyles = isDisabled
     ? 'opacity-50 cursor-not-allowed pointer-events-none'
-    : 'cursor-pointer active:scale-[0.98]';
+    : 'cursor-pointer active:scale-[0.98] motion-reduce:active:scale-100';
 
   return (
     <button

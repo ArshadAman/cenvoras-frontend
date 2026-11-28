@@ -118,7 +118,7 @@ export default function AIChatWidget() {
     <>
       {/* Floating Button Container */}
       {!isOpen ? (
-        <div className="fixed bottom-6 right-6 z-[100] group">
+        <div className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] right-[max(1.5rem,env(safe-area-inset-right,0px))] z-[100] group">
           {/* Mini Dismiss Badge */}
           <button
             onClick={handleDismiss}
@@ -139,7 +139,7 @@ export default function AIChatWidget() {
       ) : (
         <button
           onClick={() => setIsOpen(false)}
-          className="fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] flex items-center justify-center hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]"
+          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] right-[max(1.5rem,env(safe-area-inset-right,0px))] z-[100] w-14 h-14 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] flex items-center justify-center hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]"
         >
           <XMarkIcon className="w-6 h-6" />
         </button>
@@ -147,15 +147,14 @@ export default function AIChatWidget() {
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-20 left-4 right-4 md:left-auto md:right-6 md:bottom-24 w-auto md:w-[400px] h-[calc(100vh-110px)] md:h-[580px] max-h-[580px] bg-black/40 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/5 font-sans z-[100] transition-all duration-300">
+        <div className="fixed bottom-[max(5rem,calc(env(safe-area-inset-bottom,0px)+4.5rem))] left-4 right-4 md:left-auto md:right-6 md:bottom-24 w-auto md:w-[400px] h-[calc(100dvh-110px)] md:h-[580px] max-h-[580px] bg-[var(--bg-surface)]/95 backdrop-blur-2xl border border-[var(--border-default)] rounded-3xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-[var(--border-subtle)] font-sans z-[100] transition-all duration-300">
           
           {/* Header */}
-          <div className="px-4 py-4 md:px-6 md:py-5 border-b border-white/5 flex flex-col gap-0.5 md:gap-1 items-center justify-center relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-cyan-500/10 to-transparent opacity-50 pointer-events-none" />
-            <h3 className="text-base md:text-lg font-semibold tracking-tight text-white/90 relative z-10 flex items-center gap-2">
-              <SparklesIcon className="w-5 h-5 text-cyan-200" /> Cenvora Intelligence
+          <div className="px-4 py-4 md:px-6 md:py-5 border-b border-[var(--border-subtle)] flex flex-col gap-0.5 md:gap-1 items-center justify-center relative bg-[var(--bg-primary)]/40">
+            <h3 className="text-base md:text-lg font-semibold tracking-tight text-[var(--text-primary)] relative z-10 flex items-center gap-2">
+              <SparklesIcon className="w-5 h-5 text-[var(--accent-primary)]" /> Cenvora Intelligence
             </h3>
-            <p className="text-xs md:text-xs font-medium text-white/40 uppercase tracking-widest relative z-10">Business Copilot</p>
+            <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-widest relative z-10">Business Copilot</p>
           </div>
 
           {/* Messages */}
@@ -194,8 +193,8 @@ export default function AIChatWidget() {
                             }}
                             className="w-full text-left p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyan-500/30 transition-all group"
                           >
-                            <p className="text-sm font-medium text-white/90 group-hover:text-cyan-200">{opt.name}</p>
-                            <p className="text-xs text-white/40 group-hover:text-white/60">{opt.detail}</p>
+                            <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-[var(--accent-primary)]">{opt.name}</p>
+                            <p className="text-xs text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]">{opt.detail}</p>
                           </button>
                         ))}
                       </div>
@@ -258,18 +257,18 @@ export default function AIChatWidget() {
           </div>
 
           {/* Input Area */}
-          <div className="p-3 md:p-4 bg-white/[0.02] border-t border-white/5 backdrop-blur-3xl">
-            <div className={`flex items-center gap-2 md:gap-3 bg-white/[0.08] rounded-full px-3 py-1 md:px-4 md:py-1.5 border transition-colors duration-300 ${
-              input.length > 0 ? 'border-white/20' : 'border-transparent'
+          <div className="p-3 md:p-4 bg-[var(--bg-primary)]/40 border-t border-[var(--border-subtle)] backdrop-blur-3xl">
+            <div className={`flex items-center gap-2 md:gap-3 bg-[var(--bg-elevated)] rounded-full px-3 py-1 md:px-4 md:py-1.5 border transition-colors duration-300 ${
+              input.length > 0 ? 'border-[var(--border-focus)]' : 'border-[var(--border-subtle)]'
             }`}>
-              <SparklesIcon className={`w-4 h-4 transition-colors duration-300 flex-shrink-0 ${input.length > 0 ? 'text-cyan-300' : 'text-white/30'}`} />
+              <SparklesIcon className={`w-4 h-4 transition-colors duration-300 flex-shrink-0 ${input.length > 0 ? 'text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`} />
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Ask intelligence..."
-                className="flex-1 bg-transparent text-sm md:text-[15px] font-light text-white placeholder-white/30 outline-none border-none focus:outline-none focus:ring-0 shadow-none py-1.5 md:py-2 min-w-0"
+                className="flex-1 bg-transparent text-sm md:text-[15px] font-light text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none border-none focus:outline-none focus:ring-0 shadow-none py-1.5 md:py-2 min-w-0"
                 disabled={loading}
               />
               <button

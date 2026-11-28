@@ -43,10 +43,12 @@ import {
   ChevronDoubleRightIcon,
   ArrowRightOnRectangleIcon,
   MagnifyingGlassIcon,
+  CommandLineIcon,
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 import OnboardingWizard from './OnboardingWizard';
 import CommandPalette from './common/CommandPalette';
+import KeyboardShortcutsModal from './common/KeyboardShortcutsModal';
 import ThemeToggle from './common/ThemeToggle';
 import BrandLogo from './common/BrandLogo';
 
@@ -86,6 +88,7 @@ export default function Layout({ children, onLogout }) {
   }, []);
 
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
   // Keyboard shortcut Ctrl+K or Cmd+K to toggle Command Palette
   useEffect(() => {
@@ -93,6 +96,14 @@ export default function Layout({ children, onLogout }) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+      if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) {
+          return;
+        }
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -156,11 +167,18 @@ export default function Layout({ children, onLogout }) {
     const handlePopState = () => {
       setIsMobileMenuOpen(false);
     };
+    const handleEscKey = (e) => {
+      if (e.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+      }
+    };
 
     window.addEventListener('popstate', handlePopState);
+    window.addEventListener('keydown', handleEscKey);
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleEscKey);
       if (window.history.state && window.history.state.mobileMenuOpen) {
         window.history.back();
       }
@@ -413,24 +431,24 @@ export default function Layout({ children, onLogout }) {
 
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans selection:bg-[var(--accent-primary)]/30">
+    <div className="flex min-h-screen min-h-[100dvh] bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans selection:bg-[var(--accent-primary)]/30">
       {/* Background Texture Grid */}
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
 
       {/* Sidebar - Desktop */}
-      <aside className={`hidden md:flex flex-col glass-sidebar z-50 h-screen sticky top-0 transition-[width] duration-300 ease-in-out select-none overflow-x-hidden ${
+      <aside className={`hidden md:flex flex-col glass-sidebar z-50 h-screen h-[100dvh] sticky top-0 transition-[width] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none select-none overflow-x-hidden ${
         isSidebarCollapsed ? 'w-20' : 'w-72'
       }`}>
         
         {/* Logo & Collapse Header Area */}
-        <div className={`h-20 flex items-center border-b border-[var(--border-subtle)] transition-all duration-300 shrink-0 ${
+        <div className={`h-20 flex items-center border-b border-[var(--border-subtle)] shrink-0 ${
           isSidebarCollapsed ? 'justify-center px-2' : 'justify-between px-5'
         }`}>
           {!isSidebarCollapsed ? (
             <div className="flex items-center justify-between w-full gap-2 overflow-hidden">
               <Link to="/" className="flex items-center min-w-0" title="Cenvora Home">
                 <BrandLogo 
-                  className="h-11 sm:h-12 w-auto object-contain transform origin-left transition-transform duration-300" 
+                  className="h-11 sm:h-12 w-auto object-contain transform origin-left transition-transform duration-150 motion-reduce:transition-none" 
                 />
               </Link>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -438,7 +456,7 @@ export default function Layout({ children, onLogout }) {
                 <span
                   className={`px-2 py-0.5 rounded-md text-xs font-bold tracking-wider uppercase border truncate max-w-[85px] ${
                     isVipAccess
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+                      ? 'badge-success'
                       : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-default)]'
                   }`}
                   title={isVipAccess ? 'This account has VIP lifetime access' : `Current plan: ${displayPlanName}`}
@@ -686,6 +704,19 @@ export default function Layout({ children, onLogout }) {
               {/* Sign Out */}
               <button
                 type="button"
+                onClick={() => setIsShortcutsOpen(true)}
+                className="w-full flex items-center justify-between px-4 py-2 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60 transition-colors cursor-pointer"
+                title="Keyboard Shortcuts (?)"
+              >
+                <span className="flex items-center gap-2">
+                  <CommandLineIcon className="w-4 h-4 text-[var(--text-muted)]" />
+                  <span>Keyboard Shortcuts</span>
+                </span>
+                <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-muted)] font-mono text-[10px]">?</kbd>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleSignOut}
                 className="btn-secondary !w-full !text-xs !py-2.5 flex items-center justify-center gap-2 cursor-pointer"
                 title="Sign Out"
@@ -746,10 +777,13 @@ export default function Layout({ children, onLogout }) {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Mobile Header */}
-        <header className="md:hidden sticky top-0 z-40 bg-[var(--bg-surface)] backdrop-blur-xl border-b border-[var(--border-default)] flex items-center justify-between px-4 h-16 text-[var(--text-primary)]">
+        <header className="md:hidden sticky top-0 z-40 bg-[var(--bg-surface)] backdrop-blur-xl border-b border-[var(--border-default)] flex items-center justify-between px-3 sm:px-4 min-h-16 py-2 safe-pt text-[var(--text-primary)]">
           <button
+            type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isMobileMenuOpen}
           >
             {isMobileMenuOpen ? (
               <XMarkIcon className="w-6 h-6" />
@@ -758,16 +792,16 @@ export default function Layout({ children, onLogout }) {
             )}
           </button>
           
-          <Link to="/" className="flex items-center">
+          <Link to="/" className="flex items-center min-w-0">
             <BrandLogo className="h-9 sm:h-10 w-auto object-contain" />
           </Link>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <ThemeToggle />
             <button
               type="button"
               onClick={() => setIsCommandPaletteOpen(true)}
-              className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
               title="Search commands (⌘K)"
               aria-label="Search commands"
             >
@@ -786,7 +820,7 @@ export default function Layout({ children, onLogout }) {
 
         {/* Mobile Menu Overlay */}
         <div 
-          className={`md:hidden fixed inset-0 z-50 transition-all duration-300 ${
+          className={`md:hidden fixed inset-0 z-50 transition-opacity duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none ${
             isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
         >
@@ -798,15 +832,17 @@ export default function Layout({ children, onLogout }) {
           
           {/* Mobile Sidebar */}
           <div 
-            className={`absolute top-0 bottom-0 left-0 w-72 bg-[var(--bg-surface)] border-r border-[var(--border-default)] transform transition-transform duration-300 flex flex-col ${
+            className={`absolute top-0 bottom-0 left-0 w-72 max-w-[85vw] bg-[var(--bg-surface)] border-r border-[var(--border-default)] transform transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none flex flex-col safe-pt safe-pb pl-[env(safe-area-inset-left,0px)] ${
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
-            <div className="h-20 flex items-center justify-between px-6 border-b border-[var(--border-default)]">
+            <div className="h-20 flex items-center justify-between px-5 sm:px-6 border-b border-[var(--border-default)] shrink-0">
               <BrandLogo className="h-10 sm:h-11 w-auto object-contain" />
               <button 
+                type="button"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 -mr-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className="min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                aria-label="Close navigation menu"
               >
                 <XMarkIcon className="w-6 h-6" />
               </button>
@@ -940,16 +976,16 @@ export default function Layout({ children, onLogout }) {
 
         {/* Page Content */}
         <ErrorBoundary>
-          <main className="flex-1 overflow-y-auto relative z-10">
+          <main className="flex-1 overflow-y-auto relative z-10 safe-pb">
           {(showQueuedBanner || showExpiringBanner || showExpiredBanner) && (
             <div className="px-4 pt-4 md:px-6 md:pt-6">
               <div className="mx-auto max-w-7xl space-y-3">
                 {showQueuedBanner && (
-                  <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-cyan-500/15 via-sky-500/10 to-blue-500/15 p-4 md:p-5">
+                  <div className="rounded-2xl border border-[var(--status-info-border)] bg-[var(--status-info-bg)] p-4 md:p-5">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300">Downgrade Scheduled</p>
-                        <p className="mt-1 text-sm text-gray-100">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--status-info-text)]">Downgrade Scheduled</p>
+                        <p className="mt-1 text-sm text-[var(--text-primary)]">
                           Your account will move to Free on {queuedDate.toLocaleDateString()} after the current cycle ends.
                         </p>
                       </div>
@@ -958,10 +994,10 @@ export default function Layout({ children, onLogout }) {
                 )}
 
                 {(showExpiringBanner || showExpiredBanner) && (
-                  <div className={`rounded-2xl border p-4 md:p-5 ${showExpiredBanner ? 'border-rose-400/35 bg-gradient-to-r from-rose-500/20 via-red-500/15 to-orange-500/20' : 'border-amber-400/30 bg-gradient-to-r from-amber-500/20 via-yellow-500/12 to-orange-500/18'}`}>
+                  <div className={`rounded-2xl border p-4 md:p-5 ${showExpiredBanner ? 'border-[var(--status-danger-border)] bg-[var(--status-danger-bg)]' : 'border-[var(--status-warning-border)] bg-[var(--status-warning-bg)]'}`}>
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className={`text-xs font-semibold uppercase tracking-wider ${showExpiredBanner ? 'text-rose-200' : 'text-amber-200'}`}>
+                        <p className={`text-xs font-semibold uppercase tracking-wider ${showExpiredBanner ? 'text-[var(--status-danger-text)]' : 'text-[var(--status-warning-text)]'}`}>
                           {showExpiredBanner ? 'Plan Expired' : 'Renewal Reminder'}
                         </p>
                         <p className="mt-1 text-sm text-gray-100">
@@ -1060,6 +1096,12 @@ export default function Layout({ children, onLogout }) {
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
+        onOpenShortcuts={() => setIsShortcutsOpen(true)}
+      />
+
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
       />
     </div>
   );

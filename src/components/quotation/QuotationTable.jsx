@@ -264,10 +264,10 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                     </td>
                     <td className={LIST_TD}>
                       <span className={`inline-block px-2 py-0.5 rounded text-xs uppercase font-semibold tracking-wider ${
-                        q.status === 'approved' || q.status === 'converted' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' :
-                        q.status === 'rejected' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' :
-                        q.status === 'partially_converted' ? 'bg-[var(--status-info)]/15 text-[var(--status-info)] border border-[var(--status-info)]/30' :
-                        'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'
+                        q.status === 'converted' || q.status === 'partially_converted' ? 'badge-converted' :
+                        q.status === 'approved' ? 'badge-success' :
+                        q.status === 'rejected' ? 'badge-danger' :
+                        'badge-warning'
                       }`}>
                         {q.status?.replace('_', ' ')}
                       </span>
@@ -410,9 +410,10 @@ export default function QuotationTable({ onEdit, onView, onAddNewQuotation }) {
                      <div className="text-right">
                         <div className="text-xs text-[var(--text-muted)] font-black uppercase tracking-widest mb-1">Status</div>
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${
-                          q.status === 'approved' || q.status === 'converted' ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30' : 
-                          q.status === 'rejected' ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border border-[var(--status-danger)]/30' : 
-                          'bg-[var(--status-warning)]/15 text-[var(--status-warning)] border border-[var(--status-warning)]/30'
+                          q.status === 'converted' || q.status === 'partially_converted' ? 'badge-converted' :
+                          q.status === 'approved' ? 'badge-success' : 
+                          q.status === 'rejected' ? 'badge-danger' : 
+                          'badge-warning'
                         }`}>
                           {q.status?.replace('_', ' ')}
                         </span>

@@ -12,6 +12,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import UpgradePromptModal from '../subscription/UpgradePromptModal';
 import { getCurrencySymbol, formatCurrency } from '../../utils/currency';
+import { FINANCIAL_SERIES_COLORS } from '../../utils/chartColors';
 
 /**
  * MLPredictionsSection - Machine Learning Powered Predictions
@@ -139,14 +140,14 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
                   <XAxis 
                     dataKey="day_name" 
                     stroke="var(--text-muted)" 
-                    fontSize={9} 
+                    fontSize={11} 
                     tickLine={false} 
                     axisLine={false}
                     tickFormatter={(val) => val.slice(0, 3)}
                   />
                   <YAxis 
                     stroke="var(--text-muted)" 
-                    fontSize={9} 
+                    fontSize={11} 
                     tickLine={false} 
                     axisLine={false}
                     tickFormatter={(val) => `${getCurrencySymbol()}${(val/1000).toFixed(0)}K`}
@@ -164,17 +165,17 @@ export default function MLPredictionsSection({ data, isLoading, onViewAllProduct
                   />
                   <ReferenceLine 
                     y={salesForecast.historical_avg} 
-                    stroke="var(--border-subtle)" 
+                    stroke={FINANCIAL_SERIES_COLORS.baseline} 
                     strokeDasharray="3 3"
-                    label={{ value: 'Avg', position: 'right', fill: 'var(--text-muted)', fontSize: 10 }}
+                    label={{ value: 'Avg', position: 'right', fill: 'var(--text-muted)', fontSize: 11 }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="predicted_sales" 
-                    stroke="var(--accent-primary)" 
+                    stroke={FINANCIAL_SERIES_COLORS.forecast} 
                     strokeWidth={2} 
-                    dot={{ fill: 'var(--accent-primary)', strokeWidth: 0, r: 3 }}
-                    activeDot={{ r: 5, stroke: 'var(--accent-primary)', strokeWidth: 2 }}
+                    dot={{ fill: FINANCIAL_SERIES_COLORS.forecast, strokeWidth: 0, r: 3 }}
+                    activeDot={{ r: 5, stroke: FINANCIAL_SERIES_COLORS.forecast, strokeWidth: 2 }}
                   />
                 </LineChart>
               </ResponsiveContainer>

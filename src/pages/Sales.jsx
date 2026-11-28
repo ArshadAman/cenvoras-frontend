@@ -8,6 +8,7 @@ import SalesDetailsModal from "../components/sales/SalesDetailsModal";
 import SalesDeleteDialog from "../components/sales/SalesDeleteDialog";
 import SalesUploadCsv from "../components/sales/SalesUploadCsv";
 import SalesSummary from "../components/sales/SalesSummary";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import "react-toastify/dist/ReactToastify.css";
 import { PlusIcon, ArrowUpTrayIcon, CurrencyRupeeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { getUserProfile, patchUserProfile } from "../api/users";
@@ -34,6 +35,7 @@ export default function Sales({ documentType = "invoice" }) {
   const [deleteInvoice, setDeleteInvoice] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
   const [invoicePrefix, setInvoicePrefix] = useState(DEFAULT_INVOICE_PREFIX);
+  const [prefixConfirm, setPrefixConfirm] = useState(null);
   const [statusFilterTab, setStatusFilterTab] = useState(isQuotation ? "draft" : "final");
 
   // Hierarchical ESC key navigation:
@@ -178,19 +180,12 @@ export default function Sales({ documentType = "invoice" }) {
       // R22: show the number the server will actually issue. The counter is per prefix
       // (sequence_service.preview_next_number), so a prefix used before continues its series (e.g. INV-016).
       const target = normalized || DEFAULT_INVOICE_PREFIX;
-      let nextLine = 'The next invoice number could not be checked.';
+      let nextLine = 'The next invoice number will follow this series.';
       try {
         const res = await getNextInvoiceNumber(encodeURIComponent(target));
-        if (res?.next_number) nextLine = `The next invoice will be ${res.next_number}.`;
+        if (res?.next_number) nextLine = `The next invoice will be numbered ${res.next_number}.`;
       } catch { /* keep generic line */ }
-      const ok = window.confirm(
-        `Change the invoice series prefix from "${current}" to "${target}"?\n\n${nextLine}`
-      );
-      if (!ok) {
-        setInvoicePrefix(current);
-        return;
-      }
-      saveInvoicePrefixMutation.mutate(normalized);
+      setPrefixConfirm({ current, target, normalized, nextLine });
     }
   };
 
@@ -309,6 +304,31 @@ export default function Sales({ documentType = "invoice" }) {
           onClose={() => setShowUpload(false)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={!!prefixConfirm}
+        onClose={() => {
+          if (prefixConfirm) setInvoicePrefix(prefixConfirm.current);
+          setPrefixConfirm(null);
+        }}
+        onConfirm={() => {
+          if (!prefixConfirm) return;
+          saveInvoicePrefixMutation.mutate(prefixConfirm.normalized, {
+            onSettled: () => setPrefixConfirm(null),
+          });
+        }}
+        title="Update Invoice Series Prefix?"
+        description={
+          prefixConfirm
+            ? `Change invoice series prefix from "${prefixConfirm.current}" to "${prefixConfirm.target}". ${prefixConfirm.nextLine}`
+            : ''
+        }
+        dependencyWarning="Existing finalized invoices keep their original numbers. Only new invoices will use this series."
+        confirmLabel="Update Prefix"
+        cancelLabel="Keep Current"
+        variant="warning"
+        isPending={saveInvoicePrefixMutation.isPending}
+      />
     </>
   );
 }

@@ -380,7 +380,7 @@ const ProfessionalTemplate = forwardRef(({
                         lineHeight: 1.2, 
                         fontSize: `${type.tableBodySize}px`, 
                         textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
-                        fontVariantNumeric: (isNum || isHsn) ? 'tabular-nums' : 'normal',
+                        fontVariantNumeric: !isDesc ? 'tabular-nums' : 'normal',
                         overflow: 'hidden',
                         verticalAlign: 'middle' 
                       }}
@@ -426,7 +426,7 @@ const ProfessionalTemplate = forwardRef(({
           </div>
 
           <div className="w-1/3">
-            <div className="border border-gray-200 rounded-lg overflow-hidden" style={{ fontSize: `${type.totalsSize}px` }}>
+            <div className="border border-gray-200 rounded-lg overflow-hidden" style={{ fontSize: `${type.totalsSize}px`, fontVariantNumeric: 'tabular-nums' }}>
               <div className="flex justify-between px-3 py-1.5 border-b border-gray-100">
                 <span className="text-gray-600">{charges && charges.length > 0 ? "Items Subtotal" : "Subtotal"}</span>
                 <span className="font-bold">{getCurrencySymbol()}{(itemsSubtotal !== undefined ? itemsSubtotal : subtotal).toFixed(2)}</span>

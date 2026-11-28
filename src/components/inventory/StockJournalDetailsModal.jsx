@@ -88,7 +88,7 @@ export default function StockJournalDetailsModal({ isOpen, onClose, journal }) {
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]"></span>
               Adjusted Items
             </h3>
-            <div className="border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-[var(--bg-primary)]">
+            <div className="border border-[var(--border-subtle)] rounded-xl overflow-x-auto bg-[var(--bg-primary)]">
               <table className="w-full table-fixed text-sm">
                 <colgroup>
                   <col style={{ width: `${colWidths.product}px` }} />

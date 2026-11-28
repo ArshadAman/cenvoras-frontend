@@ -910,6 +910,11 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                 {/* Bill & Vendor Details Card */}
                 <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-3xl p-6 sm:p-8 space-y-8">
                   {/* Bill Details Grid */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">1. Bill Details</span>
+                      <div className="h-px flex-1 bg-[var(--border-subtle)]" />
+                    </div>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="relative group">
                       <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
@@ -980,9 +985,15 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                       />
                     </div>
                   </div>
+                  </div>
 
                   {/* Vendor Info Section */}
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-8 border-t border-[var(--border-subtle)]">
+                  <div className="pt-8 border-t border-[var(--border-subtle)]">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">2. Vendor & Tax Details</span>
+                      <div className="h-px flex-1 bg-[var(--border-subtle)]" />
+                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                     <div className="md:col-span-4 space-y-6">
                       <div className="relative group">
                         <label className="block text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-widest group-focus-within:text-[var(--accent-primary)] transition-colors">
@@ -1070,6 +1081,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                       </div>
                     </div>
                   </div>
+                  </div>
                 </div>
 
                 {/* Items Section Header */}
@@ -1122,7 +1134,7 @@ export default function PurchaseForm({ isOpen = true, bill, onClose, onSubmit })
                     >
                       
                         {/* Table Header */}
-                        <div className="hidden md:grid grid-cols-12 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl font-black text-[15px] text-center text-[var(--text-muted)] uppercase tracking-widest mb-3 [&>div]:border-r [&>div]:border-[var(--border-subtle)] [&>div:last-child]:border-r-0 [&>div]:px-2">
+                        <div className="hidden md:grid grid-cols-12 py-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl font-bold text-[11px] text-center text-[var(--text-muted)] uppercase tracking-wider mb-3 [&>div]:border-r [&>div]:border-[var(--border-subtle)] [&>div:last-child]:border-r-0 [&>div]:px-2">
                             <div className="col-span-3 text-center">Product / HSN</div>
                             <div className="col-span-2 text-center">Batch Details</div>
                             <div className="col-span-1 text-center">Quantity</div>
