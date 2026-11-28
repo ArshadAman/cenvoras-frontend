@@ -157,7 +157,7 @@ export function BankReconciliationMVP() {
                         <div className="space-y-2">
                           {line.candidates?.length > 0 ? (
                             <div>
-                                <p className="text-xs text-purple-400 font-medium mb-2">Suggested Matches:</p>
+                                <p className="text-xs text-[var(--accent-primary)] font-medium mb-2">Suggested Matches:</p>
                                 <div className="space-y-2">
                                     {line.candidates.map(candidate => (
                                         <div key={candidate.id} className="flex justify-between items-center bg-white/5 p-2 rounded text-sm hover:bg-white/10 cursor-pointer"
@@ -168,7 +168,7 @@ export function BankReconciliationMVP() {
                                             </div>
                                             <div className="flex items-center gap-2 shrink-0">
                                                 <span className="text-white font-mono">{getCurrencySymbol()}{fmt(candidate.amount)}</span>
-                                                <button className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded hover:bg-purple-500/30">Match</button>
+                                                <button className="text-xs bg-[var(--action-primary-bg)] text-[var(--accent-primary)] border border-[var(--action-primary-border)] px-2.5 py-1 rounded-lg font-semibold hover:brightness-110 transition-all">Match</button>
                                             </div>
                                         </div>
                                     ))}

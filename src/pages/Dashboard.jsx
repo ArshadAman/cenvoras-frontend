@@ -293,7 +293,7 @@ export default function Dashboard({ onLogout }) {
             {loadingMetrics
               ? Array(5).fill(0).map((_, i) => <SkeletonCard key={i} />)
               : cardData.map((card, i) => (
-                  <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 sm:p-5 xl:p-5 2xl:p-6 flex flex-col justify-between group hover:border-[var(--accent-primary)]/40 transition-all shadow-sm">
+                  <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 sm:p-5 xl:p-5 2xl:p-6 flex flex-col justify-between group hover:border-[var(--accent-primary)]/45 transition-colors duration-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_20px_-10px_rgba(0,0,0,0.14)]">
                     <div className="flex justify-between items-start mb-3 sm:mb-4">
                       <div className={`p-2.5 sm:p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] ${card.color}`}>
                         {card.icon}

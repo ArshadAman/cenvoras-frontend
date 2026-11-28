@@ -104,32 +104,34 @@ const ProductShowcase = () => {
         })}
       </div>
 
-      {/* Browser Frame */}
-      <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-xl overflow-hidden shadow-2xl">
-        <div className="flex items-center px-4 py-3 bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-xs text-[var(--text-muted)]">
-          <div className="flex items-center gap-1.5 mr-4">
-            <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-40" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-60" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-80" />
+      {/* Browser Frame (Double-Bezel Hardware Architecture) */}
+      <div className="bezel-shell">
+        <div className="bezel-core">
+          <div className="flex items-center px-4 py-3 bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] text-xs text-[var(--text-muted)]">
+            <div className="flex items-center gap-1.5 mr-4">
+              <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-40" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-60" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[var(--text-muted)] opacity-80" />
+            </div>
+            <div className="flex items-center gap-2 bg-[var(--bg-surface)] px-3 py-1 rounded-md border border-[var(--border-subtle)] font-mono text-xs text-[var(--text-muted)]">
+              <ShieldCheckIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+              <span>https://app.cenvora.com</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 bg-[var(--bg-surface)] px-3 py-1 rounded-md border border-[var(--border-subtle)] font-mono text-xs text-[var(--text-muted)]">
-            <ShieldCheckIcon className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-            <span>https://app.cenvora.com</span>
-          </div>
-        </div>
 
-        <div className="relative min-h-[300px] sm:min-h-[500px] bg-[var(--bg-primary)] flex items-center justify-center">
-          {tabs.map((tab) => (
-            <img 
-              key={tab.id}
-              src={tab.image} 
-              alt={`Cenvora ${tab.label}`} 
-              loading="lazy"
-              className={`w-full h-auto object-cover transition-opacity duration-300 ${
-                activeTab === tab.id ? 'opacity-100' : 'opacity-0 absolute inset-0 pointer-events-none'
-              }`}
-            />
-          ))}
+          <div className="relative min-h-[300px] sm:min-h-[500px] bg-[var(--bg-primary)] flex items-center justify-center">
+            {tabs.map((tab) => (
+              <img 
+                key={tab.id}
+                src={tab.image} 
+                alt={`Cenvora ${tab.label}`} 
+                loading="lazy"
+                className={`w-full h-auto object-cover transition-opacity duration-300 ${
+                  activeTab === tab.id ? 'opacity-100' : 'opacity-0 absolute inset-0 pointer-events-none'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </Reveal>
@@ -231,7 +233,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="font-body text-[var(--text-primary)] bg-[var(--bg-primary)] min-h-screen">
+    <div className="font-body text-[var(--text-primary)] bg-[var(--bg-primary)] min-h-[100dvh]">
       <Seo
         title="Cenvora — Run Your Business & GST Billing From The Cloud"
         description="Run your business and billing from the cloud without changing your CA. GST invoices, live stock, and customer ledgers with 1-click Tally export."
@@ -260,6 +262,18 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
           {/* Left Column — Copy */}
           <div className="flex-1 max-w-xl lg:max-w-none">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+              className="mb-5"
+            >
+              <span className="eyebrow-pill font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
+                Built for Indian SMEs &amp; Distributors
+              </span>
+            </motion.div>
+
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -284,23 +298,28 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-8 flex flex-col sm:flex-row items-start gap-3"
+              className="mt-8 flex flex-col sm:flex-row items-start gap-3.5"
             >
               <button
                 onClick={() => setIsCalendlyOpen(true)}
-                className="btn-primary !text-sm !py-3.5 !px-7 cursor-pointer shadow-lg"
+                className="btn-pill-cta group"
               >
-                Book a Free Demo
+                <span>Book a Free Demo</span>
+                <span className="btn-pill-icon bg-black/15 dark:bg-black/20 group-hover:translate-x-0.5 group-hover:-translate-y-[1px]">
+                  <ArrowRightIcon className="w-4 h-4" />
+                </span>
               </button>
 
               <a
                 href="https://wa.me/918456966867?text=Hi%20Cenvora%2C%20I%20would%20like%20to%20see%20a%20quick%20demo%20of%20the%20billing%20software."
                 target="_blank"
                 rel="noreferrer"
-                className="btn-secondary !text-sm !py-3.5 !px-6 flex items-center gap-2 cursor-pointer shadow-sm"
+                className="btn-pill-cta-secondary group"
               >
-                Chat on WhatsApp
-                <ArrowRightIcon className="w-4 h-4" />
+                <span>Chat on WhatsApp</span>
+                <span className="btn-pill-icon bg-[var(--bg-primary)] border border-[var(--border-subtle)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px]">
+                  <ArrowRightIcon className="w-4 h-4 text-[var(--accent-primary)]" />
+                </span>
               </a>
             </motion.div>
 
@@ -343,6 +362,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mb-14">
+              <span className="eyebrow-pill font-mono mb-4">Core Architecture</span>
               <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
                 Everything your business runs on
               </h2>
@@ -352,39 +372,47 @@ export default function LandingPage() {
             </div>
           </Reveal>
 
-          {/* Bento: 1 large left + 2 stacked right */}
+          {/* Bento: 1 large left + 2 stacked right (Double-Bezel Architecture) */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
             {/* Large cell */}
-            <Reveal className="md:col-span-3 p-8 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md hover:border-[var(--accent-primary)] transition-all duration-300 shadow-xl group">
-              <div className="w-14 h-14 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-6 group-hover:scale-105 transition-transform">
-                <BoltIcon className="w-7 h-7" />
+            <Reveal className="md:col-span-3 bezel-shell group">
+              <div className="bezel-core h-full p-8 flex flex-col justify-between transition-colors duration-300 group-hover:border-[var(--accent-primary)]/50">
+                <div>
+                  <div className="w-14 h-14 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-6 group-hover:scale-105 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+                    <BoltIcon className="w-7 h-7" />
+                  </div>
+                  <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mb-2">10-Second GST Invoicing</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-md font-body">
+                    Create clean GST tax bills with auto-calculated CGST, SGST, and IGST. Auto-fills customer details and prints formal A4 or A5 invoices with your branding.
+                  </p>
+                </div>
               </div>
-              <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mb-2">10-Second GST Invoicing</h3>
-              <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-md font-body">
-                Create clean GST tax bills with auto-calculated CGST, SGST, and IGST. Auto-fills customer details and prints formal A4 or A5 invoices with your branding.
-              </p>
             </Reveal>
 
             {/* 2 stacked right */}
             <div className="md:col-span-2 flex flex-col gap-5">
-              <Reveal delay={0.1} className="flex-1 p-7 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md hover:border-[var(--accent-primary)] transition-all duration-300 shadow-xl group">
-                <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-4 group-hover:scale-105 transition-transform">
-                  <ArchiveBoxIcon className="w-6 h-6" />
+              <Reveal delay={0.1} className="flex-1 bezel-shell group">
+                <div className="bezel-core h-full p-7 transition-colors duration-300 group-hover:border-[var(--accent-primary)]/50">
+                  <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-4 group-hover:scale-105 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+                    <ArchiveBoxIcon className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Real-Time Stock Updates</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed font-body">
+                    Stock deducts as invoices are generated. Low-stock alerts keep you ahead.
+                  </p>
                 </div>
-                <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Real-Time Stock Updates</h3>
-                <p className="text-sm text-[var(--text-muted)] leading-relaxed font-body">
-                  Stock deducts as invoices are generated. Low-stock alerts keep you ahead.
-                </p>
               </Reveal>
 
-              <Reveal delay={0.2} className="flex-1 p-7 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-md hover:border-[var(--accent-primary)] transition-all duration-300 shadow-xl group">
-                <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-4 group-hover:scale-105 transition-transform">
-                  <DocumentChartBarIcon className="w-6 h-6" />
+              <Reveal delay={0.2} className="flex-1 bezel-shell group">
+                <div className="bezel-core h-full p-7 transition-colors duration-300 group-hover:border-[var(--accent-primary)]/50">
+                  <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-primary)] mb-4 group-hover:scale-105 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+                    <DocumentChartBarIcon className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Ledgers &amp; Tax Reports</h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed font-body">
+                    Track customer balances, record settlements, and export GSTR-1 and GSTR-3B summaries.
+                  </p>
                 </div>
-                <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1.5">Ledgers & Tax Reports</h3>
-                <p className="text-sm text-[var(--text-muted)] leading-relaxed font-body">
-                  Track customer balances, record settlements, and export GSTR-1 and GSTR-3B summaries.
-                </p>
               </Reveal>
             </div>
           </div>
@@ -396,6 +424,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mx-auto text-center mb-4">
+              <span className="eyebrow-pill font-mono mb-4">Live Workspace</span>
               <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
                 See the whole system
               </h2>
@@ -420,6 +449,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mx-auto text-center mb-16">
+              <span className="eyebrow-pill font-mono mb-4">Transparent Licensing</span>
               <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
                 Choose the plan that fits your business
               </h2>
@@ -474,12 +504,13 @@ export default function LandingPage() {
 
             {/* Tier 2: Lifetime License & Custom ERP (★ Most Popular - Centered Badge) */}
             <Reveal delay={0.1}>
-              <div className="h-full p-7 rounded-3xl border-2 border-[var(--accent-primary)] bg-[var(--bg-surface)] flex flex-col justify-between relative shadow-2xl">
+              <div className="bezel-shell h-full relative">
                 {/* Centered Badge */}
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-[var(--accent-primary)] text-white text-xs font-black uppercase rounded-full shadow-md flex items-center gap-1.5 whitespace-nowrap z-20">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-[var(--accent-primary)] text-[var(--text-on-accent)] text-xs font-black uppercase rounded-full shadow-[0_8px_20px_-6px_rgba(0,0,0,0.28)] flex items-center gap-1.5 whitespace-nowrap z-20">
                   <SparklesIcon className="w-3.5 h-3.5" />
                   Lifetime Ownership · Complete Flexibility
                 </div>
+                <div className="bezel-core h-full p-7 border-2 border-[var(--accent-primary)] flex flex-col justify-between">
 
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wider text-[var(--accent-primary)] font-mono">Perpetual License</div>
@@ -516,6 +547,7 @@ export default function LandingPage() {
                     Contact Founders on WhatsApp
                   </a>
                 </div>
+              </div>
               </div>
             </Reveal>
 
@@ -578,6 +610,7 @@ export default function LandingPage() {
       <section className="relative z-10 py-20 border-t border-[var(--border-subtle)] px-6 text-center bg-[var(--bg-surface)]">
         <Reveal>
           <div className="max-w-2xl mx-auto">
+            <span className="eyebrow-pill font-mono mb-4">Get Started</span>
             <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
               See it live in 20 minutes.
             </h2>
@@ -585,20 +618,26 @@ export default function LandingPage() {
               Book a screen walkthrough or chat with our team on WhatsApp.
             </p>
 
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
               <button
                 onClick={() => setIsCalendlyOpen(true)}
-                className="w-full sm:w-auto px-7 py-3.5 btn-primary !text-sm cursor-pointer shadow-lg"
+                className="w-full sm:w-auto btn-pill-cta group"
               >
-                Book a Free Demo
+                <span>Book a Free Demo</span>
+                <span className="btn-pill-icon bg-black/15 dark:bg-black/20 group-hover:translate-x-0.5 group-hover:-translate-y-[1px]">
+                  <ArrowRightIcon className="w-4 h-4" />
+                </span>
               </button>
               <a
                 href="https://wa.me/918456966867"
                 target="_blank"
                 rel="noreferrer"
-                className="w-full sm:w-auto px-7 py-3.5 btn-secondary !text-sm flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                className="w-full sm:w-auto btn-pill-cta-secondary group"
               >
-                Chat on WhatsApp
+                <span>Chat on WhatsApp</span>
+                <span className="btn-pill-icon bg-[var(--bg-primary)] border border-[var(--border-subtle)] group-hover:translate-x-0.5 group-hover:-translate-y-[1px]">
+                  <ArrowRightIcon className="w-4 h-4 text-[var(--accent-primary)]" />
+                </span>
               </a>
             </div>
 
