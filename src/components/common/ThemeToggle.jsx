@@ -40,7 +40,7 @@ export default function ThemeToggle({ className = '', showLabel = false }) {
 
         {/* Sliding Thumb */}
         <span
-          className={`absolute top-0.5 bottom-0.5 flex w-6 items-center justify-center rounded-full shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          className={`absolute top-0.5 bottom-0.5 flex w-6 items-center justify-center rounded-full shadow-sm transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
             isDark ? 'translate-x-7' : 'translate-x-0'
           }`}
           style={{

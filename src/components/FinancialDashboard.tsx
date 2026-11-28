@@ -12,7 +12,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, trend, icon }) =>
   const { formatCurrency } = useRegion();
 
   return (
-    <div className="bg-[var(--bg-surface)] rounded-2xl p-6 shadow-sm border border-[var(--border-default)] transition-all hover:shadow-md hover:-translate-y-1">
+    <div className="bg-[var(--bg-surface)] rounded-2xl p-6 shadow-sm border border-[var(--border-default)] transition-[border-color,box-shadow] duration-150 hover:border-slate-600 hover:shadow-md">
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wider">{title}</h3>
         {icon && <div className="text-[var(--accent-primary)] bg-[var(--action-primary-bg)] p-2 rounded-lg">{icon}</div>}

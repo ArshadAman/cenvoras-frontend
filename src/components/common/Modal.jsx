@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import useEscKey from '../../hooks/useEscStack';
+import { backdropVariants, modalSurfaceVariants } from '../../utils/motion';
 
 /**
  * Universal Accessible Modal Component
@@ -38,8 +40,6 @@ export default function Modal({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget && !preventBackdropClose) {
       onClose();
@@ -47,24 +47,37 @@ export default function Modal({
   };
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={title ? "cenvora-modal-title" : undefined}
-    >
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200" />
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          onClick={handleBackdropClick}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? "cenvora-modal-title" : undefined}
+        >
+          {/* Backdrop */}
+          <motion.div
+            variants={backdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            aria-hidden="true"
+          />
 
-      {/* Modal Surface */}
-      <div
-        className={clsx(
-          'relative w-full rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-2xl overflow-hidden animate-fade-up z-10 my-auto text-[var(--text-primary)] max-h-[90vh] flex flex-col',
-          maxWidth,
-          className
-        )}
-      >
+          {/* Modal Surface */}
+          <motion.div
+            variants={modalSurfaceVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className={clsx(
+              'relative w-full rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-2xl overflow-hidden z-10 my-auto text-[var(--text-primary)] max-h-[90vh] flex flex-col',
+              maxWidth,
+              className
+            )}
+          >
         {/* Header */}
         {(title || !hideCloseButton) && (
           <div className="flex items-center justify-between px-5 py-4 sm:px-6 sm:py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
@@ -108,8 +121,10 @@ export default function Modal({
             {footer}
           </div>
         )}
-      </div>
-    </div>,
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>,
     document.body
   );
 }

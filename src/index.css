@@ -1092,18 +1092,42 @@
     border-color: var(--border-subtle) !important;
   }
 
-  /* Animations */
+  /* Animations — Precision Obsidian 120-150ms operational physics */
   @keyframes fade-up {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
   
   .animate-fade-up {
-    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: fade-up 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.12s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
   
   .delay-300 { animation-delay: 0.3s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-up,
+    .animate-fade-in {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .delay-300 {
+      animation-delay: 0s !important;
+    }
+    .glass-nav-item {
+      transition: none !important;
+    }
+  }
 
   /* App Sidebar Utilities */
   .glass-sidebar {
