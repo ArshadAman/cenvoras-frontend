@@ -4,6 +4,7 @@ import { listPurchaseOrders, deletePurchaseOrder, convertPurchaseOrder } from '.
 import PurchaseOrderTable from '../components/purchase/PurchaseOrderTable'
 import PurchaseOrderForm from '../components/purchase/PurchaseOrderForm'
 import Button from '../components/common/Button'
+import ConfirmDialog from '../components/common/ConfirmDialog'
 import { PlusIcon } from '@heroicons/react/24/outline'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -12,6 +13,8 @@ export default function PurchaseOrders() {
   const qc = useQueryClient()
   const [showForm, setShowForm] = useState(false)
   const [editOrder, setEditOrder] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [convertTarget, setConvertTarget] = useState(null)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['purchaseOrders'],
@@ -50,19 +53,29 @@ export default function PurchaseOrders() {
     setEditOrder(null)
   }
 
-  const handleDelete = async (order) => {
-    if (!window.confirm(`Are you sure you want to delete purchase order ${order.po_number}?`)) return
+  const handleDelete = (order) => {
+    setDeleteTarget(order)
+  }
+
+  const handleConvert = (order) => {
+    setConvertTarget(order)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await deleteMut.mutateAsync(order.id)
+      await deleteMut.mutateAsync(deleteTarget.id)
+      setDeleteTarget(null)
     } catch (err) {
       console.error('Failed to delete PO:', err)
     }
   }
 
-  const handleConvert = async (order) => {
-    if (!window.confirm(`Convert Purchase Order ${order.po_number} to a Purchase Bill?`)) return
+  const confirmConvert = async () => {
+    if (!convertTarget) return
     try {
-      await convertMut.mutateAsync(order.id)
+      await convertMut.mutateAsync(convertTarget.id)
+      setConvertTarget(null)
     } catch (err) {
       console.error('Failed to convert PO:', err)
     }
@@ -125,7 +138,27 @@ export default function PurchaseOrders() {
         />
       )}
 
-      
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete Purchase Order?"
+        description={deleteTarget ? `Permanently remove purchase order ${deleteTarget.po_number}. This action cannot be undone.` : ''}
+        confirmLabel="Delete Order"
+        variant="destructive"
+        isPending={deleteMut.isPending}
+      />
+
+      <ConfirmDialog
+        isOpen={!!convertTarget}
+        onClose={() => setConvertTarget(null)}
+        onConfirm={confirmConvert}
+        title="Convert to Purchase Bill?"
+        description={convertTarget ? `Create a Purchase Bill from ${convertTarget.po_number}. Line items, taxes, and vendor details will be carried over.` : ''}
+        confirmLabel="Convert to Bill"
+        variant="info"
+        isPending={convertMut.isPending}
+      />
     </>
   )
 }

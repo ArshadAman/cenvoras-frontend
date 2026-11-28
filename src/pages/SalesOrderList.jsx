@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import SalesOrderTable from "../components/sales/SalesOrderTable";
 import SalesForm from "../components/sales/SalesForm";
 import SalesDetailsModal from "../components/sales/SalesDetailsModal";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -27,6 +28,7 @@ export default function SalesOrderList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const targetOrderId = searchParams.get("orderId");
   const targetOrderNumber = searchParams.get("orderNumber");
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editOrder, setEditOrder] = useState(null);
@@ -142,13 +144,18 @@ export default function SalesOrderList() {
     }
   };
 
-  const handleDelete = async (order) => {
+  const handleDelete = (order) => {
     if (order.has_challans || order.has_invoices) {
       toast.error("Cannot delete Sales Order because a Delivery Challan or Sales Invoice has already been generated from it.");
       return;
     }
-    if (!window.confirm(`Delete sales order ${order.order_number}?`)) return;
-    await deleteMutation.mutateAsync(order.id);
+    setDeleteTarget(order);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteMutation.mutateAsync(deleteTarget.id);
+    setDeleteTarget(null);
   };
 
   return (
@@ -225,6 +232,17 @@ export default function SalesOrderList() {
           documentType="proforma"
         />
       )}
+
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete Sales Order?"
+        description={deleteTarget ? `Permanently remove sales order ${deleteTarget.order_number}. This action cannot be undone.` : ''}
+        confirmLabel="Delete Order"
+        variant="destructive"
+        isPending={deleteMutation.isPending}
+      />
     </>
   );
 }

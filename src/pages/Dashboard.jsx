@@ -258,7 +258,7 @@ export default function Dashboard({ onLogout }) {
                   : 'Smart Dashboard'}
               </span>
             </h1>
-            <p className="text-[var(--text-muted)] text-sm">Your intelligent business assistant</p>
+            <p className="text-[var(--text-muted)] text-sm">Real-time sales, inventory, and GST compliance overview</p>
             <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1 text-xs text-[var(--text-secondary)]">
               <span className="text-[var(--accent-primary)] font-semibold">{currentPlanName}</span>
               <span className="text-[var(--text-muted)]">plan active</span>
@@ -284,6 +284,24 @@ export default function Dashboard({ onLogout }) {
         </div>
 
         {/* 1. TODAY'S PULSE (New Smart Feature) */}
+        {smartError && !loadingSmart && (
+          <div
+            role="status"
+            className="rounded-2xl border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-sm"
+          >
+            <div className="flex items-center gap-2.5 text-[var(--text-primary)]">
+              <ExclamationTriangleIcon className="w-5 h-5 text-[var(--status-warning)] shrink-0" />
+              <span>Some live analytics could not be refreshed right now. Your accounting records are safe.</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => refetchSmart()}
+              className="btn-secondary !text-xs !py-1.5 !px-3"
+            >
+              Retry Analytics
+            </button>
+          </div>
+        )}
         <PulseSection 
           data={smartData?.pulse} 
           isLoading={loadingSmart} 
@@ -466,30 +484,33 @@ export default function Dashboard({ onLogout }) {
               <button onClick={() => navigate('/sales')} className="text-xs text-[var(--accent-primary)] hover:underline font-semibold">View All</button>
             </div>
             <div className="divide-y divide-[var(--border-subtle)]">
-              {loadingSales ? (
-                Array(5).fill({}).map((_, i) => (
-                  <div key={i} className="p-4 animate-pulse flex gap-4">
-                    <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
-                      <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+              {(() => {
+                const salesList = Array.isArray(sales) ? sales : sales?.data || sales?.results || [];
+                if (loadingSales) {
+                  return Array(5).fill({}).map((_, i) => (
+                    <div key={i} className="p-4 animate-pulse flex gap-4">
+                      <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
+                        <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+                      </div>
                     </div>
-                  </div>
-                ))
-              ) : (() => {
-                const recentSalesList = (Array.isArray(sales) ? sales : sales?.data || sales?.results || []).slice(0, 5);
-                if (recentSalesList.length === 0) {
+                  ));
+                }
+                if (salesList.length === 0) {
                   return (
-                    <EmptyState
-                      icon={CurrencyRupeeIcon}
-                      title="No finalized sales yet"
-                      description="Record your first tax invoice to start tracking recent sales activity."
-                      action={{ label: 'Record Sale', onClick: () => navigate('/sales') }}
-                      className="!my-0 !border-0 !rounded-none !bg-transparent"
-                    />
+                    <div className="p-4">
+                      <EmptyState
+                        icon={CurrencyRupeeIcon}
+                        title="No sales invoices yet"
+                        description="Create your first GST-compliant invoice to start tracking revenue and receivables."
+                        action={{ label: 'Create First Invoice', icon: PlusIcon, onClick: () => navigate('/sales') }}
+                        className="!my-0 !p-6"
+                      />
+                    </div>
                   );
                 }
-                return recentSalesList.map((invoice, i) => (
+                return salesList.slice(0, 5).map((invoice, i) => (
                   <div key={invoice.id || i} className="p-4 flex justify-between items-center hover:bg-[var(--bg-primary)]/40 transition-colors duration-150 cursor-pointer" onClick={() => navigate(`/sales/${invoice.id}`)}>
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="h-10 w-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--status-info)] shrink-0">
@@ -517,30 +538,33 @@ export default function Dashboard({ onLogout }) {
               <button onClick={() => navigate('/purchase')} className="text-xs text-[var(--accent-primary)] hover:underline font-semibold">View All</button>
             </div>
             <div className="divide-y divide-[var(--border-subtle)]">
-              {loadingPurchases ? (
-                Array(5).fill({}).map((_, i) => (
-                  <div key={i} className="p-4 animate-pulse flex gap-4">
-                    <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
-                      <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+              {(() => {
+                const purchasesList = Array.isArray(purchases) ? purchases : purchases?.data || purchases?.results || [];
+                if (loadingPurchases) {
+                  return Array(5).fill({}).map((_, i) => (
+                    <div key={i} className="p-4 animate-pulse flex gap-4">
+                      <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
+                        <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+                      </div>
                     </div>
-                  </div>
-                ))
-              ) : (() => {
-                const recentPurchasesList = (Array.isArray(purchases) ? purchases : purchases?.data || purchases?.results || []).slice(0, 5);
-                if (recentPurchasesList.length === 0) {
+                  ));
+                }
+                if (purchasesList.length === 0) {
                   return (
-                    <EmptyState
-                      icon={ShoppingBagIcon}
-                      title="No purchase bills yet"
-                      description="Record your first vendor purchase bill to track payables and inward stock."
-                      action={{ label: 'Record Purchase', onClick: () => navigate('/purchase') }}
-                      className="!my-0 !border-0 !rounded-none !bg-transparent"
-                    />
+                    <div className="p-4">
+                      <EmptyState
+                        icon={ShoppingBagIcon}
+                        title="No purchase bills yet"
+                        description="Record a vendor bill to track input tax credit (ITC) and update stock levels."
+                        action={{ label: 'Record Purchase Bill', icon: PlusIcon, onClick: () => navigate('/purchase') }}
+                        className="!my-0 !p-6"
+                      />
+                    </div>
                   );
                 }
-                return recentPurchasesList.map((bill, i) => (
+                return purchasesList.slice(0, 5).map((bill, i) => (
                   <div key={bill.id || i} className="p-4 flex justify-between items-center hover:bg-[var(--bg-primary)]/40 transition-colors duration-150 cursor-pointer" onClick={() => navigate(`/purchases/${bill.id}`)}>
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="h-10 w-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-secondary)] shrink-0">
