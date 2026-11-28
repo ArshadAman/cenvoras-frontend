@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MagnifyingGlassIcon,
@@ -268,9 +268,19 @@ const COMMAND_ITEMS = [
     icon: UserIcon,
     badge: 'Settings',
   },
+  {
+    id: 'act-keyboard-shortcuts',
+    title: 'Keyboard Shortcuts Reference',
+    category: 'Mastery',
+    keywords: 'shortcuts hotkeys keyboard f2 f3 f8 help mastery',
+    action: 'shortcuts',
+    icon: CommandLineIcon,
+    badge: 'Help',
+    shortcut: '?',
+  },
 ];
 
-export default function CommandPalette({ isOpen, onClose }) {
+export default function CommandPalette({ isOpen, onClose, onOpenShortcuts }) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef(null);
@@ -306,6 +316,17 @@ export default function CommandPalette({ isOpen, onClose }) {
     setSelectedIndex(0);
   }, [query]);
 
+  const executeItem = useCallback((item) => {
+    onClose();
+    if (item.action === 'shortcuts') {
+      if (onOpenShortcuts) onOpenShortcuts();
+      return;
+    }
+    if (item.path) {
+      navigate(item.path);
+    }
+  }, [onClose, onOpenShortcuts, navigate]);
+
   // Handle keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
@@ -320,9 +341,7 @@ export default function CommandPalette({ isOpen, onClose }) {
       } else if (e.key === 'Enter') {
         e.preventDefault();
         if (filteredItems[selectedIndex]) {
-          const item = filteredItems[selectedIndex];
-          onClose();
-          navigate(item.path);
+          executeItem(filteredItems[selectedIndex]);
         }
       } else if (e.key === 'Escape') {
         e.preventDefault();
@@ -332,7 +351,7 @@ export default function CommandPalette({ isOpen, onClose }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, filteredItems, selectedIndex, navigate, onClose]);
+  }, [isOpen, filteredItems, selectedIndex, executeItem, onClose]);
 
   // Scroll active item into view
   useEffect(() => {
@@ -394,10 +413,7 @@ export default function CommandPalette({ isOpen, onClose }) {
                   key={item.id}
                   data-index={index}
                   type="button"
-                  onClick={() => {
-                    onClose();
-                    navigate(item.path);
-                  }}
+                  onClick={() => executeItem(item)}
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-sm transition-all duration-100 ${
                     isSelected
@@ -415,18 +431,27 @@ export default function CommandPalette({ isOpen, onClose }) {
                     </div>
                     <div className="truncate">
                       <span className="font-medium text-[var(--text-primary)]">{item.title}</span>
-                      <span className="text-xs text-[var(--text-muted)] ml-2 hidden sm:inline">{item.path}</span>
+                      {item.path && (
+                        <span className="text-xs text-[var(--text-muted)] ml-2 hidden sm:inline">{item.path}</span>
+                      )}
                     </div>
                   </div>
-                  <span
-                    className={`text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border shrink-0 ml-2 ${
-                      isSelected
-                        ? 'bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border-[var(--accent-primary)]/30'
-                        : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)]'
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    {item.shortcut && (
+                      <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border-default)] text-[var(--text-primary)] font-mono text-[11px]">
+                        {item.shortcut}
+                      </kbd>
+                    )}
+                    <span
+                      className={`text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border ${
+                        isSelected
+                          ? 'bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border-[var(--accent-primary)]/30'
+                          : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border-[var(--border-subtle)]'
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  </div>
                 </button>
               );
             })

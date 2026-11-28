@@ -43,10 +43,12 @@ import {
   ChevronDoubleRightIcon,
   ArrowRightOnRectangleIcon,
   MagnifyingGlassIcon,
+  CommandLineIcon,
 } from '@heroicons/react/24/outline';
 import { getUserRole } from "../utils/auth";
 import OnboardingWizard from './OnboardingWizard';
 import CommandPalette from './common/CommandPalette';
+import KeyboardShortcutsModal from './common/KeyboardShortcutsModal';
 import ThemeToggle from './common/ThemeToggle';
 import BrandLogo from './common/BrandLogo';
 
@@ -86,6 +88,7 @@ export default function Layout({ children, onLogout }) {
   }, []);
 
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
   // Keyboard shortcut Ctrl+K or Cmd+K to toggle Command Palette
   useEffect(() => {
@@ -93,6 +96,14 @@ export default function Layout({ children, onLogout }) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+      if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) {
+          return;
+        }
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -686,6 +697,19 @@ export default function Layout({ children, onLogout }) {
               {/* Sign Out */}
               <button
                 type="button"
+                onClick={() => setIsShortcutsOpen(true)}
+                className="w-full flex items-center justify-between px-4 py-2 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]/60 transition-colors cursor-pointer"
+                title="Keyboard Shortcuts (?)"
+              >
+                <span className="flex items-center gap-2">
+                  <CommandLineIcon className="w-4 h-4 text-[var(--text-muted)]" />
+                  <span>Keyboard Shortcuts</span>
+                </span>
+                <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-muted)] font-mono text-[10px]">?</kbd>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleSignOut}
                 className="btn-secondary !w-full !text-xs !py-2.5 flex items-center justify-center gap-2 cursor-pointer"
                 title="Sign Out"
@@ -1060,6 +1084,12 @@ export default function Layout({ children, onLogout }) {
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
+        onOpenShortcuts={() => setIsShortcutsOpen(true)}
+      />
+
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
       />
     </div>
   );
