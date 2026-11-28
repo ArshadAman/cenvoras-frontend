@@ -50,6 +50,20 @@ const EMPTY_FORM = {
   tax_regime: 'new',
 };
 
+const isNaValue = (val) => String(val || '').replace(/[\s/.-]+/g, '').toUpperCase() === 'NA';
+const normalizeNaOr = (val, transform = (v) => v) => (isNaValue(val) ? 'NA' : transform(val));
+
+const NA_FIELD_WARNINGS = {
+  pan_number: { label: 'PAN Number', message: 'NA entered — PAN will be missing for TDS / Form 16 filings.' },
+  uan_number: { label: 'UAN', message: 'NA entered — UAN will be missing for EPF ECR filings.' },
+  pf_number: { label: 'PF Account Number', message: 'NA entered — PF member ID will be missing for EPF records.' },
+  esi_number: { label: 'ESI IP Number', message: 'NA entered — ESI IP number will be missing for ESIC filings.' },
+  account_holder_name: { label: 'Account Holder Name', message: 'NA entered — Account holder name missing for bank payouts.' },
+  bank_name: { label: 'Bank Name', message: 'NA entered — Bank name missing for bank payouts.' },
+  bank_account_number: { label: 'Bank Account Number', message: 'NA entered — Bank account number missing for payouts.' },
+  bank_ifsc: { label: 'IFSC Code', message: 'NA entered — IFSC code missing for NEFT/IMPS payouts.' },
+};
+
 export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess, initialTab = 'personal' }) {
   useEscKey(onClose, isOpen, 10);
   const [departments, setDepartments] = useState([]);
@@ -61,6 +75,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const [calcBusy, setCalcBusy] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
+  const [naConfirmFields, setNaConfirmFields] = useState(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [salaryConfig, setSalaryConfig] = useState(null);
   const [salaryEdited, setSalaryEdited] = useState(false);
@@ -118,6 +133,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       setSalaryConfig(null);
       setSalaryEdited(false);
       setFieldErrors({});
+      setNaConfirmFields(null);
       setErrorMessage('');
       setFormData({ ...EMPTY_FORM, work_state: companyWorkState });
       return;
@@ -270,6 +286,7 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    if (naConfirmFields) setNaConfirmFields(null);
     if (fieldErrors[name]) {
       setFieldErrors((prev) => {
         const copy = { ...prev };
@@ -279,8 +296,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, skipNaConfirm = false) => {
+    if (e) e.preventDefault();
     if (calcBusy) return;  // safety net: the breakdown is still updating
     setErrorMessage('');
     setFieldErrors({});
@@ -338,8 +355,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       return;
     }
 
-    // Client-side PAN check (Issue 5)
-    if (formData.pan_number && formData.pan_number.trim()) {
+    // Client-side PAN check (Issue 5) — allow NA / N/A with warning
+    if (formData.pan_number && formData.pan_number.trim() && !isNaValue(formData.pan_number)) {
       const cleanPan = formData.pan_number.trim().toUpperCase();
       const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
       if (!panRegex.test(cleanPan)) {
@@ -387,6 +404,18 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
       return;
     }
 
+    // Confirmation warning before saving if any statutory/bank field is set to NA
+    if (!skipNaConfirm) {
+      const flagged = Object.entries(NA_FIELD_WARNINGS)
+        .filter(([key]) => isNaValue(formData[key]))
+        .map(([, meta]) => meta.label);
+      if (flagged.length > 0) {
+        setNaConfirmFields(flagged);
+        return;
+      }
+    }
+    setNaConfirmFields(null);
+
     setLoading(true);
     try {
       const payload = {
@@ -408,14 +437,14 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         address: formData.address,
         emergency_contact_name: formData.emergency_contact_name,
         emergency_contact_phone: formData.emergency_contact_phone,
-        pan_number: formData.pan_number ? formData.pan_number.toUpperCase() : '',
-        uan_number: formData.uan_number,
-        pf_number: formData.pf_number,
-        esi_number: formData.esi_number,
-        bank_name: formData.bank_name,
-        bank_account_number: formData.bank_account_number,
-        bank_ifsc: formData.bank_ifsc ? formData.bank_ifsc.toUpperCase() : '',
-        account_holder_name: formData.account_holder_name,
+        pan_number: formData.pan_number ? normalizeNaOr(formData.pan_number, (v) => v.toUpperCase()) : '',
+        uan_number: normalizeNaOr(formData.uan_number),
+        pf_number: normalizeNaOr(formData.pf_number),
+        esi_number: normalizeNaOr(formData.esi_number),
+        bank_name: normalizeNaOr(formData.bank_name),
+        bank_account_number: normalizeNaOr(formData.bank_account_number),
+        bank_ifsc: formData.bank_ifsc ? normalizeNaOr(formData.bank_ifsc, (v) => v.toUpperCase()) : '',
+        account_holder_name: normalizeNaOr(formData.account_holder_name),
         upi_id: formData.upi_id?.trim() || null,
         tax_regime: !isContract ? (salaryConfig?.tax_regime || formData.tax_regime || 'new') : 'new',
       };
@@ -834,12 +863,14 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     name="pan_number"
                     value={formData.pan_number}
                     onChange={handleChange}
-                    className={`${inputCls} ${fieldErrors.pan_number || fieldErrors.pan ? '!border-red-500 !ring-1 !ring-red-500/50' : ''}`}
-                    placeholder="ABCPE1234F"
+                    className={`${inputCls} ${fieldErrors.pan_number || fieldErrors.pan ? '!border-red-500 !ring-1 !ring-red-500/50' : isNaValue(formData.pan_number) ? '!border-amber-500/70 !ring-1 !ring-amber-500/30' : ''}`}
+                    placeholder="ABCPE1234F or NA"
                     maxLength={10}
                   />
-                  {(fieldErrors.pan_number || fieldErrors.pan) && (
+                  {(fieldErrors.pan_number || fieldErrors.pan) ? (
                     <p className="text-xs text-red-400 mt-1">{fieldErrors.pan_number || fieldErrors.pan}</p>
+                  ) : isNaValue(formData.pan_number) && (
+                    <p className="text-xs text-amber-400 mt-1">⚠ {NA_FIELD_WARNINGS.pan_number.message}</p>
                   )}
                 </div>
                 <div>
@@ -849,12 +880,14 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     name="uan_number"
                     value={formData.uan_number}
                     onChange={handleChange}
-                    className={`${inputCls} ${fieldErrors.uan_number || fieldErrors.uan ? '!border-red-500 !ring-1 !ring-red-500/50' : ''}`}
-                    placeholder="12 digits"
+                    className={`${inputCls} ${fieldErrors.uan_number || fieldErrors.uan ? '!border-red-500 !ring-1 !ring-red-500/50' : isNaValue(formData.uan_number) ? '!border-amber-500/70 !ring-1 !ring-amber-500/30' : ''}`}
+                    placeholder="12 digits or NA"
                     maxLength={12}
                   />
-                  {(fieldErrors.uan_number || fieldErrors.uan) && (
+                  {(fieldErrors.uan_number || fieldErrors.uan) ? (
                     <p className="text-xs text-red-400 mt-1">{fieldErrors.uan_number || fieldErrors.uan}</p>
+                  ) : isNaValue(formData.uan_number) && (
+                    <p className="text-xs text-amber-400 mt-1">⚠ {NA_FIELD_WARNINGS.uan_number.message}</p>
                   )}
                 </div>
               </div>
@@ -867,11 +900,13 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     name="pf_number"
                     value={formData.pf_number}
                     onChange={handleChange}
-                    className={`${inputCls} ${fieldErrors.pf_number || fieldErrors.pf_member_id ? '!border-red-500 !ring-1 !ring-red-500/50' : ''}`}
-                    placeholder="e.g. MH/BAN/0012345/000/0001234 or MHBAN00123450000001234"
+                    className={`${inputCls} ${fieldErrors.pf_number || fieldErrors.pf_member_id ? '!border-red-500 !ring-1 !ring-red-500/50' : isNaValue(formData.pf_number) ? '!border-amber-500/70 !ring-1 !ring-amber-500/30' : ''}`}
+                    placeholder="e.g. MH/BAN/0012345/000/0001234 or NA"
                   />
-                  {(fieldErrors.pf_number || fieldErrors.pf_member_id) && (
+                  {(fieldErrors.pf_number || fieldErrors.pf_member_id) ? (
                     <p className="text-xs text-red-400 mt-1">{fieldErrors.pf_number || fieldErrors.pf_member_id}</p>
+                  ) : isNaValue(formData.pf_number) && (
+                    <p className="text-xs text-amber-400 mt-1">⚠ {NA_FIELD_WARNINGS.pf_number.message}</p>
                   )}
                 </div>
                 <div>
@@ -881,13 +916,14 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                     name="esi_number"
                     value={formData.esi_number}
                     onChange={handleChange}
-                    className={`${inputCls} ${fieldErrors.esi_number || fieldErrors.esi_ip_number ? '!border-red-500 !ring-1 !ring-red-500/50' : ''}`}
-                    placeholder="10-digit ESI IP number"
+                    className={`${inputCls} ${fieldErrors.esi_number || fieldErrors.esi_ip_number ? '!border-red-500 !ring-1 !ring-red-500/50' : isNaValue(formData.esi_number) ? '!border-amber-500/70 !ring-1 !ring-amber-500/30' : ''}`}
+                    placeholder="10-digit ESI IP number or NA"
                     maxLength={10}
-                    inputMode="numeric"
                   />
-                  {(fieldErrors.esi_number || fieldErrors.esi_ip_number) && (
+                  {(fieldErrors.esi_number || fieldErrors.esi_ip_number) ? (
                     <p className="text-xs text-red-400 mt-1">{fieldErrors.esi_number || fieldErrors.esi_ip_number}</p>
+                  ) : isNaValue(formData.esi_number) && (
+                    <p className="text-xs text-amber-400 mt-1">⚠ {NA_FIELD_WARNINGS.esi_number.message}</p>
                   )}
                 </div>
               </div>
@@ -899,24 +935,77 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
             <div className="space-y-4">
               <div>
                 <label className={labelCls}>Account Holder Name *</label>
-                <input required type="text" name="account_holder_name" value={formData.account_holder_name} onChange={handleChange} className={inputCls} placeholder="As per bank records" />
+                <input
+                  required
+                  type="text"
+                  name="account_holder_name"
+                  value={formData.account_holder_name}
+                  onChange={handleChange}
+                  className={`${inputCls} ${fieldErrors.account_holder_name ? '!border-red-500 !ring-1 !ring-red-500/50' : isNaValue(formData.account_holder_name) ? '!border-amber-500/70 !ring-1 !ring-amber-500/30' : ''}`}
+                  placeholder="As per bank records (or NA)"
+                />
+                {fieldErrors.account_holder_name ? (
+                  <p className="text-xs text-red-400 mt-1">{fieldErrors.account_holder_name}</p>
+                ) : isNaValue(formData.account_holder_name) && (
+                  <p className="text-xs text-amber-400 mt-1">⚠ {NA_FIELD_WARNINGS.account_holder_name.message}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Bank Name *</label>
-                  <input required type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} className={inputCls} placeholder="e.g. HDFC Bank" />
+                  <input
+                    required
+                    type="text"
+                    name="bank_name"
+                    value={formData.bank_name}
+                    onChange={handleChange}
+                    className={`${inputCls} ${fieldErrors.bank_name ? '!border-red-500 !ring-1 !ring-red-500/50' : isNaValue(formData.bank_name) ? '!border-amber-500/70 !ring-1 !ring-amber-500/30' : ''}`}
+                    placeholder="e.g. HDFC Bank (or NA)"
+                  />
+                  {fieldErrors.bank_name ? (
+                    <p className="text-xs text-red-400 mt-1">{fieldErrors.bank_name}</p>
+                  ) : isNaValue(formData.bank_name) && (
+                    <p className="text-xs text-amber-400 mt-1">⚠ {NA_FIELD_WARNINGS.bank_name.message}</p>
+                  )}
                 </div>
                 <div>
                   <label className={labelCls}>Bank Account Number *</label>
-                  <input required type="text" name="bank_account_number" value={formData.bank_account_number} onChange={handleChange} className={inputCls} placeholder="Account Number" />
+                  <input
+                    required
+                    type="text"
+                    name="bank_account_number"
+                    value={formData.bank_account_number}
+                    onChange={handleChange}
+                    className={`${inputCls} ${fieldErrors.bank_account_number ? '!border-red-500 !ring-1 !ring-red-500/50' : isNaValue(formData.bank_account_number) ? '!border-amber-500/70 !ring-1 !ring-amber-500/30' : ''}`}
+                    placeholder="Account Number (or NA)"
+                  />
+                  {fieldErrors.bank_account_number ? (
+                    <p className="text-xs text-red-400 mt-1">{fieldErrors.bank_account_number}</p>
+                  ) : isNaValue(formData.bank_account_number) && (
+                    <p className="text-xs text-amber-400 mt-1">⚠ {NA_FIELD_WARNINGS.bank_account_number.message}</p>
+                  )}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>IFSC Code *</label>
-                  <input required type="text" name="bank_ifsc" value={formData.bank_ifsc} onChange={handleChange} className={inputCls} placeholder="e.g. HDFC0001234" maxLength={11} />
+                  <input
+                    required
+                    type="text"
+                    name="bank_ifsc"
+                    value={formData.bank_ifsc}
+                    onChange={handleChange}
+                    className={`${inputCls} ${fieldErrors.bank_ifsc ? '!border-red-500 !ring-1 !ring-red-500/50' : isNaValue(formData.bank_ifsc) ? '!border-amber-500/70 !ring-1 !ring-amber-500/30' : ''}`}
+                    placeholder="e.g. HDFC0001234 or NA"
+                    maxLength={11}
+                  />
+                  {fieldErrors.bank_ifsc ? (
+                    <p className="text-xs text-red-400 mt-1">{fieldErrors.bank_ifsc}</p>
+                  ) : isNaValue(formData.bank_ifsc) && (
+                    <p className="text-xs text-amber-400 mt-1">⚠ {NA_FIELD_WARNINGS.bank_ifsc.message}</p>
+                  )}
                 </div>
                 <div>
                   <label className={labelCls}>UPI ID / VPA (Optional)</label>
@@ -1100,6 +1189,39 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   />
                 </>
               )}
+            </div>
+          )}
+
+          {naConfirmFields && naConfirmFields.length > 0 && (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 space-y-3">
+              <div className="flex items-start gap-2.5 text-amber-300 text-xs">
+                <span className="text-base leading-none shrink-0">⚠️</span>
+                <div className="space-y-1">
+                  <p className="font-semibold text-amber-200">
+                    The following fields are marked as NA: {naConfirmFields.join(', ')}
+                  </p>
+                  <p className="text-amber-300/90 leading-relaxed">
+                    You can still save this employee, but statutory filings (TDS/EPF/ESIC) or bank payouts for these fields will remain incomplete until updated.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNaConfirmFields(null)}
+                  className="btn-secondary px-3 py-1.5 text-xs rounded-lg"
+                >
+                  Review Fields
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleSubmit(null, true)}
+                  className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Saving...' : 'Save Anyway with NA'}
+                </button>
+              </div>
             </div>
           )}
 
