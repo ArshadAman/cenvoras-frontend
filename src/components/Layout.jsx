@@ -420,12 +420,12 @@ export default function Layout({ children, onLogout }) {
 
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans selection:bg-[var(--accent-primary)]/30">
+    <div className="flex min-h-screen min-h-[100dvh] bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans selection:bg-[var(--accent-primary)]/30">
       {/* Background Texture Grid */}
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
 
       {/* Sidebar - Desktop */}
-      <aside className={`hidden md:flex flex-col glass-sidebar z-50 h-screen sticky top-0 transition-[width] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none select-none overflow-x-hidden ${
+      <aside className={`hidden md:flex flex-col glass-sidebar z-50 h-screen h-[100dvh] sticky top-0 transition-[width] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none select-none overflow-x-hidden ${
         isSidebarCollapsed ? 'w-20' : 'w-72'
       }`}>
         
@@ -753,10 +753,13 @@ export default function Layout({ children, onLogout }) {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col relative z-10 min-w-0">
         {/* Mobile Header */}
-        <header className="md:hidden sticky top-0 z-40 bg-[var(--bg-surface)] backdrop-blur-xl border-b border-[var(--border-default)] flex items-center justify-between px-4 h-16 text-[var(--text-primary)]">
+        <header className="md:hidden sticky top-0 z-40 bg-[var(--bg-surface)] backdrop-blur-xl border-b border-[var(--border-default)] flex items-center justify-between px-3 sm:px-4 min-h-16 py-2 safe-pt text-[var(--text-primary)]">
           <button
+            type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isMobileMenuOpen}
           >
             {isMobileMenuOpen ? (
               <XMarkIcon className="w-6 h-6" />
@@ -765,16 +768,16 @@ export default function Layout({ children, onLogout }) {
             )}
           </button>
           
-          <Link to="/" className="flex items-center">
+          <Link to="/" className="flex items-center min-w-0">
             <BrandLogo className="h-9 sm:h-10 w-auto object-contain" />
           </Link>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <ThemeToggle />
             <button
               type="button"
               onClick={() => setIsCommandPaletteOpen(true)}
-              className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
               title="Search commands (⌘K)"
               aria-label="Search commands"
             >
@@ -805,15 +808,17 @@ export default function Layout({ children, onLogout }) {
           
           {/* Mobile Sidebar */}
           <div 
-            className={`absolute top-0 bottom-0 left-0 w-72 bg-[var(--bg-surface)] border-r border-[var(--border-default)] transform transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none flex flex-col ${
+            className={`absolute top-0 bottom-0 left-0 w-72 max-w-[85vw] bg-[var(--bg-surface)] border-r border-[var(--border-default)] transform transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none flex flex-col safe-pt safe-pb pl-[env(safe-area-inset-left,0px)] ${
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
-            <div className="h-20 flex items-center justify-between px-6 border-b border-[var(--border-default)]">
+            <div className="h-20 flex items-center justify-between px-5 sm:px-6 border-b border-[var(--border-default)] shrink-0">
               <BrandLogo className="h-10 sm:h-11 w-auto object-contain" />
               <button 
+                type="button"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 -mr-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className="min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                aria-label="Close navigation menu"
               >
                 <XMarkIcon className="w-6 h-6" />
               </button>
@@ -947,7 +952,7 @@ export default function Layout({ children, onLogout }) {
 
         {/* Page Content */}
         <ErrorBoundary>
-          <main className="flex-1 overflow-y-auto relative z-10">
+          <main className="flex-1 overflow-y-auto relative z-10 safe-pb">
           {(showQueuedBanner || showExpiringBanner || showExpiredBanner) && (
             <div className="px-4 pt-4 md:px-6 md:pt-6">
               <div className="mx-auto max-w-7xl space-y-3">

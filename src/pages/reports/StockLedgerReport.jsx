@@ -82,7 +82,7 @@ export default function StockLedgerReport() {
                 {isLoading && <div className="text-[var(--text-secondary)] text-center py-10">Loading ledger...</div>}
 
                 {!isLoading && selectedProduct && (
-                    <div className="bento-card overflow-hidden border border-[var(--border-subtle)]">
+                    <div className="bento-card overflow-x-auto border border-[var(--border-subtle)]">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]">

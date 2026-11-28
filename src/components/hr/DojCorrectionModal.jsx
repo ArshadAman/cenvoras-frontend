@@ -37,19 +37,21 @@ function ResultBlock({ data, title }) {
         {data.target_month ? ` in ${MONTHS[data.target_month - 1]} ${data.target_year} payroll` : ''}
       </p>
       {Array.isArray(data.lines) && data.lines.length > 0 && (
-        <table className="w-full text-xs">
-          <thead><tr className="text-[var(--text-muted)]"><th className="text-left">Relates to</th><th className="text-right">Days (old → new / working)</th><th className="text-right">Gross used</th><th className="text-right">Amount</th></tr></thead>
-          <tbody>
-            {data.lines.map((l, i) => (
-              <tr key={i}>
-                <td>{MONTHS[(l.month || 1) - 1]} {l.year}</td>
-                <td className="text-right">{l.carry ? '—' : `${l.old_payable_days} → ${l.new_payable_days} / ${l.working_days}`}</td>
-                <td className="text-right">{l.monthly_gross != null ? `₹${inr(l.monthly_gross)}` : '—'}</td>
-                <td className="text-right">{Number(l.delta) < 0 ? '−' : ''}₹{inr(l.delta)}{l.edited ? ' (edited)' : ''}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead><tr className="text-[var(--text-muted)]"><th className="text-left">Relates to</th><th className="text-right">Days (old → new / working)</th><th className="text-right">Gross used</th><th className="text-right">Amount</th></tr></thead>
+            <tbody>
+              {data.lines.map((l, i) => (
+                <tr key={i}>
+                  <td>{MONTHS[(l.month || 1) - 1]} {l.year}</td>
+                  <td className="text-right">{l.carry ? '—' : `${l.old_payable_days} → ${l.new_payable_days} / ${l.working_days}`}</td>
+                  <td className="text-right">{l.monthly_gross != null ? `₹${inr(l.monthly_gross)}` : '—'}</td>
+                  <td className="text-right">{Number(l.delta) < 0 ? '−' : ''}₹{inr(l.delta)}{l.edited ? ' (edited)' : ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       {data.recompute_of && (
         <p className="text-xs text-[var(--text-muted)]">This recomputes the earlier ₹0 correction ({data.old_doj} → {data.new_doj}); its old values are kept in its history.</p>

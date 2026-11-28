@@ -215,23 +215,23 @@ export default function ChartOfAccounts() {
 
   return (
     <>
-      <div className="page-bg min-h-screen p-6">
+      <div className="page-bg min-h-screen min-h-[100dvh] p-4 sm:p-6">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-[var(--text-primary)]">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
                 Chart of Accounts
               </h1>
               <p className="text-[var(--text-muted)] text-sm mt-1">
                 Manage your accounting structure and financial categories
               </p>
             </div>
-            <div className="flex space-x-3">
+            <div className="flex flex-wrap gap-2.5 sm:gap-3 w-full sm:w-auto">
               <button
                 onClick={() => setupDefaultsMutation.mutate()}
                 disabled={setupDefaultsMutation.isPending}
-                className="btn-secondary flex items-center space-x-2"
+                className="btn-secondary flex-1 sm:flex-none min-h-[44px] sm:min-h-0 flex items-center justify-center space-x-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -243,7 +243,7 @@ export default function ChartOfAccounts() {
                   setEditingAccount(null);
                   setIsAccountFormOpen(true);
                 }}
-                className="btn-primary flex items-center space-x-2"
+                className="btn-primary flex-1 sm:flex-none min-h-[44px] sm:min-h-0 flex items-center justify-center space-x-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

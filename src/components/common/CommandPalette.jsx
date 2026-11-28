@@ -352,7 +352,7 @@ export default function CommandPalette({ isOpen, onClose }) {
           role="dialog"
           aria-modal="true"
           aria-label="Command Palette"
-          className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 sm:px-6"
+          className="fixed inset-0 z-50 flex items-start justify-center pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:pt-20 px-4 sm:px-6"
         >
           {/* Backdrop */}
           <motion.div
@@ -371,7 +371,7 @@ export default function CommandPalette({ isOpen, onClose }) {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="relative w-full max-w-xl bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[75vh] text-[var(--text-primary)]"
+            className="relative w-full max-w-xl bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[75vh] max-h-[75dvh] text-[var(--text-primary)]"
           >
         {/* Search Input Bar */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/40">

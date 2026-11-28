@@ -27,12 +27,12 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
   const pages = getPageNumbers();
 
   return (
-    <div className="flex items-center justify-center gap-1.5 mt-6 select-none">
+    <div className="flex flex-wrap items-center justify-center gap-1.5 mt-6 select-none">
       {/* Previous Button */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 will-change-transform ${
+        className={`px-3 py-2 min-h-[44px] sm:min-h-[36px] rounded-lg text-sm font-medium transition-all duration-150 will-change-transform ${
           currentPage <= 1
             ? 'text-[var(--text-muted)] cursor-not-allowed opacity-40'
             : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] active:scale-95'
@@ -46,7 +46,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         <>
           <button
             onClick={() => onPageChange(1)}
-            className="w-9 h-9 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] transition-all duration-150 active:scale-95"
+            className="min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] sm:w-9 sm:h-9 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] transition-all duration-150 active:scale-95"
           >
             1
           </button>
@@ -61,7 +61,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         <button
           key={page}
           onClick={() => onPageChange(page)}
-          className={`w-9 h-9 rounded-lg text-sm font-medium transition-all duration-150 will-change-transform ${
+          className={`min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] sm:w-9 sm:h-9 rounded-lg text-sm font-medium transition-all duration-150 will-change-transform ${
             page === currentPage
               ? 'bg-[var(--accent-primary)] text-[var(--text-on-accent)] font-bold shadow-sm border border-transparent'
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] active:scale-95'
@@ -79,7 +79,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
           )}
           <button
             onClick={() => onPageChange(totalPages)}
-            className="w-9 h-9 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] transition-all duration-150 active:scale-95"
+            className="min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] sm:w-9 sm:h-9 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] transition-all duration-150 active:scale-95"
           >
             {totalPages}
           </button>
@@ -90,7 +90,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 will-change-transform ${
+        className={`px-3 py-2 min-h-[44px] sm:min-h-[36px] rounded-lg text-sm font-medium transition-all duration-150 will-change-transform ${
           currentPage >= totalPages
             ? 'text-[var(--text-muted)] cursor-not-allowed opacity-40'
             : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] active:scale-95'

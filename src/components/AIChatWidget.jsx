@@ -118,7 +118,7 @@ export default function AIChatWidget() {
     <>
       {/* Floating Button Container */}
       {!isOpen ? (
-        <div className="fixed bottom-6 right-6 z-[100] group">
+        <div className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] right-[max(1.5rem,env(safe-area-inset-right,0px))] z-[100] group">
           {/* Mini Dismiss Badge */}
           <button
             onClick={handleDismiss}
@@ -139,7 +139,7 @@ export default function AIChatWidget() {
       ) : (
         <button
           onClick={() => setIsOpen(false)}
-          className="fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] flex items-center justify-center hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]"
+          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] right-[max(1.5rem,env(safe-area-inset-right,0px))] z-[100] w-14 h-14 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] flex items-center justify-center hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]"
         >
           <XMarkIcon className="w-6 h-6" />
         </button>
@@ -147,7 +147,7 @@ export default function AIChatWidget() {
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-20 left-4 right-4 md:left-auto md:right-6 md:bottom-24 w-auto md:w-[400px] h-[calc(100vh-110px)] md:h-[580px] max-h-[580px] bg-[var(--bg-surface)]/95 backdrop-blur-2xl border border-[var(--border-default)] rounded-3xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-[var(--border-subtle)] font-sans z-[100] transition-all duration-300">
+        <div className="fixed bottom-[max(5rem,calc(env(safe-area-inset-bottom,0px)+4.5rem))] left-4 right-4 md:left-auto md:right-6 md:bottom-24 w-auto md:w-[400px] h-[calc(100dvh-110px)] md:h-[580px] max-h-[580px] bg-[var(--bg-surface)]/95 backdrop-blur-2xl border border-[var(--border-default)] rounded-3xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-[var(--border-subtle)] font-sans z-[100] transition-all duration-300">
           
           {/* Header */}
           <div className="px-4 py-4 md:px-6 md:py-5 border-b border-[var(--border-subtle)] flex flex-col gap-0.5 md:gap-1 items-center justify-center relative bg-[var(--bg-primary)]/40">

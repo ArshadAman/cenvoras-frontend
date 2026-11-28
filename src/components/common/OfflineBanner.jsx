@@ -49,7 +49,7 @@ export default function OfflineBanner() {
     <div
       role="status"
       aria-live="polite"
-      className={`fixed top-0 inset-x-0 z-[2147483640] py-2 px-4 text-xs font-semibold flex items-center justify-center gap-2 shadow-lg transition-opacity duration-150 ${
+      className={`fixed top-0 inset-x-0 z-[2147483640] pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-2 px-4 text-xs font-semibold flex items-center justify-center gap-2 shadow-lg transition-opacity duration-150 motion-reduce:transition-none ${
         isOnline
           ? 'bg-emerald-600 text-white animate-fade-in'
           : 'bg-gradient-to-r from-amber-600 to-rose-600 text-white animate-fade-in'

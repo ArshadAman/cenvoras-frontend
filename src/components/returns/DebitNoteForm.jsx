@@ -251,7 +251,7 @@ export default function DebitNoteForm({ isOpen, onClose }) {
                 )}
 
                 {returnItems.length > 0 && (
-                  <div className="mt-4 border border-[var(--border-subtle)] rounded-lg overflow-hidden">
+                  <div className="mt-4 border border-[var(--border-subtle)] rounded-lg overflow-x-auto">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-[var(--bg-primary)] text-[var(--text-muted)]">
                         <tr>

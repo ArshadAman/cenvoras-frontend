@@ -313,7 +313,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
                 </div>
 
                 {/* Desktop View */}
-                <div className="hidden sm:block border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-[var(--bg-surface)]">
+                <div className="hidden sm:block border border-[var(--border-subtle)] rounded-xl overflow-x-auto bg-[var(--bg-surface)]">
                   <table className="w-full table-fixed border-collapse">
                     <colgroup>
                       <col style={{ width: `${colWidths.hash}px` }} />
