@@ -389,6 +389,16 @@ export default function SalaryBreakdownCalculator({
     });
   };
 
+  const renderBasicVal = Math.round(monthlyCtc * (basicPct / 100) * 100) / 100;
+  const renderHraVal = Math.round(renderBasicVal * (hraPctOfBasic / 100) * 100) / 100;
+  let renderCustomTot = 0;
+  customAllowances.forEach(ca => {
+    if ((ca.name || '').trim() && Number(ca.amount) > 0) renderCustomTot += Number(ca.amount);
+  });
+  const renderTotalFixed = Math.round((renderBasicVal + renderHraVal + Number(conveyance || 0) + Number(medical || 0) + renderCustomTot) * 100) / 100;
+  const renderExceedsCtc = monthlyCtc > 0 && renderTotalFixed > monthlyCtc;
+  const renderExcessAmount = renderExceedsCtc ? Math.round((renderTotalFixed - monthlyCtc) * 100) / 100 : 0;
+
   // Safe computed figures
   const monthlyNet = (breakdown && !isNaN(Number(breakdown.monthly_net_take_home || breakdown.net_take_home_monthly)))
     ? Number(breakdown.monthly_net_take_home || breakdown.net_take_home_monthly)
@@ -425,16 +435,6 @@ export default function SalaryBreakdownCalculator({
 
   const inputCls = "w-full rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)] px-3.5 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-primary)] transition-colors";
   const labelCls = "block text-xs font-semibold text-[var(--text-muted)] mb-1.5 uppercase tracking-wider";
-
-  const renderBasicVal = Math.round(monthlyCtc * (basicPct / 100) * 100) / 100;
-  const renderHraVal = Math.round(renderBasicVal * (hraPctOfBasic / 100) * 100) / 100;
-  let renderCustomTot = 0;
-  customAllowances.forEach(ca => {
-    if ((ca.name || '').trim() && Number(ca.amount) > 0) renderCustomTot += Number(ca.amount);
-  });
-  const renderTotalFixed = Math.round((renderBasicVal + renderHraVal + Number(conveyance || 0) + Number(medical || 0) + renderCustomTot) * 100) / 100;
-  const renderExceedsCtc = monthlyCtc > 0 && renderTotalFixed > monthlyCtc;
-  const renderExcessAmount = renderExceedsCtc ? Math.round((renderTotalFixed - monthlyCtc) * 100) / 100 : 0;
 
   return (
     <div className="space-y-6">
