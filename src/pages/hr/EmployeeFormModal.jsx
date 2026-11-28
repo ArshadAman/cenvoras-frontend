@@ -505,19 +505,21 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         setErrorMessage(topMsg || 'Failed to save employee. Please check the highlighted fields.');
         modalContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 
-        const statutoryFields = ['pan_number', 'pan', 'uan_number', 'uan', 'pf_number', 'pf_member_id', 'esi_number', 'esi_ip_number', 'bank_name', 'bank_account_number', 'bank_ifsc'];
-        const employmentFields = ['date_of_joining', 'employment_type', 'department_id', 'designation_id', 'status'];
-        const compensationFields = ['salary', 'contract_fee', 'monthly_ctc'];
+        const tabFieldMap = {
+          personal: ['personal_email', 'personal_phone', 'full_name', 'date_of_birth', 'gender', 'marital_status', 'father_name', 'emergency_contact_name', 'emergency_contact_phone'],
+          employment: ['date_of_joining', 'employment_type', 'department_id', 'designation_id', 'status', 'work_state', 'branch_id'],
+          statutory: ['pan_number', 'pan', 'uan_number', 'uan', 'pf_number', 'pf_member_id', 'esi_number', 'esi_ip_number'],
+          bank: ['account_holder_name', 'bank_name', 'bank_account_number', 'bank_ifsc'],
+          kyc: ['aadhaar_number', 'passport_number'],
+          compensation: ['salary', 'contract_fee', 'monthly_ctc', 'salary_structure_id'],
+        };
 
         const errorKeys = Object.keys(fieldErrorMap);
-        if (errorKeys.some(k => statutoryFields.includes(k))) {
-          setActiveTab('statutory');
-        } else if (errorKeys.some(k => employmentFields.includes(k))) {
-          setActiveTab('employment');
-        } else if (errorKeys.some(k => compensationFields.includes(k))) {
-          setActiveTab('compensation');
-        } else if (errorKeys.some(k => ['personal_email', 'personal_phone', 'full_name'].includes(k))) {
-          setActiveTab('personal');
+        const firstFailingTab = Object.entries(tabFieldMap).find(([, fields]) =>
+          errorKeys.some((k) => fields.includes(k))
+        )?.[0];
+        if (firstFailingTab) {
+          setActiveTab(firstFailingTab);
         }
         toast.error(topMsg || 'Validation error');
       } else {
@@ -563,29 +565,43 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
         {/* Tab switcher */}
         <div className="flex border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/40 px-5 pt-3 gap-2 overflow-x-auto">
           {[
-            { id: 'personal', label: 'Personal & Family' },
-            { id: 'employment', label: 'Employment & Branch' },
-            { id: 'statutory', label: 'Statutory (PF/ESI/PAN)' },
-            { id: 'bank', label: 'Bank Details' },
-            { id: 'kyc', label: 'KYC & Verification' },
+            { id: 'personal', label: 'Personal & Family', fields: ['personal_email', 'personal_phone', 'full_name', 'date_of_birth', 'gender', 'marital_status', 'father_name', 'emergency_contact_name', 'emergency_contact_phone'] },
+            { id: 'employment', label: 'Employment & Branch', fields: ['date_of_joining', 'employment_type', 'department_id', 'designation_id', 'status', 'work_state', 'branch_id'] },
+            { id: 'statutory', label: 'Statutory (PF/ESI/PAN)', fields: ['pan_number', 'pan', 'uan_number', 'uan', 'pf_number', 'pf_member_id', 'esi_number', 'esi_ip_number'] },
+            { id: 'bank', label: 'Bank Details', fields: ['account_holder_name', 'bank_name', 'bank_account_number', 'bank_ifsc'] },
+            { id: 'kyc', label: 'KYC & Verification', fields: ['aadhaar_number', 'passport_number'] },
             {
               id: 'compensation',
               label: formData.employment_type === 'contract' ? 'Contract Fee' : 'Compensation & Tax',
+              fields: ['salary', 'contract_fee', 'monthly_ctc', 'salary_structure_id'],
             },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 px-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'border-[var(--accent-primary)] text-[var(--accent-primary)] font-semibold'
-                  : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ].map(tab => {
+            const tabErrCount = tab.fields.filter((f) => Boolean(fieldErrors[f])).length;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`pb-3 px-3 text-sm font-medium border-b-2 transition-colors duration-150 whitespace-nowrap inline-flex items-center gap-1.5 ${
+                  activeTab === tab.id
+                    ? 'border-[var(--accent-primary)] text-[var(--accent-primary)] font-semibold'
+                    : tabErrCount > 0
+                      ? 'border-transparent text-[var(--status-danger)] hover:text-[var(--status-danger)]'
+                      : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <span>{tab.label}</span>
+                {tabErrCount > 0 && (
+                  <span
+                    className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-[var(--status-danger-fill)] text-[var(--status-danger-on-fill)] font-mono"
+                    aria-label={`${tabErrCount} validation ${tabErrCount === 1 ? 'error' : 'errors'}`}
+                  >
+                    {tabErrCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -1088,8 +1104,8 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
           )}
 
           {/* Actions */}
-          <div className="pt-4 flex justify-between items-center border-t border-[var(--border-subtle)]">
-            <div className="flex gap-2">
+          <div className="pt-4 flex flex-wrap justify-between items-center gap-3 border-t border-[var(--border-subtle)]">
+            <div className="flex items-center gap-2">
               {activeTab !== 'personal' && (
                 <button
                   type="button"
@@ -1116,6 +1132,9 @@ export default function EmployeeFormModal({ isOpen, onClose, employee, onSuccess
                   Next →
                 </button>
               )}
+              <span className="text-xs font-mono text-[var(--text-muted)] ml-1">
+                Step {['personal', 'employment', 'statutory', 'bank', 'kyc', 'compensation'].indexOf(activeTab) + 1} of 6
+              </span>
             </div>
 
             <div className="flex gap-3">
