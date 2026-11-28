@@ -42,11 +42,25 @@ describe("PWAUpdatePrompt", () => {
     expect(screen.getByRole("button", { name: "Refresh" })).toBeTruthy();
   });
 
-  it("Refresh calls updateSW(true)", () => {
-    state.needRefresh = true;
-    render(<PWAUpdatePrompt />);
-    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
-    expect(state.updateServiceWorker).toHaveBeenCalledWith(true);
+  it("Refresh calls updateSW(true) and falls back to reload if stuck", () => {
+    vi.useFakeTimers();
+    const reloadSpy = vi.fn();
+    const origLocation = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...origLocation, reload: reloadSpy },
+    });
+    try {
+      state.needRefresh = true;
+      render(<PWAUpdatePrompt />);
+      fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+      expect(state.updateServiceWorker).toHaveBeenCalledWith(true);
+      expect(reloadSpy).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1500);
+      expect(reloadSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      Object.defineProperty(window, "location", { configurable: true, value: origLocation });
+    }
   });
 
   it("Later / dismiss hides the banner", () => {

@@ -3,6 +3,7 @@ import { useRegisterSW } from "virtual:pwa-register/react";
 import UpdateBanner from "./UpdateBanner";
 
 const UPDATE_INTERVAL_MS = 60 * 60 * 1000; // hourly
+const RELOAD_FALLBACK_MS = 1500;
 
 /**
  * registerType 'prompt': a new service worker waits until the user clicks Refresh,
@@ -20,6 +21,15 @@ export default function PWAUpdatePrompt() {
       if (reg) setRegistration(reg);
     },
   });
+
+  useEffect(() => {
+    if (!refreshing) return undefined;
+    // Fallback if controllerchange does not fire (e.g. waiting SW already activated or multi-tab)
+    const timer = setTimeout(() => {
+      window.location.reload();
+    }, RELOAD_FALLBACK_MS);
+    return () => clearTimeout(timer);
+  }, [refreshing]);
 
   useEffect(() => {
     if (!registration) return undefined;
@@ -43,7 +53,9 @@ export default function PWAUpdatePrompt() {
       refreshing={refreshing}
       onRefresh={() => {
         setRefreshing(true);
-        updateServiceWorker(true);
+        Promise.resolve(updateServiceWorker(true)).catch(() => {
+          window.location.reload();
+        });
       }}
       onDismiss={() => setNeedRefresh(false)}
     />
