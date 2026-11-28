@@ -585,7 +585,7 @@ const InvoicePreview = forwardRef(({
                             lineHeight: 1.2,
                             fontSize: `${type.tableBodySize}px`,
                             textAlign: isDesc ? 'left' : isNum ? 'right' : 'center',
-                            fontVariantNumeric: (isNum || isHsn) ? 'tabular-nums' : 'normal',
+                            fontVariantNumeric: !isDesc ? 'tabular-nums' : 'normal',
                             borderColor: colors.tableBorder,
                             wordBreak: isDesc ? 'break-word' : 'normal',
                             whiteSpace: isDesc ? 'normal' : 'nowrap',
@@ -687,7 +687,7 @@ const InvoicePreview = forwardRef(({
           
           {/* Totals - Right */}
           <div className="w-80">
-            <table className="w-full border-collapse" style={{ fontSize: `${type.totalsSize}px` }}>
+            <table className="w-full border-collapse" style={{ fontSize: `${type.totalsSize}px`, fontVariantNumeric: 'tabular-nums' }}>
               <tbody>
                 <tr>
                   <td className="px-3 py-1 border font-medium" style={{ borderColor: colors.tableBorder }}>

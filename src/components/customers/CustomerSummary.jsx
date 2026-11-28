@@ -2,6 +2,12 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getCustomers } from "../../api/customers";
 import { format } from "date-fns";
+import {
+  UsersIcon,
+  AtSymbolIcon,
+  PhoneIcon,
+  DocumentTextIcon,
+} from "@heroicons/react/24/outline";
 
 export default function CustomerSummary() {
   const { data, isLoading } = useQuery({
@@ -54,9 +60,7 @@ export default function CustomerSummary() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 bg-[var(--status-info-bg)] text-[var(--status-info)] border border-[var(--status-info-border)] rounded-xl flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+                <UsersIcon className="w-5 h-5" />
               </div>
             </div>
             <div className="ml-4 w-0 flex-1">
@@ -77,9 +81,7 @@ export default function CustomerSummary() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)] rounded-xl flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                </svg>
+                <AtSymbolIcon className="w-5 h-5" />
               </div>
             </div>
             <div className="ml-4 w-0 flex-1">
@@ -100,9 +102,7 @@ export default function CustomerSummary() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] rounded-xl flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
+                <PhoneIcon className="w-5 h-5" />
               </div>
             </div>
             <div className="ml-4 w-0 flex-1">
@@ -123,9 +123,7 @@ export default function CustomerSummary() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 rounded-xl flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+                <DocumentTextIcon className="w-5 h-5" />
               </div>
             </div>
             <div className="ml-4 w-0 flex-1">
