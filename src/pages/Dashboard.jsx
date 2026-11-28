@@ -248,12 +248,14 @@ export default function Dashboard({ onLogout }) {
         
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-3">
-              <SparklesIcon className="w-8 h-8 text-[var(--accent-primary)]" />
-              {(profileData?.profile?.business_name || profileData?.profile?.parent_business_name) 
-                ? `${profileData.profile.business_name || profileData.profile.parent_business_name} Smart Dashboard` 
-                : 'Smart Dashboard'}
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1 flex items-center gap-2.5 sm:gap-3">
+              <SparklesIcon className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--accent-primary)] shrink-0" />
+              <span className="break-words">
+                {(profileData?.profile?.business_name || profileData?.profile?.parent_business_name) 
+                  ? `${profileData.profile.business_name || profileData.profile.parent_business_name} Smart Dashboard` 
+                  : 'Smart Dashboard'}
+              </span>
             </h1>
             <p className="text-[var(--text-muted)] text-sm">Your intelligent business assistant</p>
             <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1 text-xs text-[var(--text-secondary)]">
@@ -262,18 +264,18 @@ export default function Dashboard({ onLogout }) {
             </div>
           </div>
           
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2.5 sm:gap-3 w-full sm:w-auto">
             <button 
               onClick={handleRefreshAll}
               disabled={isRefreshing}
-              className="btn-secondary text-sm py-2 px-4 flex items-center gap-2"
+              className="btn-secondary text-sm py-2 px-4 min-h-[44px] sm:min-h-0 flex-1 sm:flex-none flex items-center justify-center gap-2"
             >
               <ArrowPathIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
             <button 
               onClick={() => handleQuickAction('sale')} 
-              className="btn-primary text-sm py-2 px-4"
+              className="btn-primary text-sm py-2 px-4 min-h-[44px] sm:min-h-0 flex-1 sm:flex-none flex items-center justify-center gap-2"
             >
               <PlusIcon className="w-4 h-4"/> Record Sales
             </button>

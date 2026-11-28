@@ -47,7 +47,7 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-2.5 sm:px-4 pt-2 pb-4 sm:pb-6 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/80 to-transparent ${className}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-2.5 sm:px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-4 sm:pb-6 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/80 to-transparent ${className}`}>
         <div className="w-full max-w-7xl">
           <div 
             className="flex items-center justify-between rounded-2xl px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 backdrop-blur-md shadow-lg transition-all duration-300"
@@ -106,7 +106,7 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
               <button
                 type="button"
                 onClick={() => setMenuOpen((open) => !open)}
-                className="inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] transition-all duration-300 active:scale-95 shrink-0"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] transition-all duration-300 active:scale-95 shrink-0"
                 aria-label="Toggle navigation menu"
                 aria-expanded={menuOpen}
               >

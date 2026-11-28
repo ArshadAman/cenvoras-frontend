@@ -432,7 +432,7 @@ export default function CreditNoteForm({ isOpen, onClose }) {
                   ) : (
                   <>
                   {/* Desktop Items Table */}
-                  <div className="hidden lg:block overflow-hidden rounded-xl border border-[var(--border-subtle)]">
+                  <div className="hidden lg:block overflow-x-auto rounded-xl border border-[var(--border-subtle)]">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-[var(--bg-primary)] text-[var(--text-muted)] text-xs font-semibold uppercase tracking-wider">
                         <tr>

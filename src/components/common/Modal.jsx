@@ -48,7 +48,7 @@ export default function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 pt-[max(0.75rem,env(safe-area-inset-top,0px))] pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] overflow-y-auto"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
@@ -60,7 +60,7 @@ export default function Modal({
       {/* Modal Surface */}
       <div
         className={clsx(
-          'relative w-full rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-2xl overflow-hidden animate-fade-up z-10 my-auto text-[var(--text-primary)] max-h-[90vh] flex flex-col',
+          'relative w-full rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-2xl overflow-hidden animate-fade-up z-10 my-auto text-[var(--text-primary)] max-h-[90vh] max-h-[90dvh] flex flex-col',
           maxWidth,
           className
         )}
@@ -87,7 +87,7 @@ export default function Modal({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer shrink-0"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors cursor-pointer shrink-0 -mr-2"
                 title="Close (Esc)"
                 aria-label="Close dialog"
               >

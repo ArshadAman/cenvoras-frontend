@@ -1252,7 +1252,7 @@ export default function SalesTable({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => onView(invoice)}
-                className="btn-secondary flex-1 min-w-[70px] px-3 py-2 text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
+                className="btn-secondary flex-1 min-w-[70px] min-h-[44px] px-3 py-2 text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <EyeIcon className="w-3.5 h-3.5" />
                 View
@@ -1262,7 +1262,7 @@ export default function SalesTable({
                 <button
                   type="button"
                   onClick={() => openPaymentForInvoice(invoice)}
-                  className="flex-1 min-w-[70px] px-3 py-2 bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30 rounded-xl hover:bg-[var(--status-success)]/25 transition-all text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                  className="flex-1 min-w-[70px] min-h-[44px] px-3 py-2 bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/30 rounded-xl hover:bg-[var(--status-success)]/25 transition-all text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                 >
                   <CurrencyDollarIcon className="w-3.5 h-3.5" />
                   Pay
@@ -1277,7 +1277,8 @@ export default function SalesTable({
                   }
                 }}
                 disabled={!canEditInvoice(invoice)}
-                className={`btn-secondary flex-none p-2 rounded-xl transition-all ${
+                aria-label="Edit invoice"
+                className={`btn-secondary flex-none min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-xl transition-all ${
                   canEditInvoice(invoice)
                     ? 'text-[var(--accent-primary)] hover:bg-[var(--bg-surface-hover)]'
                     : 'text-[var(--text-muted)] cursor-not-allowed opacity-40'
@@ -1294,7 +1295,8 @@ export default function SalesTable({
                   }
                 }}
                 disabled={!canDeleteInvoice(invoice)}
-                className={`flex-none p-2 rounded-xl transition-all border ${
+                aria-label="Delete invoice"
+                className={`flex-none min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-xl transition-all border ${
                   canDeleteInvoice(invoice)
                     ? 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border-[var(--status-danger)]/30 hover:bg-[var(--status-danger)]/25'
                     : 'btn-secondary text-[var(--text-muted)] cursor-not-allowed opacity-40'
