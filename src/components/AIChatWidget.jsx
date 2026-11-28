@@ -151,7 +151,7 @@ export default function AIChatWidget() {
           
           {/* Header */}
           <div className="px-4 py-4 md:px-6 md:py-5 border-b border-white/5 flex flex-col gap-0.5 md:gap-1 items-center justify-center relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-cyan-500/10 to-transparent opacity-50 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-primary)]/10 via-[var(--accent-secondary)]/5 to-transparent opacity-60 pointer-events-none" />
             <h3 className="text-base md:text-lg font-semibold tracking-tight text-white/90 relative z-10 flex items-center gap-2">
               <SparklesIcon className="w-5 h-5 text-cyan-200" /> Cenvora Intelligence
             </h3>

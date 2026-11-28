@@ -50,7 +50,7 @@ export default function PublicNavbar({ links = [], authLinks = true, className =
       <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-2.5 sm:px-4 pt-2 pb-4 sm:pb-6 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/80 to-transparent ${className}`}>
         <div className="w-full max-w-7xl">
           <div 
-            className="flex items-center justify-between rounded-2xl px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 backdrop-blur-md shadow-lg transition-all duration-300"
+            className="flex items-center justify-between rounded-full px-3.5 sm:px-5 md:px-6 py-2 sm:py-2.5 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_40px_-14px_rgba(0,0,0,0.22)] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
             style={{
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border-default)',

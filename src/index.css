@@ -170,12 +170,12 @@
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'DM Sans', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--text-primary);
   }
 
@@ -409,10 +409,10 @@
   .modal-shell {
     position: relative;
     width: 100%;
-    border-radius: 1rem;
+    border-radius: 1.25rem;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-default);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 24px 48px -12px rgba(0, 0, 0, 0.22);
     display: flex;
     flex-direction: column;
     max-height: 90vh;
@@ -843,8 +843,8 @@
     border: 1px solid var(--card-border);
     border-radius: 20px;
     padding: 1.75rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12); 
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 28px -8px rgba(0, 0, 0, 0.14);
+    transition: border-color 150ms cubic-bezier(0.32, 0.72, 0, 1), background-color 150ms cubic-bezier(0.32, 0.72, 0, 1);
     overflow: hidden;
     position: relative;
     color: var(--text-primary);
@@ -852,6 +852,110 @@
 
   .bento-card:hover {
     border-color: var(--border-default);
+  }
+
+  /* Double-Bezel (Doppelrand) Machined Container Architecture */
+  .bezel-shell {
+    padding: 0.375rem;
+    border-radius: 1.75rem;
+    background-color: color-mix(in srgb, var(--bg-surface) 45%, transparent);
+    border: 1px solid var(--border-subtle);
+    transition: border-color 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .bezel-shell:hover {
+    border-color: var(--border-default);
+  }
+
+  .bezel-core {
+    border-radius: calc(1.75rem - 0.375rem);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 32px -12px rgba(0, 0, 0, 0.16);
+    overflow: hidden;
+  }
+
+  /* Editorial Eyebrow Pill */
+  .eyebrow-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    padding: 0.3125rem 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border: 1px solid var(--border-default);
+    background-color: var(--bg-surface);
+    color: var(--text-secondary);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /* Button-in-Button Pill CTA Architecture (Marketing / Hero) */
+  .btn-pill-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-radius: 9999px;
+    padding: 0.375rem 0.375rem 0.375rem 1.375rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    background-color: var(--accent-primary);
+    color: var(--text-on-accent);
+    border: 1px solid transparent;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 10px 24px -8px rgba(0, 0, 0, 0.22);
+    transition: transform 250ms cubic-bezier(0.32, 0.72, 0, 1), filter 200ms cubic-bezier(0.32, 0.72, 0, 1);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .btn-pill-cta:hover {
+    filter: brightness(1.06);
+  }
+
+  .btn-pill-cta:active {
+    transform: scale(0.98);
+  }
+
+  .btn-pill-cta-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-radius: 9999px;
+    padding: 0.375rem 0.375rem 0.375rem 1.375rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: transform 250ms cubic-bezier(0.32, 0.72, 0, 1), border-color 200ms cubic-bezier(0.32, 0.72, 0, 1);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .btn-pill-cta-secondary:hover {
+    border-color: var(--accent-primary);
+  }
+
+  .btn-pill-cta-secondary:active {
+    transform: scale(0.98);
+  }
+
+  .btn-pill-icon {
+    width: 2.125rem;
+    height: 2.125rem;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   /* Typography Utilities */
