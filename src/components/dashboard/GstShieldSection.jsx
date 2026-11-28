@@ -6,6 +6,7 @@ import { getTodayKolkata, getKolkataMonthBounds, getKolkataFYStart } from '../..
 import { downloadCAAuditPack } from '../../api/gst';
 import InfoTip from '../common/InfoTip';
 import { gstShieldView } from '../../utils/gstShieldView';
+import { getGstFilingCadence } from '../../utils/complianceCadence';
 import DateInputField from '../common/DateInputField';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
@@ -72,6 +73,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
   const formatSigned = (value) => (Number(value) < 0 ? `−${formatCurrency(value)}` : formatCurrency(value));
 
   const view = gstShieldView(gst);
+  const gstCadence = view.registered ? getGstFilingCadence(todayStr) : null;
   const gaugeColor = !view.registered
     ? { success: 'var(--status-success)', warning: 'var(--status-warning)', danger: 'var(--status-danger)' }[view.gauge.level]
     : undefined;
@@ -170,6 +172,34 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
               <p className="text-xs font-medium flex items-start gap-1 text-[var(--status-warning)]">
                 <ExclamationTriangleIcon className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {view.eInvoiceWarning}
               </p>
+            )}
+            {gstCadence && (
+              <div
+                className={`rounded-xl border px-3 py-2 flex items-center justify-between gap-2 ${
+                  gstCadence.tone === 'warning'
+                    ? 'bg-[var(--status-warning-bg)] border-[var(--status-warning-border)]'
+                    : gstCadence.tone === 'success'
+                    ? 'bg-[var(--status-success-bg)] border-[var(--status-success-border)]'
+                    : 'bg-[var(--bg-primary)]/70 border-[var(--border-subtle)]'
+                }`}
+              >
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                    <CalendarDaysIcon className="w-3.5 h-3.5 shrink-0 text-[var(--accent-primary)]" />
+                    <span className="truncate">{gstCadence.title}</span>
+                  </div>
+                  <div className="text-[10px] text-[var(--text-muted)] truncate mt-0.5">
+                    {gstCadence.subtitle}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate(gstCadence.route)}
+                  className="text-[11px] font-semibold text-[var(--accent-primary)] hover:underline shrink-0 cursor-pointer"
+                >
+                  {gstCadence.actionLabel}
+                </button>
+              </div>
             )}
           </div>
         )}

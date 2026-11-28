@@ -23,6 +23,7 @@ import GstShieldSection from '../components/dashboard/GstShieldSection'
 import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
 import ExpiryCard from '../components/dashboard/ExpiryCard'
 import EmptyState from '../components/common/EmptyState'
+import SetupReadinessCard from '../components/dashboard/SetupReadinessCard'
 import { getSubscriptionEntitlements } from '../api/subscription'
 import { getKolkataMonthBounds } from '../utils/date'
 import { getGSTR1Export } from '../api/gst'
@@ -305,6 +306,15 @@ export default function Dashboard({ onLogout }) {
         <PulseSection 
           data={smartData?.pulse} 
           isLoading={loadingSmart} 
+        />
+
+        {/* 1B. WORKSPACE READINESS CHECKLIST (Ethical Goal-Gradient & Endowed Progress) */}
+        <SetupReadinessCard
+          profile={profileData?.profile}
+          metrics={metrics}
+          salesList={Array.isArray(sales) ? sales : sales?.data || sales?.results || []}
+          purchasesList={Array.isArray(purchases) ? purchases : purchases?.data || purchases?.results || []}
+          isLoading={loadingMetrics}
         />
 
         {/* 2. OVERVIEW CARDS (Total Sales, Purchases, etc.) */}
