@@ -17,7 +17,7 @@ export const LIST_TD =
   "px-3.5 py-3.5 whitespace-nowrap text-center border-r border-[var(--border-subtle)] last:border-r-0";
 
 export const LIST_TD_AMOUNT =
-  "px-3.5 py-3.5 whitespace-nowrap text-right border-r border-[var(--border-subtle)] last:border-r-0";
+  "px-3.5 py-3.5 whitespace-nowrap text-right tabular-nums border-r border-[var(--border-subtle)] last:border-r-0";
 
 export const LIST_TD_CUSTOMER =
   "px-3.5 py-3.5 whitespace-nowrap text-left border-r border-[var(--border-subtle)] last:border-r-0";

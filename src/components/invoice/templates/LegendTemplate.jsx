@@ -336,7 +336,7 @@ const LegendTemplate = forwardRef(({
                         lineHeight: 1.2, 
                         fontSize: `${type.tableBodySize}px`, 
                         textAlign: isDesc ? 'left' : isNum ? 'right' : 'center', 
-                        fontVariantNumeric: (isNum || isHsn) ? 'tabular-nums' : 'normal',
+                        fontVariantNumeric: !isDesc ? 'tabular-nums' : 'normal',
                         overflow: 'hidden',
                         verticalAlign: 'middle' 
                       }}
@@ -400,7 +400,7 @@ const LegendTemplate = forwardRef(({
             
             {/* Totals Block — stays under table */}
             <div className="w-2/5 flex flex-col">
-               <div className="p-3 space-y-1" style={{ fontSize: `${type.totalsSize}px` }}>
+               <div className="p-3 space-y-1" style={{ fontSize: `${type.totalsSize}px`, fontVariantNumeric: 'tabular-nums' }}>
                  <div className="flex justify-between items-center py-0.5">
                    <span className="font-semibold text-gray-700 whitespace-nowrap">{charges && charges.length > 0 ? "Items Taxable" : "Taxable Amount"}</span>
                    <span className="font-mono text-gray-900 whitespace-nowrap">{getCurrencySymbol()}{(itemsSubtotal !== undefined ? itemsSubtotal : subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>

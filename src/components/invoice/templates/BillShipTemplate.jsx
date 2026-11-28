@@ -321,7 +321,7 @@ const BillShipTemplate = forwardRef(({
                       lineHeight: 1.2,
                       fontSize: `${type.tableBodySize}px`,
                       textAlign: isDesc ? 'left' : isNum ? 'right' : 'center',
-                      fontVariantNumeric: (isNum || isHsn) ? 'tabular-nums' : 'normal',
+                      fontVariantNumeric: !isDesc ? 'tabular-nums' : 'normal',
                       overflow: 'hidden',
                       verticalAlign: 'middle',
                     }}
@@ -370,7 +370,7 @@ const BillShipTemplate = forwardRef(({
              </div>
           </div>
 
-          <div className="w-1/2 pl-6 flex flex-col justify-between" style={{ fontSize: `${type.totalsSize}px` }}>
+          <div className="w-1/2 pl-6 flex flex-col justify-between" style={{ fontSize: `${type.totalsSize}px`, fontVariantNumeric: 'tabular-nums' }}>
              <div>
                <div className="flex justify-between font-medium text-gray-700 mb-1.5 items-center" style={{ fontSize: `${type.totalsSize}px` }}>
                  <span>{charges && charges.length > 0 ? "Items Taxable" : "Taxable Amount"}</span>

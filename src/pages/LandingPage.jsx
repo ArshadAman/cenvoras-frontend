@@ -343,6 +343,9 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mb-14">
+              <p className="text-xs font-mono font-semibold uppercase tracking-widest text-[var(--accent-primary)] mb-2">
+                Core Capabilities
+              </p>
               <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
                 Everything your business runs on
               </h2>
@@ -396,6 +399,9 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mx-auto text-center mb-4">
+              <p className="text-xs font-mono font-semibold uppercase tracking-widest text-[var(--accent-primary)] mb-2">
+                System Architecture
+              </p>
               <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
                 See the whole system
               </h2>
@@ -420,6 +426,9 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="max-w-2xl mx-auto text-center mb-16">
+              <p className="text-xs font-mono font-semibold uppercase tracking-widest text-[var(--accent-primary)] mb-2">
+                Transparent Licensing
+              </p>
               <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--text-primary)] tracking-tight">
                 Choose the plan that fits your business
               </h2>
@@ -476,7 +485,7 @@ export default function LandingPage() {
             <Reveal delay={0.1}>
               <div className="h-full p-7 rounded-3xl border-2 border-[var(--accent-primary)] bg-[var(--bg-surface)] flex flex-col justify-between relative shadow-2xl">
                 {/* Centered Badge */}
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-[var(--accent-primary)] text-white text-xs font-black uppercase rounded-full shadow-md flex items-center gap-1.5 whitespace-nowrap z-20">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-[var(--accent-primary)] text-[var(--text-on-accent)] text-xs font-black uppercase rounded-full shadow-md flex items-center gap-1.5 whitespace-nowrap z-20">
                   <SparklesIcon className="w-3.5 h-3.5" />
                   Lifetime Ownership · Complete Flexibility
                 </div>

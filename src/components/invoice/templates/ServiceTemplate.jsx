@@ -337,7 +337,7 @@ const ServiceTemplate = forwardRef(({
                         lineHeight: 1.2,
                         fontSize: `${type.tableBodySize}px`,
                         textAlign: isDesc ? 'left' : isNum ? 'right' : 'center',
-                        fontVariantNumeric: isNum ? 'tabular-nums' : 'normal',
+                        fontVariantNumeric: !isDesc ? 'tabular-nums' : 'normal',
                         overflow: 'hidden',
                         verticalAlign: 'middle',
                       }}
@@ -382,7 +382,7 @@ const ServiceTemplate = forwardRef(({
           </div>
 
           <div className="w-[40%]">
-            <table className="w-full text-right" style={{ fontSize: `${type.totalsSize}px` }}>
+            <table className="w-full text-right" style={{ fontSize: `${type.totalsSize}px`, fontVariantNumeric: 'tabular-nums' }}>
               <tbody>
                 <tr><td className="py-1 font-semibold text-gray-700">{charges && charges.length > 0 ? "Items Taxable" : "Taxable Amount"}</td><td className="py-1">{getCurrencySymbol()}{(itemsSubtotal !== undefined ? itemsSubtotal : subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
                 {charges?.map((c, i) => (
