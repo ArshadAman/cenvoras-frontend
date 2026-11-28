@@ -49,13 +49,13 @@ export default function OfflineBanner() {
     <div
       role="status"
       aria-live="polite"
-      className={`fixed top-0 inset-x-0 z-[2147483640] py-2 px-4 text-xs font-semibold flex items-center justify-center gap-2 shadow-lg transition-all duration-300 ${
+      className={`fixed top-0 inset-x-0 z-[2147483640] py-2 px-4 text-xs font-semibold flex items-center justify-center gap-2 shadow-lg transition-opacity duration-150 ${
         isOnline
           ? 'bg-emerald-600 text-white animate-fade-in'
           : 'bg-gradient-to-r from-amber-600 to-rose-600 text-white animate-fade-in'
       }`}
     >
-      <WifiIcon className="w-4 h-4 animate-pulse" />
+      <WifiIcon className="w-4 h-4 animate-pulse motion-reduce:animate-none" />
       {isOnline ? (
         <span>Connection restored. System is synchronized.</span>
       ) : (

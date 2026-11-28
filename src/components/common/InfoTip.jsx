@@ -55,7 +55,7 @@ export default function InfoTip({ content, label = 'More info', children, classN
             ref={refs.setFloating}
             id={tipId}
             style={{ ...floatingStyles, maxWidth: 260 }}
-            className="z-[1000] rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-2 text-xs leading-snug text-[var(--text-primary)] shadow-lg"
+            className="z-[1000] rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-2 text-xs leading-snug text-[var(--text-primary)] shadow-lg animate-fade-in"
             {...getFloatingProps()}
           >
             {content}

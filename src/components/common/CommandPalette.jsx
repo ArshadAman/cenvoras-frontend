@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { backdropVariants, commandPaletteVariants } from '../../utils/motion';
 import {
   MagnifyingGlassIcon,
   ChartBarIcon,
@@ -343,24 +345,34 @@ export default function CommandPalette({ isOpen, onClose }) {
     }
   }, [selectedIndex]);
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Command Palette"
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 sm:px-6"
-    >
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Command Palette"
+          className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 sm:px-6"
+        >
+          {/* Backdrop */}
+          <motion.div
+            variants={backdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+            aria-hidden="true"
+          />
 
-      {/* Palette Container */}
-      <div className="relative w-full max-w-xl bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[75vh] animate-in fade-in zoom-in-95 duration-150 text-[var(--text-primary)]">
+          {/* Palette Container */}
+          <motion.div
+            variants={commandPaletteVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="relative w-full max-w-xl bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[75vh] text-[var(--text-primary)]"
+          >
         {/* Search Input Bar */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/40">
           <MagnifyingGlassIcon className="w-5 h-5 text-[var(--text-muted)] shrink-0" />
@@ -399,7 +411,7 @@ export default function CommandPalette({ isOpen, onClose }) {
                     navigate(item.path);
                   }}
                   onMouseEnter={() => setSelectedIndex(index)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-sm transition-all duration-100 ${
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-sm transition-colors duration-100 ${
                     isSelected
                       ? 'bg-[var(--accent-primary)]/15 text-[var(--text-primary)] border border-[var(--accent-primary)]/30 shadow-sm'
                       : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] border border-transparent'
@@ -448,7 +460,9 @@ export default function CommandPalette({ isOpen, onClose }) {
           </div>
           <span className="text-[11px] font-medium">Cenvora Quick Action</span>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

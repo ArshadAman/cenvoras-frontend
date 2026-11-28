@@ -156,11 +156,18 @@ export default function Layout({ children, onLogout }) {
     const handlePopState = () => {
       setIsMobileMenuOpen(false);
     };
+    const handleEscKey = (e) => {
+      if (e.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+      }
+    };
 
     window.addEventListener('popstate', handlePopState);
+    window.addEventListener('keydown', handleEscKey);
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleEscKey);
       if (window.history.state && window.history.state.mobileMenuOpen) {
         window.history.back();
       }
@@ -418,19 +425,19 @@ export default function Layout({ children, onLogout }) {
       <div className="fixed inset-0 bg-grid z-0 pointer-events-none opacity-40"></div>
 
       {/* Sidebar - Desktop */}
-      <aside className={`hidden md:flex flex-col glass-sidebar z-50 h-screen sticky top-0 transition-[width] duration-300 ease-in-out select-none overflow-x-hidden ${
+      <aside className={`hidden md:flex flex-col glass-sidebar z-50 h-screen sticky top-0 transition-[width] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none select-none overflow-x-hidden ${
         isSidebarCollapsed ? 'w-20' : 'w-72'
       }`}>
         
         {/* Logo & Collapse Header Area */}
-        <div className={`h-20 flex items-center border-b border-[var(--border-subtle)] transition-all duration-300 shrink-0 ${
+        <div className={`h-20 flex items-center border-b border-[var(--border-subtle)] shrink-0 ${
           isSidebarCollapsed ? 'justify-center px-2' : 'justify-between px-5'
         }`}>
           {!isSidebarCollapsed ? (
             <div className="flex items-center justify-between w-full gap-2 overflow-hidden">
               <Link to="/" className="flex items-center min-w-0" title="Cenvora Home">
                 <BrandLogo 
-                  className="h-11 sm:h-12 w-auto object-contain transform origin-left transition-transform duration-300" 
+                  className="h-11 sm:h-12 w-auto object-contain transform origin-left transition-transform duration-150 motion-reduce:transition-none" 
                 />
               </Link>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -786,7 +793,7 @@ export default function Layout({ children, onLogout }) {
 
         {/* Mobile Menu Overlay */}
         <div 
-          className={`md:hidden fixed inset-0 z-50 transition-all duration-300 ${
+          className={`md:hidden fixed inset-0 z-50 transition-opacity duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none ${
             isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
         >
@@ -798,7 +805,7 @@ export default function Layout({ children, onLogout }) {
           
           {/* Mobile Sidebar */}
           <div 
-            className={`absolute top-0 bottom-0 left-0 w-72 bg-[var(--bg-surface)] border-r border-[var(--border-default)] transform transition-transform duration-300 flex flex-col ${
+            className={`absolute top-0 bottom-0 left-0 w-72 bg-[var(--bg-surface)] border-r border-[var(--border-default)] transform transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none flex flex-col ${
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >

@@ -155,7 +155,7 @@ export default function ReportsDashboard() {
                 key={index}
                 type="button"
                 onClick={() => openUpgrade(report)}
-                className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 flex items-start gap-4 transition-all duration-300 hover:scale-[1.02] hover:border-[var(--accent-primary)]/40 text-left w-full relative overflow-hidden shadow-sm"
+                className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 flex items-start gap-4 transition-[border-color,box-shadow,transform] duration-150 hover:border-[var(--accent-primary)]/50 hover:shadow-md active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:transition-none text-left w-full relative overflow-hidden shadow-sm"
               >
                 <div className="absolute inset-0 bg-black/20" />
                 <div className={`p-3 rounded-xl ${report.bg} shrink-0 relative z-10`}>
@@ -174,7 +174,7 @@ export default function ReportsDashboard() {
               <Link 
                 key={index} 
                 to={report.link}
-                className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 flex items-start gap-4 transition-all duration-300 hover:scale-[1.02] hover:border-[var(--accent-primary)]/40 shadow-sm"
+                className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-6 flex items-start gap-4 transition-[border-color,box-shadow,transform] duration-150 hover:border-[var(--accent-primary)]/50 hover:shadow-md active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:transition-none shadow-sm"
               >
                 <div className={`p-3 rounded-xl ${report.bg} shrink-0`}>
                   <report.icon className={`w-8 h-8 ${report.color}`} />

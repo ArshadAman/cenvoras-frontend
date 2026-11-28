@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { MotionConfig } from 'framer-motion'
 import LandingPage from './pages/LandingPage'
 import Layout from './components/Layout'
 import ContactUs from './pages/ContactUs'
@@ -117,6 +118,7 @@ function App() {
   };
 
   return (
+    <MotionConfig reducedMotion="user">
     <Router>
       <ToastContainer position="top-right" autoClose={3000} limit={2} pauseOnFocusLoss={false} theme="dark" newestOnTop style={{ zIndex: 2147483647 }} />
       <OfflineBanner />
@@ -462,6 +464,7 @@ function App() {
       </Routes>
       {isAuthenticated && <AIChatWidget />}
     </Router>
+    </MotionConfig>
   )
 }
 
