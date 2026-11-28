@@ -22,6 +22,7 @@ import InsightsSection from '../components/dashboard/InsightsSection'
 import GstShieldSection from '../components/dashboard/GstShieldSection'
 import MLPredictionsSection from '../components/dashboard/MLPredictionsSection'
 import ExpiryCard from '../components/dashboard/ExpiryCard'
+import EmptyState from '../components/common/EmptyState'
 import { getSubscriptionEntitlements } from '../api/subscription'
 import { getKolkataMonthBounds } from '../utils/date'
 import { getGSTR1Export } from '../api/gst'
@@ -255,7 +256,7 @@ export default function Dashboard({ onLogout }) {
                 ? `${profileData.profile.business_name || profileData.profile.parent_business_name} Smart Dashboard` 
                 : 'Smart Dashboard'}
             </h1>
-            <p className="text-[var(--text-muted)] text-sm">Your intelligent business assistant</p>
+            <p className="text-[var(--text-muted)] text-sm">Real-time sales, inventory, and GST compliance overview</p>
             <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1 text-xs text-[var(--text-secondary)]">
               <span className="text-[var(--accent-primary)] font-semibold">{currentPlanName}</span>
               <span className="text-[var(--text-muted)]">plan active</span>
@@ -281,6 +282,24 @@ export default function Dashboard({ onLogout }) {
         </div>
 
         {/* 1. TODAY'S PULSE (New Smart Feature) */}
+        {smartError && !loadingSmart && (
+          <div
+            role="status"
+            className="rounded-2xl border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-sm"
+          >
+            <div className="flex items-center gap-2.5 text-[var(--text-primary)]">
+              <ExclamationTriangleIcon className="w-5 h-5 text-[var(--status-warning)] shrink-0" />
+              <span>Some live analytics could not be refreshed right now. Your accounting records are safe.</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => refetchSmart()}
+              className="btn-secondary !text-xs !py-1.5 !px-3"
+            >
+              Retry Analytics
+            </button>
+          </div>
+        )}
         <PulseSection 
           data={smartData?.pulse} 
           isLoading={loadingSmart} 
@@ -463,16 +482,33 @@ export default function Dashboard({ onLogout }) {
               <button onClick={() => navigate('/sales')} className="text-xs text-[var(--accent-primary)] hover:underline font-semibold">View All</button>
             </div>
             <div className="divide-y divide-[var(--border-subtle)]">
-              {(loadingSales ? Array(5).fill({}) : (Array.isArray(sales) ? sales : sales?.data || sales?.results || [])).slice(0, 5).map((invoice, i) =>
-                loadingSales ? (
-                  <div key={i} className="p-4 animate-pulse flex gap-4">
-                    <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
-                      <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+              {(() => {
+                const salesList = Array.isArray(sales) ? sales : sales?.data || sales?.results || [];
+                if (loadingSales) {
+                  return Array(5).fill({}).map((_, i) => (
+                    <div key={i} className="p-4 animate-pulse flex gap-4">
+                      <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
+                        <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+                      </div>
                     </div>
-                  </div>
-                ) : (
+                  ));
+                }
+                if (salesList.length === 0) {
+                  return (
+                    <div className="p-4">
+                      <EmptyState
+                        icon={CurrencyRupeeIcon}
+                        title="No sales invoices yet"
+                        description="Create your first GST-compliant invoice to start tracking revenue and receivables."
+                        action={{ label: 'Create First Invoice', icon: PlusIcon, onClick: () => navigate('/sales') }}
+                        className="!my-0 !p-6"
+                      />
+                    </div>
+                  );
+                }
+                return salesList.slice(0, 5).map((invoice, i) => (
                   <div key={invoice.id || i} className="p-4 flex justify-between items-center hover:bg-[var(--bg-primary)]/40 transition-colors cursor-pointer" onClick={() => navigate(`/sales/${invoice.id}`)}>
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--status-info)]">
@@ -484,12 +520,12 @@ export default function Dashboard({ onLogout }) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-[var(--text-primary)]">{formatCurrency(invoice.total_amount)}</div>
+                      <div className="text-sm font-bold text-[var(--text-primary)] font-mono font-tabular">{formatCurrency(invoice.total_amount)}</div>
                       <div className="text-xs text-[var(--text-muted)]">{invoice.invoice_date}</div>
                     </div>
                   </div>
-                )
-              )}
+                ));
+              })()}
             </div>
           </div>
 
@@ -500,16 +536,33 @@ export default function Dashboard({ onLogout }) {
               <button onClick={() => navigate('/purchase')} className="text-xs text-[var(--accent-primary)] hover:underline font-semibold">View All</button>
             </div>
             <div className="divide-y divide-[var(--border-subtle)]">
-              {(loadingPurchases ? Array(5).fill({}) : (Array.isArray(purchases) ? purchases : purchases?.data || purchases?.results || [])).slice(0, 5).map((bill, i) =>
-                loadingPurchases ? (
-                  <div key={i} className="p-4 animate-pulse flex gap-4">
-                    <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
-                      <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+              {(() => {
+                const purchasesList = Array.isArray(purchases) ? purchases : purchases?.data || purchases?.results || [];
+                if (loadingPurchases) {
+                  return Array(5).fill({}).map((_, i) => (
+                    <div key={i} className="p-4 animate-pulse flex gap-4">
+                      <div className="h-10 w-10 bg-[var(--border-subtle)] rounded-full"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-1/3 bg-[var(--border-subtle)] rounded"></div>
+                        <div className="h-3 w-1/4 bg-[var(--border-subtle)] rounded"></div>
+                      </div>
                     </div>
-                  </div>
-                ) : (
+                  ));
+                }
+                if (purchasesList.length === 0) {
+                  return (
+                    <div className="p-4">
+                      <EmptyState
+                        icon={ShoppingBagIcon}
+                        title="No purchase bills yet"
+                        description="Record a vendor bill to track input tax credit (ITC) and update stock levels."
+                        action={{ label: 'Record Purchase Bill', icon: PlusIcon, onClick: () => navigate('/purchase') }}
+                        className="!my-0 !p-6"
+                      />
+                    </div>
+                  );
+                }
+                return purchasesList.slice(0, 5).map((bill, i) => (
                   <div key={bill.id || i} className="p-4 flex justify-between items-center hover:bg-[var(--bg-primary)]/40 transition-colors cursor-pointer" onClick={() => navigate(`/purchases/${bill.id}`)}>
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-secondary)]">
@@ -521,12 +574,12 @@ export default function Dashboard({ onLogout }) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-[var(--text-primary)]">{formatCurrency(bill.total_amount)}</div>
+                      <div className="text-sm font-bold text-[var(--text-primary)] font-mono font-tabular">{formatCurrency(bill.total_amount)}</div>
                       <div className="text-xs text-[var(--text-muted)]">{bill.bill_date}</div>
                     </div>
                   </div>
-                )
-              )}
+                ));
+              })()}
             </div>
           </div>
         </section>

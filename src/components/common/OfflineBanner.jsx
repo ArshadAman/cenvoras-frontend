@@ -49,17 +49,17 @@ export default function OfflineBanner() {
     <div
       role="status"
       aria-live="polite"
-      className={`fixed top-0 inset-x-0 z-[2147483640] py-2 px-4 text-xs font-semibold flex items-center justify-center gap-2 shadow-lg transition-all duration-300 ${
+      className={`fixed top-0 inset-x-0 z-[2147483640] py-2 px-4 text-xs font-semibold flex items-center justify-center gap-2 shadow-lg transition-all duration-150 border-b ${
         isOnline
-          ? 'bg-emerald-600 text-white animate-fade-in'
-          : 'bg-gradient-to-r from-amber-600 to-rose-600 text-white animate-fade-in'
+          ? 'bg-[var(--status-success-fill)] text-[var(--status-success-on-fill)] border-[var(--status-success-border)] animate-fade-in'
+          : 'bg-[var(--status-warning-fill)] text-[var(--status-warning-on-fill)] border-[var(--status-warning-border)] animate-fade-in'
       }`}
     >
-      <WifiIcon className="w-4 h-4 animate-pulse" />
+      <WifiIcon className="w-4 h-4 shrink-0" />
       {isOnline ? (
-        <span>Connection restored. System is synchronized.</span>
+        <span>Connection restored — your workspace is back in sync.</span>
       ) : (
-        <span>You are currently working offline. Unsaved drafts are cached locally on this device.</span>
+        <span>Offline mode — your unsaved invoice and bill drafts are safely stored on this device.</span>
       )}
     </div>
   );

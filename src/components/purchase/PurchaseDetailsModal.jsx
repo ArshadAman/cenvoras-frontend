@@ -5,6 +5,7 @@ import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { createPortal } from "react-dom";
+import { toast } from "react-toastify";
 import {
   XMarkIcon,
   PrinterIcon,
@@ -122,7 +123,7 @@ export default function PurchaseDetailsModal({ billId, onClose }) {
       pdf.save(`purchase-bill-${bill.bill_number || billId}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Error generating PDF. Please try again.");
+      toast.error("Could not generate the purchase bill PDF. Please try again.");
     }
   };
 

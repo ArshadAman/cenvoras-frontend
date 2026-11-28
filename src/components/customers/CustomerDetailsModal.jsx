@@ -7,6 +7,7 @@ import { getDeliveryChallans } from "../../api/delivery_challan";
 import { getSalesOrders } from "../../api/sales_order";
 import { getQuotations } from "../../api/quotation";
 import { format } from "date-fns";
+import { toast } from "react-toastify";
 import { useReactToPrint } from "react-to-print";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -205,7 +206,7 @@ export default function CustomerDetailsModal({ isOpen, onClose, customer }) {
       pdf.save(`customer-statement-${customerDetails?.name?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || customer?.id}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      toast.error('Could not generate the customer statement PDF. Please try again.');
     }
   };
 

@@ -8,6 +8,7 @@ import InfoTip from '../common/InfoTip';
 import { gstShieldView } from '../../utils/gstShieldView';
 import DateInputField from '../common/DateInputField';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
 import api from '../../api/api';
 import {
   ShieldCheckIcon,
@@ -85,7 +86,7 @@ export default function GstShieldSection({ data, isLoading, onDownloadReport }) 
       setModalOpen(false);
     } catch (err) {
       console.error('Download CA Pack failed:', err);
-      alert(err.message || 'Failed to generate report. Please try again.');
+      toast.error(err.message || 'Could not generate the CA Audit Pack. Please try again.');
     } finally {
       setDownloadingFormat(null);
     }

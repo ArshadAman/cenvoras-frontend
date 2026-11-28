@@ -54,7 +54,9 @@ export default function ConfirmDialog({
           className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-md ${
             variant === 'destructive'
               ? 'bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)] text-[var(--status-danger)]'
-              : 'bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] text-[var(--status-warning)]'
+              : variant === 'warning'
+              ? 'bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] text-[var(--status-warning)]'
+              : 'bg-[var(--status-info-bg)] border border-[var(--status-info-border)] text-[var(--status-info)]'
           }`}
         >
           <IconComponent className="w-6 h-6" />
